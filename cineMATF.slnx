@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/Services/">
+    <Project Path="Services/Cinema.API/Cinema.API.csproj" />
+  </Folder>
+</Solution>
