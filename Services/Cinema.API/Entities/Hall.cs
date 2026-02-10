@@ -8,11 +8,11 @@ public class Hall
     public int SeatsPerRow { get; set; }
 
     public Guid CinemaId { get; set; }
-    public required Cinema Cinema { get; set; }
+    public required MovieTheatre Cinema { get; set; }
 
     public ICollection<Seat> Seats { get; set; } = [];
 
-    private void InitializeSeats()
+    public void InitializeSeats()
     {
         for (int i = 0; i < TotalRows; i++)
         {

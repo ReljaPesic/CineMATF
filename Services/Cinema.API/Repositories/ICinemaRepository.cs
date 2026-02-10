@@ -1,0 +1,20 @@
+using Cinema.API.Entities;
+
+namespace Cinema.API.Repositories;
+
+public interface ICinemaRepository
+{
+    Task<IEnumerable<MovieTheatre>> GetCinemasAsync();
+    Task<MovieTheatre?> GetCinemaByIdAsync(Guid id);
+    Task CreateCinemaAsync(MovieTheatre cinema);
+    Task<bool> DeleteCinemaAsync(Guid id);
+    Task<bool> UpdateCinemaAsync(MovieTheatre newCinema);
+
+    Task<IEnumerable<Hall>> GetHallsAsync(Guid cinemaId);
+    Task CreateHallAsync(Guid cinemaId, Hall hall);
+    Task<bool> DeleteHallAsync(Guid cinemaId, Guid hallId);
+    Task<bool> UpdateHallAsync(Hall newHall);
+
+    Task<IEnumerable<Seat>> GetSeatLayoutAsync(Guid hallId);
+    Task CreateSeatsAsync(Guid hallId);
+}
