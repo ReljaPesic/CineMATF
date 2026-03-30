@@ -1,0 +1,25 @@
+services:
+
+  cinemadb:
+    container_name: cinemadb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: CinemaDB
+      POSTGRES_USER: user 
+      POSTGRES_PASSWORD: strongpassword123 
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=cine.matf@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=admin1234
+    restart: always
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/root/.pgadmin
+

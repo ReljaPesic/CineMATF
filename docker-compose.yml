@@ -1,0 +1,10 @@
+services:
+  cinemadb:
+    image: postgres:16
+
+  pgadmin:
+      image: dpage/pgadmin4
+
+volumes:
+  pgdata:
+  pgadmin_data:

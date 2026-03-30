@@ -8,7 +8,7 @@ public class Hall
     public int SeatsPerRow { get; set; }
 
     public Guid CinemaId { get; set; }
-    public required MovieTheatre Cinema { get; set; }
+    public MovieTheatre? Cinema { get; set; }
 
     public ICollection<Seat> Seats { get; set; } = [];
 

@@ -7,5 +7,5 @@ public class Seat
     public int Number { get; set; }
 
     public Guid HallId { get; set; }
-    public required Hall Hall { get; set; } = null!;
+    public Hall? Hall { get; set; }
 }
