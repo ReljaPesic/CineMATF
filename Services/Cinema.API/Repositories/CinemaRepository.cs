@@ -1,4 +1,5 @@
 using Cinema.API.Data;
+using Cinema.API.DTOs;
 using Cinema.API.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,10 +9,17 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
 {
     private readonly CinemaDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
-    public async Task CreateCinemaAsync(MovieTheatre cinema)
+    public async Task<MovieTheatre> CreateCinemaAsync(CreateCinemaRequest request)
     {
-        await _context.MovieTheatres.AddAsync(cinema);
+        var cinema = new MovieTheatre
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name,
+            City = request.City
+        };
+        _context.MovieTheatres.Add(cinema);
         await _context.SaveChangesAsync();
+        return cinema;
     }
 
     public async Task CreateHallAsync(Guid cinemaId, Hall hall)
@@ -59,22 +67,30 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
 
     public async Task<MovieTheatre?> GetCinemaByIdAsync(Guid id)
     {
-        return await _context.MovieTheatres.Include(c => c.Halls).ThenInclude(h => h.Seats).FirstOrDefaultAsync(c => c.Id == id);
+        return await _context.MovieTheatres.AsNoTracking().Include(c => c.Halls).FirstOrDefaultAsync(c => c.Id == id);
     }
 
-    public async Task<IEnumerable<MovieTheatre>> GetCinemasAsync()
+    public async Task<(IEnumerable<MovieTheatre> Cinemas, int TotalCount)> GetCinemasAsync(int page, int pageSize)
     {
-        return await _context.MovieTheatres.Include(c => c.Halls).ThenInclude(h => h.Seats).ToListAsync();
+        var query = _context.MovieTheatres.AsNoTracking();
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderBy(c => c.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
     }
 
     public async Task<IEnumerable<Hall>> GetHallsAsync(Guid cinemaId)
     {
-        return await _context.Halls.Where(h => h.CinemaId == cinemaId).Include(h => h.Seats).ToListAsync();
+        return await _context.Halls.Where(h => h.CinemaId == cinemaId).AsNoTracking().ToListAsync();
     }
 
     public async Task<IEnumerable<Seat>> GetSeatLayoutAsync(Guid hallId)
     {
-        return await _context.Seats.Where(s => s.HallId == hallId).ToListAsync();
+        return await _context.Seats.AsNoTracking().Where(s => s.HallId == hallId).OrderBy(s => s.Row).ThenBy(s => s.Number).ToListAsync();
     }
 
     public async Task<bool> UpdateCinemaAsync(MovieTheatre newCinema)
@@ -86,13 +102,16 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
         await _context.SaveChangesAsync();
         return true;
     }
-
     public async Task<bool> UpdateHallAsync(Hall newHall)
     {
-        var exists = await _context.Halls.AnyAsync(h => h.Id == newHall.Id && h.CinemaId == newHall.CinemaId);
-        if (!exists) return false;
+        var existing = await _context.Halls
+            .FirstOrDefaultAsync(h => h.Id == newHall.Id && h.CinemaId == newHall.CinemaId);
 
-        _context.Halls.Update(newHall);
+        if (existing == null) return false;
+        existing.Name = newHall.Name;
+        existing.TotalRows = newHall.TotalRows;
+        existing.SeatsPerRow = newHall.SeatsPerRow;
+
         await _context.SaveChangesAsync();
         return true;
     }

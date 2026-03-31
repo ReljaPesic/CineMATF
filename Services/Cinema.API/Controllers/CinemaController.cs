@@ -1,3 +1,4 @@
+using Cinema.API.DTOs;
 using Cinema.API.Entities;
 using Cinema.API.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -12,9 +13,10 @@ public class CinemaController(ICinemaRepository repository) : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<MovieTheatre>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<MovieTheatre>>> GetCinemas()
+    public async Task<ActionResult<IEnumerable<MovieTheatre>>> GetCinemas([FromQuery] int page = 1,
+                                                                          [FromQuery] int pageSize = 10)
     {
-        var cinemas = await _repository.GetCinemasAsync();
+        var (cinemas, _) = await _repository.GetCinemasAsync(page, pageSize);
         return Ok(cinemas);
     }
 
@@ -30,9 +32,9 @@ public class CinemaController(ICinemaRepository repository) : ControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(MovieTheatre), StatusCodes.Status201Created)]
-    public async Task<ActionResult<MovieTheatre>> CreateCinema(MovieTheatre cinema)
+    public async Task<ActionResult<MovieTheatre>> CreateCinema(CreateCinemaRequest request)
     {
-        await repository.CreateCinemaAsync(cinema);
+        var cinema = await repository.CreateCinemaAsync(request);
         return CreatedAtAction(nameof(GetCinemaById), new { id = cinema.Id }, cinema);
     }
 

@@ -1,12 +1,13 @@
+using Cinema.API.DTOs;
 using Cinema.API.Entities;
 
 namespace Cinema.API.Repositories;
 
 public interface ICinemaRepository
 {
-    Task<IEnumerable<MovieTheatre>> GetCinemasAsync();
+    Task<(IEnumerable<MovieTheatre> Cinemas, int TotalCount)> GetCinemasAsync(int page, int pageSize);
     Task<MovieTheatre?> GetCinemaByIdAsync(Guid id);
-    Task CreateCinemaAsync(MovieTheatre cinema);
+    Task<MovieTheatre> CreateCinemaAsync(CreateCinemaRequest request);
     Task<bool> DeleteCinemaAsync(Guid id);
     Task<bool> UpdateCinemaAsync(MovieTheatre newCinema);
 
