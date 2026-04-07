@@ -1,25 +1,26 @@
 using Cinema.API.Data;
+using Cinema.API.Mapping;
 using Cinema.API.Repositories;
+using Cinema.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<CinemaDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<ICinemaRepository, CinemaRepository>();
+builder.Services.AddScoped<ICinemaService, CinemaService>();
+builder.Services.AddAutoMapper(typeof(CinemaMappingProfile));
+builder.Services.AddAutoMapper(typeof(HallMappingProfile));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 
 app.MapControllers();
 app.Run();

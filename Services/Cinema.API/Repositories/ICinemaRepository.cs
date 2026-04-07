@@ -7,12 +7,12 @@ public interface ICinemaRepository
 {
     Task<(IEnumerable<MovieTheatre> Cinemas, int TotalCount)> GetCinemasAsync(int page, int pageSize);
     Task<MovieTheatre?> GetCinemaByIdAsync(Guid id);
-    Task<MovieTheatre> CreateCinemaAsync(CreateCinemaRequest request);
+    Task<MovieTheatre> CreateCinemaAsync(CinemaRequest request);
     Task<bool> DeleteCinemaAsync(Guid id);
     Task<bool> UpdateCinemaAsync(MovieTheatre newCinema);
 
     Task<IEnumerable<Hall>> GetHallsAsync(Guid cinemaId);
-    Task CreateHallAsync(Guid cinemaId, Hall hall);
+    Task<Hall> CreateHallAsync(Guid cinemaId, HallRequest hall);
     Task<bool> DeleteHallAsync(Guid cinemaId, Guid hallId);
     Task<bool> UpdateHallAsync(Hall newHall);
 

@@ -1,6 +1,7 @@
 namespace Cinema.API.DTOs;
 
-public record CreateCinemaRequest(
+public record CinemaResponse(
+    Guid Id,
     string Name,
     string City
 );

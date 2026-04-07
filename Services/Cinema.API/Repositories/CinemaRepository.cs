@@ -9,7 +9,7 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
 {
     private readonly CinemaDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
-    public async Task<MovieTheatre> CreateCinemaAsync(CreateCinemaRequest request)
+    public async Task<MovieTheatre> CreateCinemaAsync(CinemaRequest request)
     {
         var cinema = new MovieTheatre
         {
@@ -22,15 +22,21 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
         return cinema;
     }
 
-    public async Task CreateHallAsync(Guid cinemaId, Hall hall)
+    public async Task<Hall> CreateHallAsync(Guid cinemaId, HallRequest request)
     {
-        var cinema = await _context.MovieTheatres.FindAsync(cinemaId);
-        if (cinema == null) return;
-
-        hall.CinemaId = cinemaId;
+        var cinema = await _context.MovieTheatres.FindAsync(cinemaId) ?? throw new KeyNotFoundException($"Cinema with ID {cinemaId} not found");
+        var hall = new Hall
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name,
+            TotalRows = request.TotalRows,
+            SeatsPerRow = request.SeatsPerRow,
+            CinemaId = cinema.Id
+        };
 
         await _context.Halls.AddAsync(hall);
         await _context.SaveChangesAsync();
+        return hall;
     }
 
     public async Task CreateSeatsAsync(Guid hallId)

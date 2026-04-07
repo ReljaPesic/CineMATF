@@ -1,52 +1,49 @@
 using Cinema.API.DTOs;
 using Cinema.API.Entities;
-using Cinema.API.Repositories;
+using Cinema.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cinema.API.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]
-public class CinemaController(ICinemaRepository repository) : ControllerBase
+public class CinemaController(ICinemaService service) : ControllerBase
 {
-    private readonly ICinemaRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<MovieTheatre>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<MovieTheatre>>> GetCinemas([FromQuery] int page = 1,
-                                                                          [FromQuery] int pageSize = 10)
+    [ProducesResponseType(typeof(IEnumerable<CinemaResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<CinemaResponse>>> GetCinemas([FromQuery] int page = 1,
+                                                                           [FromQuery] int pageSize = 10)
     {
-        var (cinemas, _) = await _repository.GetCinemasAsync(page, pageSize);
+        var (cinemas, _) = await service.GetCinemasAsync(page, pageSize);
         return Ok(cinemas);
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(MovieTheatre), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CinemaResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MovieTheatre>> GetCinemaById(Guid id)
+    public async Task<ActionResult<CinemaResponse>> GetCinemaById(Guid id)
     {
-        var cinema = await _repository.GetCinemaByIdAsync(id);
+        var cinema = await service.GetCinemaByIdAsync(id);
         if (cinema == null) return NotFound();
         return Ok(cinema);
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(MovieTheatre), StatusCodes.Status201Created)]
-    public async Task<ActionResult<MovieTheatre>> CreateCinema(CreateCinemaRequest request)
+    [ProducesResponseType(typeof(CinemaResponse), StatusCodes.Status201Created)]
+    public async Task<ActionResult<CinemaResponse>> CreateCinema([FromBody] CinemaRequest request)
     {
-        var cinema = await repository.CreateCinemaAsync(request);
+        var cinema = await service.CreateCinemaAsync(request);
         return CreatedAtAction(nameof(GetCinemaById), new { id = cinema.Id }, cinema);
     }
 
-    [HttpPut]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(CinemaResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> UpdateCinema([FromBody] MovieTheatre cinema)
+    public async Task<ActionResult<CinemaResponse>> UpdateCinema(Guid id, [FromBody] CinemaRequest request)
     {
-        var updated = await _repository.UpdateCinemaAsync(cinema);
-        if (!updated) return NotFound();
-
-        return NoContent();
+        var cinema = await service.UpdateCinemaAsync(id, request);
+        if (cinema == null) return NotFound();
+        return Ok(cinema);
     }
 
     [HttpDelete("{id:guid}")]
@@ -54,41 +51,33 @@ public class CinemaController(ICinemaRepository repository) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteCinema(Guid id)
     {
-        var deleted = await _repository.DeleteCinemaAsync(id);
+        var deleted = await service.DeleteCinemaAsync(id);
         if (!deleted) return NotFound();
-
         return NoContent();
     }
 
-
     [HttpGet("{cinemaId:guid}/halls")]
-    [ProducesResponseType(typeof(IEnumerable<Hall>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Hall>>> GetHalls(Guid cinemaId)
+    [ProducesResponseType(typeof(IEnumerable<HallResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<HallResponse>>> GetHalls(Guid cinemaId)
     {
-        var halls = await _repository.GetHallsAsync(cinemaId);
+        var halls = await service.GetHallsAsync(cinemaId);
         return Ok(halls);
     }
 
-    [HttpPost("{cinemaId:guid}/halls")]
-    [ProducesResponseType(typeof(Hall), StatusCodes.Status201Created)]
-    public async Task<ActionResult<Hall>> CreateHall(Guid cinemaId, [FromBody] Hall hall)
+    [HttpPost("{cinemaId:guid}/hall")]
+    [ProducesResponseType(typeof(HallResponse), StatusCodes.Status201Created)]
+    public async Task<ActionResult<HallResponse>> CreateHall(Guid cinemaId, [FromBody] HallRequest request)
     {
-        await _repository.CreateHallAsync(cinemaId, hall);
+        var hall = await service.CreateHallAsync(cinemaId, request);
         return CreatedAtAction(nameof(GetHalls), new { cinemaId }, hall);
     }
 
-    [HttpPut("{cinemaId:guid}/halls/{hallId:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateHall(Guid cinemaId, Guid hallId, [FromBody] Hall hall)
+    [HttpPost("{cinemaId:guid}/halls")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<ActionResult> CreateHalls(Guid cinemaId, [FromBody] CreateHallsRequest request)
     {
-        if (hallId != hall.Id || hall.CinemaId != cinemaId)
-            return BadRequest("ID mismatch");
-
-        var updated = await _repository.UpdateHallAsync(hall);
-        if (!updated) return NotFound();
-
-        return NoContent();
+        var count = await service.CreateHallsAsync(cinemaId, request.Halls);
+        return Created($"/api/v1/cinema/{cinemaId}/halls", new { created = count });
     }
 
     [HttpDelete("{cinemaId:guid}/halls/{hallId:guid}")]
@@ -96,9 +85,8 @@ public class CinemaController(ICinemaRepository repository) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteHall(Guid cinemaId, Guid hallId)
     {
-        var deleted = await _repository.DeleteHallAsync(cinemaId, hallId);
+        var deleted = await service.DeleteHallAsync(cinemaId, hallId);
         if (!deleted) return NotFound();
-
         return NoContent();
     }
 
@@ -106,7 +94,7 @@ public class CinemaController(ICinemaRepository repository) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<Seat>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<Seat>>> GetSeats(Guid hallId)
     {
-        var seats = await _repository.GetSeatLayoutAsync(hallId);
+        var seats = await service.GetSeatsAsync(hallId);
         return Ok(seats);
     }
 
@@ -114,7 +102,7 @@ public class CinemaController(ICinemaRepository repository) : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateSeats(Guid hallId)
     {
-        await _repository.CreateSeatsAsync(hallId);
+        await service.CreateSeatsAsync(hallId);
         return StatusCode(StatusCodes.Status201Created);
     }
 }
