@@ -91,11 +91,21 @@ public class CinemaController(ICinemaService service) : ControllerBase
     }
 
     [HttpGet("halls/{hallId:guid}/seats")]
-    [ProducesResponseType(typeof(IEnumerable<Seat>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Seat>>> GetSeats(Guid hallId)
+    [ProducesResponseType(typeof(IEnumerable<SeatResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<SeatResponse>>> GetSeats(Guid hallId)
     {
         var seats = await service.GetSeatsAsync(hallId);
         return Ok(seats);
+    }
+
+    [HttpPatch("halls/{hallId:guid}/seats/{seatId:guid}")]
+    [ProducesResponseType(typeof(SeatResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SeatResponse>> UpdateSeatType(Guid hallId, Guid seatId, [FromBody] UpdateSeatTypeRequest request)
+    {
+        var seat = await service.UpdateSeatTypeAsync(seatId, request);
+        if (seat == null) return NotFound();
+        return Ok(seat);
     }
 
     [HttpPost("halls/{hallId:guid}/seats")]

@@ -15,7 +15,8 @@ public interface ICinemaService
     Task<int> CreateHallsAsync(Guid cinemaId, IEnumerable<HallRequest> requests);
     Task<IEnumerable<HallResponse>> GetHallsAsync(Guid cinemaId);
     Task<bool> DeleteHallAsync(Guid cinemaId, Guid hallId);
-    Task<IEnumerable<Seat>> GetSeatsAsync(Guid hallId);
+    Task<IEnumerable<SeatResponse>> GetSeatsAsync(Guid hallId);
+    Task<SeatResponse?> UpdateSeatTypeAsync(Guid seatId, UpdateSeatTypeRequest request);
     Task CreateSeatsAsync(Guid hallId);
 
 }

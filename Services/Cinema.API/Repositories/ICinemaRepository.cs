@@ -17,5 +17,8 @@ public interface ICinemaRepository
     Task<bool> UpdateHallAsync(Hall newHall);
 
     Task<IEnumerable<Seat>> GetSeatLayoutAsync(Guid hallId);
+    Task<Seat?> GetSeatByIdAsync(Guid seatId);
+    Task<bool> UpdateSeatAsync(Seat seat);
     Task CreateSeatsAsync(Guid hallId);
+    Task CreateSeatsAsync(Guid hallId, IEnumerable<Seat> seats);
 }

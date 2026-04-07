@@ -50,6 +50,16 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task CreateSeatsAsync(Guid hallId, IEnumerable<Seat> seats)
+    {
+        foreach (var seat in seats)
+        {
+            seat.HallId = hallId;
+        }
+        await _context.Seats.AddRangeAsync(seats);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<bool> DeleteCinemaAsync(Guid id)
     {
         var cinema = await _context.MovieTheatres.Include(c => c.Halls).ThenInclude(h => h.Seats).FirstOrDefaultAsync(c => c.Id == id);
@@ -97,6 +107,21 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
     public async Task<IEnumerable<Seat>> GetSeatLayoutAsync(Guid hallId)
     {
         return await _context.Seats.AsNoTracking().Where(s => s.HallId == hallId).OrderBy(s => s.Row).ThenBy(s => s.Number).ToListAsync();
+    }
+
+    public async Task<Seat?> GetSeatByIdAsync(Guid seatId)
+    {
+        return await _context.Seats.FirstOrDefaultAsync(s => s.Id == seatId);
+    }
+
+    public async Task<bool> UpdateSeatAsync(Seat seat)
+    {
+        var existing = await _context.Seats.FindAsync(seat.Id);
+        if (existing == null) return false;
+
+        existing.SeatType = seat.SeatType;
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> UpdateCinemaAsync(MovieTheatre newCinema)

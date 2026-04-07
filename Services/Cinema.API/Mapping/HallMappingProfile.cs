@@ -9,5 +9,7 @@ public class HallMappingProfile : Profile
     {
         CreateMap<Hall, HallResponse>();
         CreateMap<HallRequest, Hall>();
+        CreateMap<Seat, SeatResponse>()
+            .ForMember(dest => dest.SeatType, opt => opt.MapFrom(src => src.SeatType.ToString()));
     }
 }

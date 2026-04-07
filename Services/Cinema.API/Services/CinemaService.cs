@@ -45,6 +45,8 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
     public async Task<HallResponse> CreateHallAsync(Guid cinemaId, HallRequest request)
     {
         var hall = await repository.CreateHallAsync(cinemaId, request);
+        hall.InitializeSeats();
+        await repository.CreateSeatsAsync(hall.Id, hall.Seats);
         return mapper.Map<HallResponse>(hall);
     }
 
@@ -55,7 +57,9 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
         {
             try
             {
-                await repository.CreateHallAsync(cinemaId, request);
+                var hall = await repository.CreateHallAsync(cinemaId, request);
+                hall.InitializeSeats();
+                await repository.CreateSeatsAsync(hall.Id, hall.Seats);
                 count++;
             }
             catch
@@ -77,9 +81,23 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
         return await repository.DeleteHallAsync(cinemaId, hallId);
     }
 
-    public async Task<IEnumerable<Seat>> GetSeatsAsync(Guid hallId)
+    public async Task<IEnumerable<SeatResponse>> GetSeatsAsync(Guid hallId)
     {
-        return await repository.GetSeatLayoutAsync(hallId);
+        var seats = await repository.GetSeatLayoutAsync(hallId);
+        return mapper.Map<IEnumerable<SeatResponse>>(seats);
+    }
+
+    public async Task<SeatResponse?> UpdateSeatTypeAsync(Guid seatId, UpdateSeatTypeRequest request)
+    {
+        var seat = await repository.GetSeatByIdAsync(seatId);
+        if (seat == null) return null;
+
+        if (!Enum.TryParse<SeatType>(request.SeatType, true, out var seatType))
+            return null;
+
+        seat.SeatType = seatType;
+        await repository.UpdateSeatAsync(seat);
+        return mapper.Map<SeatResponse>(seat);
     }
 
     public async Task CreateSeatsAsync(Guid hallId)
