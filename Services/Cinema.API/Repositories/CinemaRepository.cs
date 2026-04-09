@@ -104,6 +104,11 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
         return await _context.Halls.Where(h => h.CinemaId == cinemaId).AsNoTracking().ToListAsync();
     }
 
+    public async Task<Hall?> GetHallByIdAsync(Guid hallId, Guid cinemaId)
+    {
+        return await _context.Halls.FirstOrDefaultAsync(h => h.Id == hallId && h.CinemaId == cinemaId);
+    }
+
     public async Task<IEnumerable<Seat>> GetSeatLayoutAsync(Guid hallId)
     {
         return await _context.Seats.AsNoTracking().Where(s => s.HallId == hallId).OrderBy(s => s.Row).ThenBy(s => s.Number).ToListAsync();

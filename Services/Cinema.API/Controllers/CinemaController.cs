@@ -1,5 +1,4 @@
 using Cinema.API.DTOs;
-using Cinema.API.Entities;
 using Cinema.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,12 +9,12 @@ namespace Cinema.API.Controllers;
 public class CinemaController(ICinemaService service) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<CinemaResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<CinemaResponse>>> GetCinemas([FromQuery] int page = 1,
+    [ProducesResponseType(typeof(PagedResponse<CinemaResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResponse<CinemaResponse>>> GetCinemas([FromQuery] int page = 1,
                                                                            [FromQuery] int pageSize = 10)
     {
-        var (cinemas, _) = await service.GetCinemasAsync(page, pageSize);
-        return Ok(cinemas);
+        var response = await service.GetCinemasAsync(page, pageSize);
+        return Ok(response);
     }
 
     [HttpGet("{id:guid}")]
@@ -64,20 +63,12 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return Ok(halls);
     }
 
-    [HttpPost("{cinemaId:guid}/hall")]
-    [ProducesResponseType(typeof(HallResponse), StatusCodes.Status201Created)]
-    public async Task<ActionResult<HallResponse>> CreateHall(Guid cinemaId, [FromBody] HallRequest request)
-    {
-        var hall = await service.CreateHallAsync(cinemaId, request);
-        return CreatedAtAction(nameof(GetHalls), new { cinemaId }, hall);
-    }
-
     [HttpPost("{cinemaId:guid}/halls")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<ActionResult> CreateHalls(Guid cinemaId, [FromBody] CreateHallsRequest request)
     {
         var count = await service.CreateHallsAsync(cinemaId, request.Halls);
-        return Created($"/api/v1/cinema/{cinemaId}/halls", new { created = count });
+        return CreatedAtAction(nameof(GetHalls), new { cinemaId }, new { created = count });
     }
 
     [HttpDelete("{cinemaId:guid}/halls/{hallId:guid}")]
@@ -90,29 +81,28 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("halls/{hallId:guid}/seats")]
+    [HttpGet("{cinemaId:guid}/halls/{hallId:guid}/seats")]
     [ProducesResponseType(typeof(IEnumerable<SeatResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<SeatResponse>>> GetSeats(Guid hallId)
+    public async Task<ActionResult<IEnumerable<SeatResponse>>> GetSeats(Guid cinemaId, Guid hallId)
     {
-        var seats = await service.GetSeatsAsync(hallId);
+        var seats = await service.GetSeatsAsync(cinemaId, hallId);
         return Ok(seats);
     }
 
-    [HttpPatch("halls/{hallId:guid}/seats/{seatId:guid}")]
+    [HttpPatch("{cinemaId:guid}/halls/{hallId:guid}/seats/{seatId:guid}")]
     [ProducesResponseType(typeof(SeatResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SeatResponse>> UpdateSeatType(Guid hallId, Guid seatId, [FromBody] UpdateSeatTypeRequest request)
+    public async Task<ActionResult<SeatResponse>> UpdateSeatType(Guid cinemaId, Guid hallId, Guid seatId, [FromBody] UpdateSeatTypeRequest request)
     {
-        var seat = await service.UpdateSeatTypeAsync(seatId, request);
-        if (seat == null) return NotFound();
+        var seat = await service.UpdateSeatTypeAsync(cinemaId, hallId, seatId, request);
         return Ok(seat);
     }
 
-    [HttpPost("halls/{hallId:guid}/seats")]
+    [HttpPost("{cinemaId:guid}/halls/{hallId:guid}/seats")]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateSeats(Guid hallId)
+    public async Task<IActionResult> CreateSeats(Guid cinemaId, Guid hallId)
     {
-        await service.CreateSeatsAsync(hallId);
-        return StatusCode(StatusCodes.Status201Created);
+        await service.CreateSeatsAsync(cinemaId, hallId);
+        return CreatedAtAction(nameof(GetSeats), new { cinemaId, hallId }, new { message = "Seats created successfully" });
     }
 }

@@ -12,6 +12,7 @@ public interface ICinemaRepository
     Task<bool> UpdateCinemaAsync(MovieTheatre newCinema);
 
     Task<IEnumerable<Hall>> GetHallsAsync(Guid cinemaId);
+    Task<Hall?> GetHallByIdAsync(Guid hallId, Guid cinemaId);
     Task<Hall> CreateHallAsync(Guid cinemaId, HallRequest hall);
     Task<bool> DeleteHallAsync(Guid cinemaId, Guid hallId);
     Task<bool> UpdateHallAsync(Hall newHall);
