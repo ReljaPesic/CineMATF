@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using Cinema.API.Converters;
 using Cinema.API.Data;
 using Cinema.API.Mapping;
