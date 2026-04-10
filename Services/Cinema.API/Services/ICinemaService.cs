@@ -11,7 +11,7 @@ public interface ICinemaService
     Task<bool> DeleteCinemaAsync(Guid id);
     Task<CinemaResponse?> UpdateCinemaAsync(Guid id, CinemaRequest request);
 
-    Task<int> CreateHallsAsync(Guid cinemaId, IEnumerable<HallRequest> requests);
+    Task<CreateHallsResponse> CreateHallsAsync(Guid cinemaId, IEnumerable<HallRequest> requests);
     Task<IEnumerable<HallResponse>> GetHallsAsync(Guid cinemaId);
     Task<bool> DeleteHallAsync(Guid cinemaId, Guid hallId);
     Task<IEnumerable<SeatResponse>> GetSeatsAsync(Guid cinemaId, Guid hallId);

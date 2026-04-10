@@ -47,9 +47,11 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
         return mapper.Map<CinemaResponse>(existing);
     }
 
-    public async Task<int> CreateHallsAsync(Guid cinemaId, IEnumerable<HallRequest> requests)
+    public async Task<CreateHallsResponse> CreateHallsAsync(Guid cinemaId, IEnumerable<HallRequest> requests)
     {
         int count = 0;
+        var failed = new List<FailedHall>();
+
         foreach (var request in requests)
         {
             try
@@ -59,12 +61,13 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
                 await repository.CreateSeatsAsync(hall.Id, hall.Seats);
                 count++;
             }
-            catch
+            catch (Exception)
             {
-                // Skip on error, continue with next
+                failed.Add(new FailedHall(request.Name, "duplicate"));
             }
         }
-        return count;
+
+        return new CreateHallsResponse(count, failed);
     }
 
     public async Task<IEnumerable<HallResponse>> GetHallsAsync(Guid cinemaId)

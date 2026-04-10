@@ -64,11 +64,11 @@ public class CinemaController(ICinemaService service) : ControllerBase
     }
 
     [HttpPost("{cinemaId:guid}/halls")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<ActionResult> CreateHalls(Guid cinemaId, [FromBody] CreateHallsRequest request)
+    [ProducesResponseType(typeof(CreateHallsResponse), StatusCodes.Status201Created)]
+    public async Task<ActionResult<CreateHallsResponse>> CreateHalls(Guid cinemaId, [FromBody] CreateHallsRequest request)
     {
-        var count = await service.CreateHallsAsync(cinemaId, request.Halls);
-        return CreatedAtAction(nameof(GetHalls), new { cinemaId }, new { created = count });
+        var result = await service.CreateHallsAsync(cinemaId, request.Halls);
+        return CreatedAtAction(nameof(GetHalls), new { cinemaId }, result);
     }
 
     [HttpDelete("{cinemaId:guid}/halls/{hallId:guid}")]

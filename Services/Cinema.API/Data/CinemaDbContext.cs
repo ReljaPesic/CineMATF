@@ -17,5 +17,9 @@ public class CinemaDbContext(DbContextOptions<CinemaDbContext> options) : DbCont
             .HasIndex(c => c.City);
         modelBuilder.Entity<Hall>()
             .HasIndex(h => new { h.CinemaId, h.Name }).IsUnique();
+
+        modelBuilder.Entity<MovieTheatre>()
+            .Property(m => m.City)
+            .HasConversion<string>();
     }
 }
