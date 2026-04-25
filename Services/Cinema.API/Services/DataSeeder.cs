@@ -1,22 +1,14 @@
 using Cinema.API.Data;
 using Cinema.API.DTOs;
 using Cinema.API.Entities;
-using Cinema.API.Repositories;
-using Cinema.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.API.Services;
 
-public class DataSeeder
+public class DataSeeder(CinemaDbContext context, ICinemaService cinemaService)
 {
-    private readonly CinemaDbContext _context;
-    private readonly ICinemaService _cinemaService;
-
-    public DataSeeder(CinemaDbContext context, ICinemaService cinemaService)
-    {
-        _context = context;
-        _cinemaService = cinemaService;
-    }
+    private readonly CinemaDbContext _context = context;
+    private readonly ICinemaService _cinemaService = cinemaService;
 
     public async Task SeedAsync()
     {
@@ -28,7 +20,9 @@ public class DataSeeder
         var cinemas = new (string Name, City City, List<(string Name, int Rows, int Seats)> Halls)[]
         {
             ("CineMax", City.Beograd, [("Hall 1", 5, 10), ("Hall 2", 8, 12)]),
+            ("Takvud", City.Beograd, [("Hall 1", 5, 10), ("Hall 2", 8, 12), ("Hall 3", 7, 10), ("Hall 4", 12, 10)]),
             ("Cineplexx", City.NoviSad, [("Hall 1", 6, 8), ("Hall 2", 4, 10)]),
+            ("Novi Sad Cinema", City.NoviSad, [("Hall 1", 5, 10), ("Hall 2", 8, 12), ("Hall 3", 7, 10), ("Hall 4", 12, 10)]),
             ("Arena", City.Nis, [("Hall 1", 5, 10)]),
             ("Cinema City", City.Kragujevac, [("Hall 1", 4, 8), ("Hall 2", 3, 6)])
         };
