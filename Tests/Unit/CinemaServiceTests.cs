@@ -52,6 +52,18 @@ public class CinemaServiceTests
     }
 
     [Fact]
+    public async Task GetCinemasAsync_WithEmptyList_ReturnsEmptyData()
+    {
+        _repositoryMock.Setup(r => r.GetCinemasAsync(1, 10)).ReturnsAsync((new List<MovieTheatre>(), 0));
+
+        var result = await _service.GetCinemasAsync(1, 10);
+
+        result.Should().NotBeNull();
+        result.Data.Should().BeEmpty();
+        result.TotalCount.Should().Be(0);
+    }
+
+    [Fact]
     public async Task GetCinemasByCityAsync_WithValidCity_ReturnsCinemas()
     {
         var cinemas = new List<MovieTheatre>
@@ -64,6 +76,16 @@ public class CinemaServiceTests
 
         result.Should().HaveCount(1);
         result.First().City.Should().Be(City.Beograd);
+    }
+
+    [Fact]
+    public async Task GetCinemasByCityAsync_WithNoCinemas_ReturnsEmpty()
+    {
+        _repositoryMock.Setup(r => r.GetCinemasByCityAsync(City.Beograd)).ReturnsAsync(new List<MovieTheatre>());
+
+        var result = await _service.GetCinemasByCityAsync(City.Beograd);
+
+        result.Should().BeEmpty();
     }
 
     [Fact]
@@ -167,6 +189,22 @@ public class CinemaServiceTests
     }
 
     [Fact]
+    public async Task CreateHallsAsync_WithDuplicate_ReturnsFailed()
+    {
+        var cinemaId = Guid.NewGuid();
+        var requests = new List<HallRequest> { new("Hall 1", 5, 10) };
+        var hall = new Hall { Id = Guid.NewGuid(), Name = "Hall 1", CinemaId = cinemaId };
+
+        _repositoryMock.Setup(r => r.CreateHallAsync(cinemaId, It.IsAny<HallRequest>()))
+            .ThrowsAsync(new Exception("duplicate"));
+
+        var result = await _service.CreateHallsAsync(cinemaId, requests);
+
+        result.Created.Should().Be(0);
+        result.Failed.Should().HaveCount(1);
+    }
+
+    [Fact]
     public async Task GetHallsAsync_WithValidCinemaId_ReturnsHalls()
     {
         var cinemaId = Guid.NewGuid();
@@ -183,6 +221,17 @@ public class CinemaServiceTests
     }
 
     [Fact]
+    public async Task GetHallsAsync_WithNoHalls_ReturnsEmpty()
+    {
+        var cinemaId = Guid.NewGuid();
+        _repositoryMock.Setup(r => r.GetHallsAsync(cinemaId)).ReturnsAsync(new List<Hall>());
+
+        var result = await _service.GetHallsAsync(cinemaId);
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task DeleteHallAsync_WithExistingHall_ReturnsTrue()
     {
         var cinemaId = Guid.NewGuid();
@@ -192,5 +241,146 @@ public class CinemaServiceTests
         var result = await _service.DeleteHallAsync(cinemaId, hallId);
 
         result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task DeleteHallAsync_WithNonExistingHall_ReturnsFalse()
+    {
+        var cinemaId = Guid.NewGuid();
+        var hallId = Guid.NewGuid();
+        _repositoryMock.Setup(r => r.DeleteHallAsync(cinemaId, hallId)).ReturnsAsync(false);
+
+        var result = await _service.DeleteHallAsync(cinemaId, hallId);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetSeatsAsync_WithValidHall_ReturnsSeats()
+    {
+        var cinemaId = Guid.NewGuid();
+        var hallId = Guid.NewGuid();
+        var hall = new Hall { Id = hallId, CinemaId = cinemaId, Name = "Hall 1" };
+        var seats = new List<Seat>
+        {
+            new() { Id = Guid.NewGuid(), HallId = hallId, Row = 1, Number = 1, SeatType = SeatType.Standard },
+            new() { Id = Guid.NewGuid(), HallId = hallId, Row = 1, Number = 2, SeatType = SeatType.VIP }
+        };
+
+        _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync(hall);
+        _repositoryMock.Setup(r => r.GetSeatLayoutAsync(hallId)).ReturnsAsync(seats);
+
+        var result = await _service.GetSeatsAsync(cinemaId, hallId);
+
+        result.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetSeatsAsync_WithNonExistingHall_ThrowsKeyNotFoundException()
+    {
+        var cinemaId = Guid.NewGuid();
+        var hallId = Guid.NewGuid();
+
+        _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync((Hall?)null);
+
+        var action = () => _service.GetSeatsAsync(cinemaId, hallId);
+
+        await action.Should().ThrowAsync<KeyNotFoundException>();
+    }
+
+    [Fact]
+    public async Task UpdateSeatTypeAsync_WithValidData_ReturnsSeatResponse()
+    {
+        var cinemaId = Guid.NewGuid();
+        var hallId = Guid.NewGuid();
+        var hall = new Hall { Id = hallId, CinemaId = cinemaId, Name = "Hall 1" };
+        var seat = new Seat { Id = Guid.NewGuid(), HallId = hallId, Row = 1, Number = 1, SeatType = SeatType.Standard };
+        var request = new UpdateSeatTypeRequest("VIP");
+
+        _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync(hall);
+        _repositoryMock.Setup(r => r.GetSeatByIdAsync(seat.Id)).ReturnsAsync(seat);
+        _repositoryMock.Setup(r => r.UpdateSeatAsync(seat)).ReturnsAsync(true);
+
+        var result = await _service.UpdateSeatTypeAsync(cinemaId, hallId, seat.Id, request);
+
+        result.Should().NotBeNull();
+        result.SeatType.Should().Be("VIP");
+    }
+
+    [Fact]
+    public async Task UpdateSeatTypeAsync_WithInvalidSeatType_ThrowsArgumentException()
+    {
+        var cinemaId = Guid.NewGuid();
+        var hallId = Guid.NewGuid();
+        var hall = new Hall { Id = hallId, CinemaId = cinemaId, Name = "Hall 1" };
+        var seat = new Seat { Id = Guid.NewGuid(), HallId = hallId, Row = 1, Number = 1, SeatType = SeatType.Standard };
+        var request = new UpdateSeatTypeRequest("InvalidType");
+
+        _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync(hall);
+        _repositoryMock.Setup(r => r.GetSeatByIdAsync(seat.Id)).ReturnsAsync(seat);
+
+        var action = () => _service.UpdateSeatTypeAsync(cinemaId, hallId, seat.Id, request);
+
+        await action.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
+    public async Task UpdateSeatTypeAsync_WithNonExistingHall_ThrowsKeyNotFoundException()
+    {
+        var cinemaId = Guid.NewGuid();
+        var hallId = Guid.NewGuid();
+        var seatId = Guid.NewGuid();
+        var request = new UpdateSeatTypeRequest("VIP");
+
+        _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync((Hall?)null);
+
+        var action = () => _service.UpdateSeatTypeAsync(cinemaId, hallId, seatId, request);
+
+        await action.Should().ThrowAsync<KeyNotFoundException>();
+    }
+
+    [Fact]
+    public async Task UpdateSeatTypeAsync_WithNonExistingSeat_ThrowsKeyNotFoundException()
+    {
+        var cinemaId = Guid.NewGuid();
+        var hallId = Guid.NewGuid();
+        var hall = new Hall { Id = hallId, CinemaId = cinemaId, Name = "Hall 1" };
+        var seatId = Guid.NewGuid();
+        var request = new UpdateSeatTypeRequest("VIP");
+
+        _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync(hall);
+        _repositoryMock.Setup(r => r.GetSeatByIdAsync(seatId)).ReturnsAsync((Seat?)null);
+
+        var action = () => _service.UpdateSeatTypeAsync(cinemaId, hallId, seatId, request);
+
+        await action.Should().ThrowAsync<KeyNotFoundException>();
+    }
+
+    [Fact]
+    public async Task CreateSeatsAsync_WithValidHall_CreatesSeats()
+    {
+        var cinemaId = Guid.NewGuid();
+        var hallId = Guid.NewGuid();
+        var hall = new Hall { Id = hallId, CinemaId = cinemaId, Name = "Hall 1", TotalRows = 5, SeatsPerRow = 10 };
+
+        _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync(hall);
+        _repositoryMock.Setup(r => r.CreateSeatsAsync(hallId)).Returns(Task.CompletedTask);
+
+        var action = () => _service.CreateSeatsAsync(cinemaId, hallId);
+
+        await action.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task CreateSeatsAsync_WithNonExistingHall_ThrowsKeyNotFoundException()
+    {
+        var cinemaId = Guid.NewGuid();
+        var hallId = Guid.NewGuid();
+
+        _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync((Hall?)null);
+
+        var action = () => _service.CreateSeatsAsync(cinemaId, hallId);
+
+        await action.Should().ThrowAsync<KeyNotFoundException>();
     }
 }
