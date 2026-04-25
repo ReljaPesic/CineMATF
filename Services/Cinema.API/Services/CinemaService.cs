@@ -24,6 +24,12 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
         );
     }
 
+    public async Task<IEnumerable<CinemaResponse>> GetCinemasByCityAsync(City city)
+    {
+        var cinemas = await repository.GetCinemasByCityAsync(city);
+        return mapper.Map<IEnumerable<CinemaResponse>>(cinemas);
+    }
+
     public async Task<CinemaResponse?> GetCinemaByIdAsync(Guid id)
     {
         var cinema = await repository.GetCinemaByIdAsync(id);

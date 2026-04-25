@@ -7,6 +7,7 @@ public interface ICinemaService
 {
     Task<CinemaResponse> CreateCinemaAsync(CinemaRequest request);
     Task<PagedResponse<CinemaResponse>> GetCinemasAsync(int page, int pageSize);
+    Task<IEnumerable<CinemaResponse>> GetCinemasByCityAsync(City city);
     Task<CinemaResponse?> GetCinemaByIdAsync(Guid id);
     Task<bool> DeleteCinemaAsync(Guid id);
     Task<CinemaResponse?> UpdateCinemaAsync(Guid id, CinemaRequest request);

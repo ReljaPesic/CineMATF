@@ -1,4 +1,5 @@
 using Cinema.API.DTOs;
+using Cinema.API.Entities;
 using Cinema.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +16,21 @@ public class CinemaController(ICinemaService service) : ControllerBase
     {
         var response = await service.GetCinemasAsync(page, pageSize);
         return Ok(response);
+    }
+
+    [HttpGet("city/{cityName}")]
+    [ProducesResponseType(typeof(IEnumerable<CinemaResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IEnumerable<CinemaResponse>>> GetCinemasByCity(string cityName)
+    {
+        var normalizedCity = cityName.Replace(" ", "");
+        if (!Enum.TryParse<City>(normalizedCity, ignoreCase: true, out var city))
+        {
+            return BadRequest(new { message = $"Invalid city name. Valid values: {string.Join(", ", Enum.GetNames<City>())}" });
+        }
+
+        var cinemas = await service.GetCinemasByCityAsync(city);
+        return Ok(cinemas);
     }
 
     [HttpGet("{id:guid}")]

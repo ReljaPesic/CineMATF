@@ -6,6 +6,7 @@ namespace Cinema.API.Repositories;
 public interface ICinemaRepository
 {
     Task<(IEnumerable<MovieTheatre> Cinemas, int TotalCount)> GetCinemasAsync(int page, int pageSize);
+    Task<IEnumerable<MovieTheatre>> GetCinemasByCityAsync(City city);
     Task<MovieTheatre?> GetCinemaByIdAsync(Guid id);
     Task<MovieTheatre> CreateCinemaAsync(CinemaRequest request);
     Task<bool> DeleteCinemaAsync(Guid id);

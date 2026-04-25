@@ -99,6 +99,15 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
         return (items, totalCount);
     }
 
+    public async Task<IEnumerable<MovieTheatre>> GetCinemasByCityAsync(City city)
+    {
+        return await _context.MovieTheatres
+            .AsNoTracking()
+            .Where(c => c.City == city)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Hall>> GetHallsAsync(Guid cinemaId)
     {
         return await _context.Halls.Where(h => h.CinemaId == cinemaId).AsNoTracking().ToListAsync();
