@@ -1,39 +1,20 @@
 services:
-
-  cinemadb:
-    container_name: cinemadb
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: CinemaDB
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: strongpassword123
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
-
-  pgadmin:
-    container_name: pgadmin
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=cine.matf@gmail.com
-      - PGADMIN_DEFAULT_PASSWORD=admin1234
-    restart: always
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/root/.pgadmin
-
-  cinema-api:
+  cinemaapi:
     build:
       context: .
       dockerfile: Services/Cinema.API/Dockerfile
-    container_name: cinema-api
-    ports:
-      - "8000:8080"
+    container_name: cinemaapi
+    env_file:
+      - .env
     environment:
-      - ConnectionStrings__Default=Host=cinemadb;Port=5432;Database=CinemaDB;Username=user;Password=strongpassword123
+      - ConnectionStrings__Default=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "8000:8000"
     depends_on:
       - cinemadb
     restart: unless-stopped
-
+    networks:
+      - cinema-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
