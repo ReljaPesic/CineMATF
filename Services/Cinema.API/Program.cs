@@ -16,6 +16,7 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<CinemaDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<ICinemaRepository, CinemaRepository>();
 builder.Services.AddScoped<ICinemaService, CinemaService>();
+builder.Services.AddScoped<DataSeeder>();
 builder.Services.AddAutoMapper(typeof(CinemaMappingProfile));
 builder.Services.AddAutoMapper(typeof(HallMappingProfile));
 
@@ -23,6 +24,7 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    await app.SeedDataAsync();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
