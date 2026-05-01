@@ -1,0 +1,20 @@
+services:
+  cinemaapi:
+    build:
+      context: .
+      dockerfile: Services/Cinema.API/Dockerfile
+    container_name: cinemaapi
+    env_file:
+      - .env
+    environment:
+      - ConnectionStrings__Default=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "8000:8000"
+    depends_on:
+      - cinemadb
+    restart: unless-stopped
+    networks:
+      - cinema-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
