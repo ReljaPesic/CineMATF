@@ -1,10 +1,7 @@
 <Solution>
   <Folder Name="/Services/">
     <Project Path="Services/Cinema.API/Cinema.API.csproj" />
-  </Folder>
-  <Folder Name="/Services/Cinema.API/" />
-  <Folder Name="/Services/Cinema.API/Tests/">
-    <Project Path="Services/Cinema.API/Tests/Cinema.API.Tests.csproj" />
+    <Project Path="Services/Movie.API/Movie.API.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/Cinema.API.Tests.csproj" />
