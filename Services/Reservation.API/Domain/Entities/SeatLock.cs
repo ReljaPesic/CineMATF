@@ -8,7 +8,7 @@ public class SeatLock
     public Guid UserId { get; set; }
     public DateTime LockedAt { get; set; }
     public DateTime ExpiresAt { get; set; }
-    public bool IsConfirmed { get; set; }
+    public Guid? ReservationId { get; set; }
 
     public Reservation? Reservation { get; set; }
 }

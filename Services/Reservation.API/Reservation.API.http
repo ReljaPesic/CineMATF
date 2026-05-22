@@ -1,6 +1,45 @@
-@Reservation.API_HostAddress = http://localhost:5083
+@Reservation_HostAddress = http://localhost:5002
 
-GET {{Reservation.API_HostAddress}}/weatherforecast/
-Accept: application/json
+### Lock seats for a screening
+POST {{Reservation_HostAddress}}/api/v1/reservation/lock-seats
+Content-Type: application/json
 
-###
+{
+  "screeningId": "00000000-0000-0000-0000-000000000001",
+  "seatIds": [
+    "00000000-0000-0000-0000-000000000001",
+    "00000000-0000-0000-0000-000000000002"
+  ],
+  "userId": "00000000-0000-0000-0000-000000000001"
+}
+
+### Get available seats for a screening
+GET {{Reservation_HostAddress}}/api/v1/reservation/screenings/00000000-0000-0000-0000-000000000001/available-seats
+
+### Create a reservation
+POST {{Reservation_HostAddress}}/api/v1/reservation
+Content-Type: application/json
+
+{
+  "screeningId": "00000000-0000-0000-0000-000000000001",
+  "seatIds": [
+    "00000000-0000-0000-0000-000000000001",
+    "00000000-0000-0000-0000-000000000002"
+  ],
+  "userId": "00000000-0000-0000-0000-000000000001"
+}
+
+### Get reservation by ID
+GET {{Reservation_HostAddress}}/api/v1/reservation/00000000-0000-0000-0000-000000000001
+
+### Confirm reservation
+POST {{Reservation_HostAddress}}/api/v1/reservation/confirm
+Content-Type: application/json
+
+{
+  "reservationId": "00000000-0000-0000-0000-000000000001",
+  "paymentId": "00000000-0000-0000-0000-000000000001"
+}
+
+### Cancel reservation
+POST {{Reservation_HostAddress}}/api/v1/reservation/00000000-0000-0000-0000-000000000001/cancel
