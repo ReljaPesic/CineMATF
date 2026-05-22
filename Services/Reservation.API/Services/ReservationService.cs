@@ -12,34 +12,6 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
 
-    public async Task<(bool Success, string? ErrorMessage, IEnumerable<SeatLockResponse>? LockedSeats)> LockSeatsAsync(LockSeatsRequest request)
-    {
-        var existingLocks = await _repository.GetActiveLocksBySeatsAsync(request.ScreeningId, request.SeatIds);
-        if (existingLocks.Any())
-        {
-            var lockedSeatIds = existingLocks.Select(l => l.SeatId).ToList();
-            return (false, $"Seats already locked: {string.Join(", ", lockedSeatIds)}", null);
-        }
-
-        var lockedSeats = new List<SeatLockResponse>();
-        foreach (var seatId in request.SeatIds)
-        {
-            var seatLock = new Entities.SeatLock
-            {
-                Id = Guid.NewGuid(),
-                ScreeningId = request.ScreeningId,
-                SeatId = seatId,
-                UserId = request.UserId,
-                LockedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(10)
-            };
-            var created = await _repository.LockSeatAsync(seatLock);
-            lockedSeats.Add(new SeatLockResponse(created.SeatId, created.LockedAt, created.ExpiresAt));
-        }
-
-        return (true, null, lockedSeats);
-    }
-
     public async Task<AvailableSeatsResponse> GetAvailableSeatsAsync(Guid screeningId)
     {
         var activeLocks = await _repository.GetActiveLocksByScreeningAsync(screeningId);
@@ -51,9 +23,26 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
     public async Task<(bool Success, string? ErrorMessage, ReservationResponse? Response)> CreateReservationAsync(CreateReservationRequest request)
     {
         var existingLocks = await _repository.GetActiveLocksBySeatsAsync(request.ScreeningId, request.SeatIds);
-        if (!existingLocks.Any() || existingLocks.Any(l => l.UserId != request.UserId))
+        if (existingLocks.Any())
         {
-            return (false, "Seats are not locked by this user or locks expired", null);
+            var lockedSeatIds = existingLocks.Select(l => l.SeatId).ToList();
+            return (false, $"Some seats are already locked: {string.Join(", ", lockedSeatIds)}", null);
+        }
+
+        var lockedSeats = new List<Entities.SeatLock>();
+        foreach (var seatId in request.SeatIds)
+        {
+            var seatLock = new Entities.SeatLock
+            {
+                Id = Guid.NewGuid(),
+                ScreeningId = request.ScreeningId,
+                SeatId = seatId,
+                UserId = request.UserId,
+                LockedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(1)
+            };
+            var created = await _repository.LockSeatAsync(seatLock);
+            lockedSeats.Add(created);
         }
 
         var reservation = new Entities.Reservation
@@ -64,12 +53,12 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
             Status = ReservationStatus.Locked,
             TotalPrice = request.SeatIds.Count() * 10.0m,
             CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(1)
         };
 
         var createdReservation = await _repository.CreateReservationAsync(reservation);
 
-        foreach (var seatLock in existingLocks)
+        foreach (var seatLock in lockedSeats)
         {
             seatLock.ReservationId = createdReservation.Id;
         }
@@ -110,7 +99,7 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
         return _mapper.Map<IEnumerable<TicketResponse>>(tickets);
     }
 
-    public async Task<(bool Success, string? ErrorMessage)> InitiatePaymentAsync(Guid reservationId)
+    public async Task<(bool Success, string? ErrorMessage)> PayAsync(Guid reservationId)
     {
         var reservation = await _repository.GetReservationByIdAsync(reservationId);
         if (reservation == null) return (false, "Reservation not found");

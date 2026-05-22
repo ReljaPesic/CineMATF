@@ -1,7 +1,7 @@
 @Reservation_HostAddress = http://localhost:5002
 
-### Lock seats for a screening
-POST {{Reservation_HostAddress}}/api/v1/reservation/lock-seats
+### Create a reservation (locks seats + creates reservation)
+POST {{Reservation_HostAddress}}/api/v1/reservations
 Content-Type: application/json
 
 {
@@ -13,33 +13,25 @@ Content-Type: application/json
   "userId": "00000000-0000-0000-0000-000000000001"
 }
 
-### Get available seats for a screening
-GET {{Reservation_HostAddress}}/api/v1/reservation/screenings/00000000-0000-0000-0000-000000000001/available-seats
+### Pay for a reservation (Locked → Pending)
+POST {{Reservation_HostAddress}}/api/v1/reservations/00000000-0000-0000-0000-000000000001/pay
 
-### Create a reservation
-POST {{Reservation_HostAddress}}/api/v1/reservation
+### Confirm reservation (Pending → Confirmed)
+POST {{Reservation_HostAddress}}/api/v1/reservations/00000000-0000-0000-0000-000000000001/confirm
 Content-Type: application/json
 
 {
-  "screeningId": "00000000-0000-0000-0000-000000000001",
-  "seatIds": [
-    "00000000-0000-0000-0000-000000000001",
-    "00000000-0000-0000-0000-000000000002"
-  ],
-  "userId": "00000000-0000-0000-0000-000000000001"
-}
-
-### Get reservation by ID
-GET {{Reservation_HostAddress}}/api/v1/reservation/00000000-0000-0000-0000-000000000001
-
-### Confirm reservation
-POST {{Reservation_HostAddress}}/api/v1/reservation/confirm
-Content-Type: application/json
-
-{
-  "reservationId": "00000000-0000-0000-0000-000000000001",
   "paymentId": "00000000-0000-0000-0000-000000000001"
 }
 
+### Get reservation by ID
+GET {{Reservation_HostAddress}}/api/v1/reservations/00000000-0000-0000-0000-000000000001
+
+### Get all reservations
+GET {{Reservation_HostAddress}}/api/v1/reservations
+
 ### Cancel reservation
-POST {{Reservation_HostAddress}}/api/v1/reservation/00000000-0000-0000-0000-000000000001/cancel
+POST {{Reservation_HostAddress}}/api/v1/reservations/00000000-0000-0000-0000-000000000001/cancel
+
+### Get available seats for a screening
+GET {{Reservation_HostAddress}}/api/v1/reservations/screenings/00000000-0000-0000-0000-000000000001/available-seats
