@@ -39,7 +39,7 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
                 SeatId = seatId,
                 UserId = request.UserId,
                 LockedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(1)
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10)
             };
             var created = await _repository.LockSeatAsync(seatLock);
             lockedSeats.Add(created);
@@ -53,7 +53,7 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
             Status = ReservationStatus.Locked,
             TotalPrice = request.SeatIds.Count() * 10.0m,
             CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(1)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10)
         };
 
         var createdReservation = await _repository.CreateReservationAsync(reservation);
