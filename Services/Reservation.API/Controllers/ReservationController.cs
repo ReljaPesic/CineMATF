@@ -48,6 +48,7 @@ public class ReservationController(IReservationService service) : ControllerBase
         return CreatedAtAction(nameof(GetReservationById), new { id = result.Response!.Id }, result.Response);
     }
 
+    //temporary this is the payment service
     [HttpPost("{id:guid}/pay")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

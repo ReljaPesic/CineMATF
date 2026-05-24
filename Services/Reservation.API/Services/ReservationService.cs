@@ -8,11 +8,11 @@ using Reservation.API.Services.Pricing;
 
 namespace Reservation.API.Services;
 
-public class ReservationService(IReservationRepository repository, IMapper mapper, ITicketPricingService pricing) : IReservationService
+public class ReservationService(IReservationRepository repository, IMapper mapper, IReservationFactory factory) : IReservationService
 {
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-    private readonly ITicketPricingService _pricing = pricing ?? throw new ArgumentNullException(nameof(pricing));
+    private readonly IReservationFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
 
     public async Task<AvailableSeatsResponse> GetAvailableSeatsAsync(Guid screeningId)
     {
@@ -31,20 +31,13 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
             return (false, $"Some seats are already locked: {string.Join(", ", lockedSeatIds)}", null);
         }
 
-        var reservationId = Guid.NewGuid();
+        var (reservation, tickets) = _factory.CreateReservation(
+            Guid.NewGuid(), request.UserId, request.ScreeningId,
+            ReservationStatus.Locked, request.SeatIds);
 
         await using var transaction = await _repository.BeginTransactionAsync();
         try
         {
-            var reservation = new Entities.Reservation
-            {
-                Id = reservationId,
-                UserId = request.UserId,
-                ScreeningId = request.ScreeningId,
-                Status = ReservationStatus.Locked,
-                TotalPrice = _pricing.CalculateTotalPrice(request.SeatIds.Count()),
-            };
-
             var createdReservation = await _repository.CreateReservationAsync(reservation);
 
             foreach (var seatId in request.SeatIds)
@@ -55,19 +48,12 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
                     ScreeningId = request.ScreeningId,
                     SeatId = seatId,
                     UserId = request.UserId,
+                    LockedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(10),
                     ReservationId = createdReservation.Id
                 };
                 await _repository.LockSeatAsync(seatLock);
             }
-
-            var tickets = request.SeatIds.Select(seatId => new Entities.Ticket
-            {
-                Id = Guid.NewGuid(),
-                ReservationId = createdReservation.Id,
-                SeatId = seatId,
-                Price = _pricing.CalculateTicketPrice(),
-                QrCode = Guid.NewGuid().ToString()
-            }).ToList();
 
             await _repository.CreateTicketsAsync(tickets);
 
