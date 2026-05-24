@@ -70,6 +70,21 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
             .ToListAsync();
     }
 
+    public async Task<Entities.Ticket?> GetTicketByIdAsync(Guid id)
+    {
+        return await _context.Tickets
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id);
+    }
+
+    public async Task<IEnumerable<Entities.Ticket>> GetTicketsByReservationAsync(Guid reservationId)
+    {
+        return await _context.Tickets
+            .AsNoTracking()
+            .Where(t => t.ReservationId == reservationId)
+            .ToListAsync();
+    }
+
     public async Task<bool> UpdateReservationStatusAsync(Guid id, ReservationStatus status)
     {
         var reservation = await _context.Reservations.FindAsync(id);

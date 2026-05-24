@@ -103,6 +103,18 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
         return _mapper.Map<IEnumerable<TicketResponse>>(tickets);
     }
 
+    public async Task<TicketResponse?> GetTicketByIdAsync(Guid id)
+    {
+        var ticket = await _repository.GetTicketByIdAsync(id);
+        return ticket == null ? null : _mapper.Map<TicketResponse>(ticket);
+    }
+
+    public async Task<IEnumerable<TicketResponse>> GetReservationTicketsAsync(Guid reservationId)
+    {
+        var tickets = await _repository.GetTicketsByReservationAsync(reservationId);
+        return _mapper.Map<IEnumerable<TicketResponse>>(tickets);
+    }
+
     public async Task<(bool Success, string? ErrorMessage)> PayAsync(Guid reservationId)
     {
         var reservation = await _repository.GetReservationByIdAsync(reservationId);

@@ -14,6 +14,8 @@ public interface IReservationRepository
     Task<Entities.Reservation?> GetReservationByIdAsync(Guid id);
     Task<IEnumerable<Entities.Reservation>> GetAllReservationsAsync();
     Task<IEnumerable<Entities.Ticket>> GetAllTicketsAsync();
+    Task<Entities.Ticket?> GetTicketByIdAsync(Guid id);
+    Task<IEnumerable<Entities.Ticket>> GetTicketsByReservationAsync(Guid reservationId);
     Task<bool> UpdateReservationStatusAsync(Guid id, ReservationStatus status);
     Task CleanExpiredLocksAsync();
     Task<IEnumerable<Entities.Reservation>> GetExpiredReservationsAsync();
