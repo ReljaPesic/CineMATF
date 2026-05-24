@@ -29,56 +29,60 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
             return (false, $"Some seats are already locked: {string.Join(", ", lockedSeatIds)}", null);
         }
 
-        var lockedSeats = new List<Entities.SeatLock>();
-        foreach (var seatId in request.SeatIds)
+        var reservationId = Guid.NewGuid();
+
+        await using var transaction = await _repository.BeginTransactionAsync();
+        try
         {
-            var seatLock = new Entities.SeatLock
+            var reservation = new Entities.Reservation
             {
-                Id = Guid.NewGuid(),
-                ScreeningId = request.ScreeningId,
-                SeatId = seatId,
+                Id = reservationId,
                 UserId = request.UserId,
-                LockedAt = DateTime.UtcNow,
+                ScreeningId = request.ScreeningId,
+                Status = ReservationStatus.Locked,
+                TotalPrice = request.SeatIds.Count() * 10.0m,
+                CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(10)
             };
-            var created = await _repository.LockSeatAsync(seatLock);
-            lockedSeats.Add(created);
-        }
 
-        var reservation = new Entities.Reservation
-        {
-            Id = Guid.NewGuid(),
-            UserId = request.UserId,
-            ScreeningId = request.ScreeningId,
-            Status = ReservationStatus.Locked,
-            TotalPrice = request.SeatIds.Count() * 10.0m,
-            CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(10)
-        };
+            var createdReservation = await _repository.CreateReservationAsync(reservation);
 
-        var createdReservation = await _repository.CreateReservationAsync(reservation);
+            foreach (var seatId in request.SeatIds)
+            {
+                var seatLock = new Entities.SeatLock
+                {
+                    Id = Guid.NewGuid(),
+                    ScreeningId = request.ScreeningId,
+                    SeatId = seatId,
+                    UserId = request.UserId,
+                    LockedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                    ReservationId = createdReservation.Id
+                };
+                await _repository.LockSeatAsync(seatLock);
+            }
 
-        foreach (var seatLock in lockedSeats)
-        {
-            seatLock.ReservationId = createdReservation.Id;
-        }
-
-        var tickets = new List<Entities.Ticket>();
-        foreach (var seatId in request.SeatIds)
-        {
-            tickets.Add(new Entities.Ticket
+            var tickets = request.SeatIds.Select(seatId => new Entities.Ticket
             {
                 Id = Guid.NewGuid(),
                 ReservationId = createdReservation.Id,
                 SeatId = seatId,
                 Price = 10.0m,
                 QrCode = Guid.NewGuid().ToString()
-            });
-        }
+            }).ToList();
 
-        await _repository.CreateTicketsAsync(tickets);
-        var response = _mapper.Map<ReservationResponse>(createdReservation);
-        return (true, null, response);
+            await _repository.CreateTicketsAsync(tickets);
+
+            await transaction.CommitAsync();
+
+            var response = _mapper.Map<ReservationResponse>(createdReservation);
+            return (true, null, response);
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task<ReservationResponse?> GetReservationByIdAsync(Guid id)

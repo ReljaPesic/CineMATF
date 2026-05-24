@@ -1,10 +1,12 @@
 using Entities = Reservation.API.Domain.Entities;
 using Reservation.API.Domain.Enums;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Reservation.API.Repositories;
 
 public interface IReservationRepository
 {
+    Task<IDbContextTransaction> BeginTransactionAsync();
     Task<Entities.SeatLock> LockSeatAsync(Entities.SeatLock seatLock);
     Task<IEnumerable<Entities.SeatLock>> GetActiveLocksByScreeningAsync(Guid screeningId);
     Task<IEnumerable<Entities.SeatLock>> GetActiveLocksBySeatsAsync(Guid screeningId, IEnumerable<Guid> seatIds);

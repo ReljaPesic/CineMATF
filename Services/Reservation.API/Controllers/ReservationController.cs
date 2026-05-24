@@ -9,6 +9,32 @@ namespace Reservation.API.Controllers;
 [Route("api/v1/reservations")]
 public class ReservationController(IReservationService service) : ControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<ReservationResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ReservationResponse>>> GetAllReservations()
+    {
+        var reservations = await service.GetAllReservationsAsync();
+        return Ok(reservations);
+    }
+
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(ReservationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ReservationResponse>> GetReservationById(Guid id)
+    {
+        var reservation = await service.GetReservationByIdAsync(id);
+        if (reservation == null) return NotFound();
+        return Ok(reservation);
+    }
+
+    [HttpGet("screenings/{screeningId:guid}/available-seats")]
+    [ProducesResponseType(typeof(AvailableSeatsResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<AvailableSeatsResponse>> GetAvailableSeats(Guid screeningId)
+    {
+        var response = await service.GetAvailableSeatsAsync(screeningId);
+        return Ok(response);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(ReservationResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -61,29 +87,4 @@ public class ReservationController(IReservationService service) : ControllerBase
         return Ok();
     }
 
-    [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(ReservationResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ReservationResponse>> GetReservationById(Guid id)
-    {
-        var reservation = await service.GetReservationByIdAsync(id);
-        if (reservation == null) return NotFound();
-        return Ok(reservation);
-    }
-
-    [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<ReservationResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ReservationResponse>>> GetAllReservations()
-    {
-        var reservations = await service.GetAllReservationsAsync();
-        return Ok(reservations);
-    }
-
-    [HttpGet("screenings/{screeningId:guid}/available-seats")]
-    [ProducesResponseType(typeof(AvailableSeatsResponse), StatusCodes.Status200OK)]
-    public async Task<ActionResult<AvailableSeatsResponse>> GetAvailableSeats(Guid screeningId)
-    {
-        var response = await service.GetAvailableSeatsAsync(screeningId);
-        return Ok(response);
-    }
 }

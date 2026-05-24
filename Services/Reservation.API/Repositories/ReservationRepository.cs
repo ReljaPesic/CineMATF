@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Reservation.API.Data;
 using Entities = Reservation.API.Domain.Entities;
 using Reservation.API.Domain.Enums;
@@ -8,6 +9,11 @@ namespace Reservation.API.Repositories;
 public class ReservationRepository(ReservationDbContext context) : IReservationRepository
 {
     private readonly ReservationDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return await _context.Database.BeginTransactionAsync();
+    }
 
     public async Task<Entities.SeatLock> LockSeatAsync(Entities.SeatLock seatLock)
     {
