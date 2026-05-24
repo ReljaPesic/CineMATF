@@ -2,6 +2,7 @@ using Reservation.API.Data;
 using Reservation.API.Mapping;
 using Reservation.API.Repositories;
 using Reservation.API.Services;
+using Reservation.API.Services.Pricing;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,7 @@ builder.Services.AddDbContext<ReservationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddSingleton<ITicketPricingService, TicketPricingService>();
 builder.Services.AddAutoMapper(typeof(ReservationMappingProfile));
 builder.Services.AddHostedService<ReservationCleanupService>();
 builder.Services.AddHostedService<DataSeeder>();

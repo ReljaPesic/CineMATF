@@ -6,8 +6,8 @@ public class SeatLock
     public Guid ScreeningId { get; set; }
     public Guid SeatId { get; set; }
     public Guid UserId { get; set; }
-    public DateTime LockedAt { get; set; }
-    public DateTime ExpiresAt { get; set; }
+    public DateTime LockedAt { get; set; } = DateTime.UtcNow;
+    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(10);
     public Guid? ReservationId { get; set; }
 
     public Reservation? Reservation { get; set; }

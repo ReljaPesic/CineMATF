@@ -4,13 +4,15 @@ using Reservation.API.Domain.Enums;
 using Reservation.API.DTOs.Requests;
 using Reservation.API.DTOs.Responses;
 using Reservation.API.Repositories;
+using Reservation.API.Services.Pricing;
 
 namespace Reservation.API.Services;
 
-public class ReservationService(IReservationRepository repository, IMapper mapper) : IReservationService
+public class ReservationService(IReservationRepository repository, IMapper mapper, ITicketPricingService pricing) : IReservationService
 {
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+    private readonly ITicketPricingService _pricing = pricing ?? throw new ArgumentNullException(nameof(pricing));
 
     public async Task<AvailableSeatsResponse> GetAvailableSeatsAsync(Guid screeningId)
     {
@@ -40,9 +42,7 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
                 UserId = request.UserId,
                 ScreeningId = request.ScreeningId,
                 Status = ReservationStatus.Locked,
-                TotalPrice = request.SeatIds.Count() * 10.0m,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+                TotalPrice = _pricing.CalculateTotalPrice(request.SeatIds.Count()),
             };
 
             var createdReservation = await _repository.CreateReservationAsync(reservation);
@@ -55,8 +55,6 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
                     ScreeningId = request.ScreeningId,
                     SeatId = seatId,
                     UserId = request.UserId,
-                    LockedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(10),
                     ReservationId = createdReservation.Id
                 };
                 await _repository.LockSeatAsync(seatLock);
@@ -67,7 +65,7 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
                 Id = Guid.NewGuid(),
                 ReservationId = createdReservation.Id,
                 SeatId = seatId,
-                Price = 10.0m,
+                Price = _pricing.CalculateTicketPrice(),
                 QrCode = Guid.NewGuid().ToString()
             }).ToList();
 
@@ -115,6 +113,7 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
         return _mapper.Map<IEnumerable<TicketResponse>>(tickets);
     }
 
+    //this is temporarly testing too until payment service
     public async Task<(bool Success, string? ErrorMessage)> PayAsync(Guid reservationId)
     {
         var reservation = await _repository.GetReservationByIdAsync(reservationId);
@@ -127,6 +126,7 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
         return (true, null);
     }
 
+    //this one too
     public async Task<(bool Success, string? ErrorMessage)> ConfirmReservationAsync(Guid reservationId, Guid paymentId)
     {
         var reservation = await _repository.GetReservationByIdAsync(reservationId);

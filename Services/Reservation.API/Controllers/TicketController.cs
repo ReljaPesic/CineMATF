@@ -26,7 +26,7 @@ public class TicketController(IReservationService service) : ControllerBase
         var ticket = await _service.GetTicketByIdAsync(id);
         if (ticket != null)
         {
-            return NotFound(ticket);
+            return NotFound();
         }
         return Ok(ticket);
     }
