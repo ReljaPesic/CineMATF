@@ -47,6 +47,30 @@ services:
     networks:
       - cinema-network
 
+  moviedb:
+    image: mongo:7
+    container_name: moviedb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
+  movieapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: movieapi
+    ports:
+      - "8001:8080"
+    depends_on:
+      - moviedb
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
 networks:
   cinema-network:
     driver: bridge
@@ -54,3 +78,4 @@ networks:
 volumes:
   pgdata:
   pgadmin_data:
+  mongodata:
