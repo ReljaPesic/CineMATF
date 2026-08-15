@@ -15,10 +15,14 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
         return await _context.Database.BeginTransactionAsync();
     }
 
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<Entities.SeatLock> LockSeatAsync(Entities.SeatLock seatLock)
     {
         await _context.SeatLocks.AddAsync(seatLock);
-        await _context.SaveChangesAsync();
         return seatLock;
     }
 
@@ -41,7 +45,6 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
     public async Task<Entities.Reservation> CreateReservationAsync(Entities.Reservation reservation)
     {
         await _context.Reservations.AddAsync(reservation);
-        await _context.SaveChangesAsync();
         return reservation;
     }
 
@@ -127,10 +130,22 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
         return true;
     }
 
+    public async Task DeleteSeatLocksAsync(IEnumerable<Guid> seatLockIds)
+    {
+        var locks = await _context.SeatLocks
+            .Where(sl => seatLockIds.Contains(sl.Id))
+            .ToListAsync();
+
+        if (locks.Count != 0)
+        {
+            _context.SeatLocks.RemoveRange(locks);
+            await _context.SaveChangesAsync();
+        }
+    }
+
     public async Task<IEnumerable<Entities.Ticket>> CreateTicketsAsync(IEnumerable<Entities.Ticket> tickets)
     {
         await _context.Tickets.AddRangeAsync(tickets);
-        await _context.SaveChangesAsync();
         return tickets;
     }
 }

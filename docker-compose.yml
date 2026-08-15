@@ -16,6 +16,21 @@ services:
     networks:
       - cinema-network
 
+  reservationdb:
+    image: postgres:16
+    container_name: reservationdb
+    environment:
+      POSTGRES_DB: ReservationServiceDb
+      POSTGRES_USER: reservationuser
+      POSTGRES_PASSWORD: reservationpass
+    ports:
+      - "5433:5432"
+    volumes:
+      - reservationpgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
@@ -47,6 +62,24 @@ services:
     networks:
       - cinema-network
 
+  reservationapi:
+    build:
+      context: .
+      dockerfile: Services/Reservation.API/Dockerfile
+    container_name: reservationapi
+    environment:
+      - ConnectionStrings__Default=Host=reservationdb;Port=5432;Database=ReservationServiceDb;Username=reservationuser;Password=reservationpass
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "8001:8000"
+    depends_on:
+      - reservationdb
+    restart: unless-stopped
+    networks:
+      - cinema-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 networks:
   cinema-network:
     driver: bridge
@@ -54,3 +87,4 @@ networks:
 volumes:
   pgdata:
   pgadmin_data:
+  reservationpgdata:

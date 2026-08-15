@@ -12,7 +12,8 @@ public class ReservationDbContext(DbContextOptions<ReservationDbContext> options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Entities.SeatLock>()
-            .HasIndex(s => new { s.ScreeningId, s.SeatId });
+            .HasIndex(s => new { s.ScreeningId, s.SeatId })
+            .IsUnique();
 
         modelBuilder.Entity<Entities.SeatLock>()
             .HasIndex(s => s.ExpiresAt);

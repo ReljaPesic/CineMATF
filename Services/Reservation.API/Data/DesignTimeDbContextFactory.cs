@@ -7,8 +7,13 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Reservatio
 {
     public ReservationDbContext CreateDbContext(string[] args)
     {
+        DotNetEnv.Env.Load();
+
+        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING")
+            ?? "Host=localhost;Database=ReservationServiceDb;Username=postgres;Password=postgres";
+
         var optionsBuilder = new DbContextOptionsBuilder<ReservationDbContext>();
-        optionsBuilder.UseNpgsql("Host=localhost;Database=ReservationServiceDb;Username=postgres;Password=postgres");
+        optionsBuilder.UseNpgsql(connectionString);
 
         return new ReservationDbContext(optionsBuilder.Options);
     }

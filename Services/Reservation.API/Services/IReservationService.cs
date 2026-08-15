@@ -15,4 +15,5 @@ public interface IReservationService
     Task<(bool Success, string? ErrorMessage)> PayAsync(Guid reservationId);
     Task<(bool Success, string? ErrorMessage)> ConfirmReservationAsync(Guid reservationId, Guid paymentId);
     Task<bool> CancelReservationAsync(Guid id);
+    Task ExpireReservationAsync(Guid id);
 }

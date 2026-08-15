@@ -1,6 +1,5 @@
 using AutoMapper;
 using Entities = Reservation.API.Domain.Entities;
-using Reservation.API.Domain.Enums;
 using Reservation.API.DTOs.Responses;
 
 namespace Reservation.API.Mapping;

@@ -7,6 +7,7 @@ namespace Reservation.API.Repositories;
 public interface IReservationRepository
 {
     Task<IDbContextTransaction> BeginTransactionAsync();
+    Task SaveChangesAsync();
     Task<Entities.SeatLock> LockSeatAsync(Entities.SeatLock seatLock);
     Task<IEnumerable<Entities.SeatLock>> GetActiveLocksByScreeningAsync(Guid screeningId);
     Task<IEnumerable<Entities.SeatLock>> GetActiveLocksBySeatsAsync(Guid screeningId, IEnumerable<Guid> seatIds);
@@ -20,5 +21,6 @@ public interface IReservationRepository
     Task CleanExpiredLocksAsync();
     Task<IEnumerable<Entities.Reservation>> GetExpiredReservationsAsync();
     Task<bool> DeleteSeatLockAsync(Guid seatLockId);
+    Task DeleteSeatLocksAsync(IEnumerable<Guid> seatLockIds);
     Task<IEnumerable<Entities.Ticket>> CreateTicketsAsync(IEnumerable<Entities.Ticket> tickets);
 }

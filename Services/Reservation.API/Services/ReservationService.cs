@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Entities = Reservation.API.Domain.Entities;
 using Reservation.API.Domain.Enums;
 using Reservation.API.DTOs.Requests;
@@ -57,16 +58,28 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
 
             await _repository.CreateTicketsAsync(tickets);
 
+            await _repository.SaveChangesAsync();
             await transaction.CommitAsync();
 
             var response = _mapper.Map<ReservationResponse>(createdReservation);
             return (true, null, response);
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        {
+            await transaction.RollbackAsync();
+            return (false, "Some seats are no longer available", null);
         }
         catch
         {
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+    {
+        return ex.InnerException?.Message.Contains("unique", StringComparison.OrdinalIgnoreCase) == true
+            || ex.InnerException?.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     public async Task<ReservationResponse?> GetReservationByIdAsync(Guid id)
@@ -99,7 +112,6 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
         return _mapper.Map<IEnumerable<TicketResponse>>(tickets);
     }
 
-    //this is temporarly testing too until payment service
     public async Task<(bool Success, string? ErrorMessage)> PayAsync(Guid reservationId)
     {
         var reservation = await _repository.GetReservationByIdAsync(reservationId);
@@ -112,7 +124,6 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
         return (true, null);
     }
 
-    //this one too
     public async Task<(bool Success, string? ErrorMessage)> ConfirmReservationAsync(Guid reservationId, Guid paymentId)
     {
         var reservation = await _repository.GetReservationByIdAsync(reservationId);
@@ -131,12 +142,17 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
         if (reservation == null) return false;
 
         await _repository.UpdateReservationStatusAsync(id, ReservationStatus.Cancelled);
-
-        foreach (var seatLock in reservation.SeatLocks)
-        {
-            await _repository.DeleteSeatLockAsync(seatLock.Id);
-        }
+        await _repository.DeleteSeatLocksAsync(reservation.SeatLocks.Select(sl => sl.Id));
 
         return true;
+    }
+
+    public async Task ExpireReservationAsync(Guid id)
+    {
+        var reservation = await _repository.GetReservationByIdAsync(id);
+        if (reservation == null) return;
+
+        await _repository.UpdateReservationStatusAsync(id, ReservationStatus.Expired);
+        await _repository.DeleteSeatLocksAsync(reservation.SeatLocks.Select(sl => sl.Id));
     }
 }
