@@ -288,7 +288,7 @@ public class ReservationServiceTests
     public async Task PayAsync_WithLockedReservation_MovesToPending()
     {
         var id = Guid.NewGuid();
-        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Locked };
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Locked, ExpiresAt = DateTime.UtcNow.AddMinutes(10) };
         _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
 
         var (success, error) = await _service.PayAsync(id);
@@ -296,6 +296,20 @@ public class ReservationServiceTests
         success.Should().BeTrue();
         error.Should().BeNull();
         _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(id, ReservationStatus.Pending), Times.Once);
+    }
+
+    [Fact]
+    public async Task PayAsync_WithExpiredReservation_ReturnsFailure()
+    {
+        var id = Guid.NewGuid();
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Locked, ExpiresAt = DateTime.UtcNow.AddMinutes(-1) };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+
+        var (success, error) = await _service.PayAsync(id);
+
+        success.Should().BeFalse();
+        error.Should().Be("Reservation has expired");
+        _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(It.IsAny<Guid>(), It.IsAny<ReservationStatus>()), Times.Never);
     }
 
     [Fact]
@@ -327,7 +341,7 @@ public class ReservationServiceTests
     public async Task ConfirmReservationAsync_WithPendingReservation_MovesToConfirmed()
     {
         var id = Guid.NewGuid();
-        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Pending };
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Pending, ExpiresAt = DateTime.UtcNow.AddMinutes(10) };
         _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
 
         var (success, error) = await _service.ConfirmReservationAsync(id, Guid.NewGuid());
@@ -338,12 +352,27 @@ public class ReservationServiceTests
     }
 
     [Fact]
+    public async Task ConfirmReservationAsync_WithExpiredReservation_ReturnsFailure()
+    {
+        var id = Guid.NewGuid();
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Pending, ExpiresAt = DateTime.UtcNow.AddMinutes(-1) };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+
+        var (success, error) = await _service.ConfirmReservationAsync(id, Guid.NewGuid());
+
+        success.Should().BeFalse();
+        error.Should().Be("Reservation has expired");
+        _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(It.IsAny<Guid>(), It.IsAny<ReservationStatus>()), Times.Never);
+    }
+
+    [Fact]
     public async Task CancelReservationAsync_WithExistingReservation_UpdatesStatusAndDeletesLocks()
     {
         var id = Guid.NewGuid();
         var lockId = Guid.NewGuid();
         var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Locked, SeatLocks = [new Entities.SeatLock { Id = lockId }] };
         _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+        _repositoryMock.Setup(r => r.BeginTransactionAsync()).ReturnsAsync(Mock.Of<IDbContextTransaction>());
 
         var result = await _service.CancelReservationAsync(id);
 
@@ -370,6 +399,7 @@ public class ReservationServiceTests
         var lockId = Guid.NewGuid();
         var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Locked, SeatLocks = [new Entities.SeatLock { Id = lockId }] };
         _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+        _repositoryMock.Setup(r => r.BeginTransactionAsync()).ReturnsAsync(Mock.Of<IDbContextTransaction>());
 
         await _service.ExpireReservationAsync(id);
 

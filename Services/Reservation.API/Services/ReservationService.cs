@@ -166,6 +166,9 @@ public class ReservationService(
         if (reservation.Status != ReservationStatus.Locked)
             return (false, "Only locked reservations can initiate payment");
 
+        if (reservation.ExpiresAt <= DateTime.UtcNow)
+            return (false, "Reservation has expired");
+
         await _repository.UpdateReservationStatusAsync(reservationId, ReservationStatus.Pending);
         return (true, null);
     }
@@ -178,6 +181,9 @@ public class ReservationService(
         if (reservation.Status != ReservationStatus.Pending)
             return (false, "Only pending reservations can be confirmed");
 
+        if (reservation.ExpiresAt <= DateTime.UtcNow)
+            return (false, "Reservation has expired");
+
         await _repository.UpdateReservationStatusAsync(reservationId, ReservationStatus.Confirmed);
         return (true, null);
     }
@@ -187,8 +193,18 @@ public class ReservationService(
         var reservation = await _repository.GetReservationByIdAsync(id);
         if (reservation == null) return false;
 
-        await _repository.UpdateReservationStatusAsync(id, ReservationStatus.Cancelled);
-        await _repository.DeleteSeatLocksAsync(reservation.SeatLocks.Select(sl => sl.Id));
+        await using var transaction = await _repository.BeginTransactionAsync();
+        try
+        {
+            await _repository.UpdateReservationStatusAsync(id, ReservationStatus.Cancelled);
+            await _repository.DeleteSeatLocksAsync(reservation.SeatLocks.Select(sl => sl.Id));
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return true;
     }
@@ -198,7 +214,17 @@ public class ReservationService(
         var reservation = await _repository.GetReservationByIdAsync(id);
         if (reservation == null) return;
 
-        await _repository.UpdateReservationStatusAsync(id, ReservationStatus.Expired);
-        await _repository.DeleteSeatLocksAsync(reservation.SeatLocks.Select(sl => sl.Id));
+        await using var transaction = await _repository.BeginTransactionAsync();
+        try
+        {
+            await _repository.UpdateReservationStatusAsync(id, ReservationStatus.Expired);
+            await _repository.DeleteSeatLocksAsync(reservation.SeatLocks.Select(sl => sl.Id));
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }
