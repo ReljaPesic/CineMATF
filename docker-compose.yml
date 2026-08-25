@@ -19,10 +19,12 @@ services:
   reservationdb:
     image: postgres:16
     container_name: reservationdb
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: ReservationServiceDb
-      POSTGRES_USER: reservationuser
-      POSTGRES_PASSWORD: reservationpass
+      POSTGRES_DB: ${RESERVATION_DB_NAME}
+      POSTGRES_USER: ${RESERVATION_DB_USER}
+      POSTGRES_PASSWORD: ${RESERVATION_DB_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -67,8 +69,10 @@ services:
       context: .
       dockerfile: Services/Reservation.API/Dockerfile
     container_name: reservationapi
+    env_file:
+      - .env
     environment:
-      - ConnectionStrings__Default=Host=reservationdb;Port=5432;Database=ReservationServiceDb;Username=reservationuser;Password=reservationpass
+      - ConnectionStrings__Default=Host=${RESERVATION_DB_HOST};Port=${RESERVATION_DB_PORT};Database=${RESERVATION_DB_NAME};Username=${RESERVATION_DB_USER};Password=${RESERVATION_DB_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8002:8080"
