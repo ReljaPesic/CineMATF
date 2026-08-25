@@ -1,3 +1,4 @@
+using Entities = Reservation.API.Domain.Entities;
 using Reservation.API.ExternalServices;
 using Reservation.API.Services.Pricing;
 
@@ -33,6 +34,7 @@ public class DataSeeder(IServiceProvider serviceProvider, IReservationFactory fa
         tickets1[0].Id = Guid.Parse("55555555-5555-5555-5555-555555555555");
         tickets1[1].Id = new Guid("55555555-5555-5555-5555-555555555556");
         res1.Tickets = tickets1;
+        res1.SeatLocks = CreateSeatLocks(res1, [seat1, seat2]);
 
         var (res2, tickets2) = _factory.CreateReservation(
             Guid.Parse("33333333-3333-3333-3333-333333333334"),
@@ -42,6 +44,7 @@ public class DataSeeder(IServiceProvider serviceProvider, IReservationFactory fa
 
         tickets2[0].Id = Guid.Parse("55555555-5555-5555-5555-555555555557");
         res2.Tickets = tickets2;
+        res2.SeatLocks = CreateSeatLocks(res2, [seat3]);
 
         var reservations = new[] { res1, res2 };
 
@@ -52,5 +55,21 @@ public class DataSeeder(IServiceProvider serviceProvider, IReservationFactory fa
     public Task StopAsync(CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
+    }
+
+    // Mirrors the SeatLock creation ReservationService.CreateReservationAsync does for real
+    // bookings - without these, the seeded reservations don't actually hold their seats.
+    private static List<Entities.SeatLock> CreateSeatLocks(Entities.Reservation reservation, IEnumerable<SeatDetails> seats)
+    {
+        return seats.Select(seat => new Entities.SeatLock
+        {
+            Id = Guid.NewGuid(),
+            ScreeningId = reservation.ScreeningId,
+            SeatId = seat.SeatId,
+            UserId = reservation.UserId,
+            LockedAt = reservation.CreatedAt,
+            ExpiresAt = reservation.ExpiresAt,
+            ReservationId = reservation.Id
+        }).ToList();
     }
 }
