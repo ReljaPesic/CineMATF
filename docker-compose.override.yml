@@ -1,4 +1,24 @@
 services:
+  movieapi:
+    build:
+      context: .
+      dockerfile: Services/Movie.API/DockerFile
+    container_name: movieapi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DatabaseSettings__ConnectionString=mongodb://moviedb:27017
+      - DatabaseSettings__DatabaseName=MovieDB
+      - DatabaseSettings__CollectionName=Movies
+    ports:
+      - "8001:8080"
+    depends_on:
+      - moviedb
+    restart: unless-stopped
+    networks:
+      - cinema-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   cinemaapi:
     build:
       context: .

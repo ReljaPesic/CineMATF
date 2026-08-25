@@ -62,6 +62,45 @@ services:
     networks:
       - cinema-network
 
+  moviedb:
+    image: mongo:7
+    container_name: moviedb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
+  movieapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: movieapi
+    ports:
+      - "8001:8080"
+    depends_on:
+      - moviedb
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
+  screeningdb:
+    image: postgres:16
+    container_name: screeningdb
+    environment:
+      POSTGRES_DB: ScreeningDB
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5435:5432"
+    volumes:
+      - screeningpgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
   reservationapi:
     build:
       context: .
@@ -91,4 +130,6 @@ networks:
 volumes:
   pgdata:
   pgadmin_data:
+  mongodata:
+  screeningpgdata:
   reservationpgdata:
