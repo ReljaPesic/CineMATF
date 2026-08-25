@@ -8,9 +8,16 @@ public class MovieRepository(IMovieContext context) : IMovieRepository
 {
     private readonly IMovieContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
-    public async Task<IEnumerable<Entities.Movie>> GetMoviesAsync()
+    public async Task<(IEnumerable<Entities.Movie> Movies, int TotalCount)> GetMoviesAsync(int page, int pageSize)
     {
-        return await _context.Movies.Find(_ => true).ToListAsync();
+        var totalCount = (int)await _context.Movies.CountDocumentsAsync(_ => true);
+        var movies = await _context.Movies.Find(_ => true)
+            .SortBy(m => m.Title)
+            .Skip((page - 1) * pageSize)
+            .Limit(pageSize)
+            .ToListAsync();
+
+        return (movies, totalCount);
     }
 
     public async Task<Entities.Movie?> GetMovieByIdAsync(Guid id)

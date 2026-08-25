@@ -4,7 +4,7 @@ namespace Movie.API.Repositories;
 
 public interface IMovieRepository
 {
-    Task<IEnumerable<Entities.Movie>> GetMoviesAsync();
+    Task<(IEnumerable<Entities.Movie> Movies, int TotalCount)> GetMoviesAsync(int page, int pageSize);
     Task<Entities.Movie?> GetMovieByIdAsync(Guid id);
     Task<IEnumerable<Entities.Movie>> GetMoviesByGenreAsync(Genre genre);
     Task<IEnumerable<Entities.Movie>> GetMoviesByTitleAsync(string title);

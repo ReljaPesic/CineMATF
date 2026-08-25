@@ -3,7 +3,9 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using Movie.API.Data;
+using Movie.API.Mapping;
 using Movie.API.Repositories;
+using Movie.API.Services;
 
 BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
@@ -17,6 +19,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IMovieContext, MovieContext>();
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
+builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddAutoMapper(typeof(MovieMappingProfile));
 
 var app = builder.Build();
 
