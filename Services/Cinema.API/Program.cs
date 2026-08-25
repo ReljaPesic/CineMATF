@@ -22,6 +22,15 @@ builder.Services.AddAutoMapper(typeof(HallMappingProfile));
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
+    if (db.Database.IsRelational())
+    {
+        await db.Database.MigrateAsync();
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     await app.SeedDataAsync();

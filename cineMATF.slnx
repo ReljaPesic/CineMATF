@@ -3,9 +3,11 @@
     <Project Path="Services/Cinema.API/Cinema.API.csproj" />
     <Project Path="Services/Movie.API/Movie.API.csproj" />
     <Project Path="Services/Screening.API/Screening.API.csproj" />
+    <Project Path="Services/Reservation.API/Reservation.API.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/Cinema.API.Tests.csproj" />
     <Project Path="Tests/Movie.API.Tests/Movie.API.Tests.csproj" />
+    <Project Path="Tests/Reservation.API.Tests/Reservation.API.Tests.csproj" />
   </Folder>
 </Solution>

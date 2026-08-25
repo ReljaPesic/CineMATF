@@ -94,6 +94,12 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
         return mapper.Map<IEnumerable<SeatResponse>>(seats);
     }
 
+    public async Task<SeatResponse?> GetSeatByIdAsync(Guid seatId)
+    {
+        var seat = await repository.GetSeatByIdAsync(seatId);
+        return seat == null ? null : mapper.Map<SeatResponse>(seat);
+    }
+
     public async Task<SeatResponse?> UpdateSeatTypeAsync(Guid cinemaId, Guid hallId, Guid seatId, UpdateSeatTypeRequest request)
     {
         var hall = await repository.GetHallByIdAsync(hallId, cinemaId) ?? throw new KeyNotFoundException($"Hall with ID {hallId} not found in cinema {cinemaId}");
