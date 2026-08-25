@@ -92,3 +92,13 @@ public class MovieContextSeed
         await movieCollection.InsertManyAsync(movies);
     }
 }
+
+public static class MovieContextSeedExtensions
+{
+    public static async Task SeedMovieDataAsync(this IApplicationBuilder app)
+    {
+        using var scope = app.ApplicationServices.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<IMovieContext>();
+        await MovieContextSeed.SeedAsync(context.Movies);
+    }
+}

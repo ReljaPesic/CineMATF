@@ -20,8 +20,12 @@ builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    await app.SeedMovieDataAsync();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 app.MapControllers();
