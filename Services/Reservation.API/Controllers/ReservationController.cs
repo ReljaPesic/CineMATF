@@ -81,11 +81,16 @@ public class ReservationController(IReservationService service) : ControllerBase
 
     [HttpPost("{id:guid}/cancel")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CancelReservation(Guid id)
     {
-        var cancelled = await service.CancelReservationAsync(id);
-        if (!cancelled) return NotFound();
+        var (Success, ErrorMessage) = await service.CancelReservationAsync(id);
+        if (!Success)
+            return ErrorMessage == "Reservation not found"
+                ? NotFound(new { message = ErrorMessage })
+                : BadRequest(new { message = ErrorMessage });
+
         return Ok();
     }
 

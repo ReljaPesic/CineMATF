@@ -366,7 +366,7 @@ public class ReservationServiceTests
     }
 
     [Fact]
-    public async Task CancelReservationAsync_WithExistingReservation_UpdatesStatusAndDeletesLocks()
+    public async Task CancelReservationAsync_WithLockedReservation_UpdatesStatusAndDeletesLocks()
     {
         var id = Guid.NewGuid();
         var lockId = Guid.NewGuid();
@@ -374,22 +374,57 @@ public class ReservationServiceTests
         _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
         _repositoryMock.Setup(r => r.BeginTransactionAsync()).ReturnsAsync(Mock.Of<IDbContextTransaction>());
 
-        var result = await _service.CancelReservationAsync(id);
+        var (success, error) = await _service.CancelReservationAsync(id);
 
-        result.Should().BeTrue();
+        success.Should().BeTrue();
+        error.Should().BeNull();
         _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(id, ReservationStatus.Cancelled), Times.Once);
         _repositoryMock.Verify(r => r.DeleteSeatLocksAsync(It.Is<IEnumerable<Guid>>(ids => ids.Contains(lockId))), Times.Once);
     }
 
     [Fact]
-    public async Task CancelReservationAsync_WithNonExistingReservation_ReturnsFalse()
+    public async Task CancelReservationAsync_WithPendingReservation_UpdatesStatusAndDeletesLocks()
+    {
+        var id = Guid.NewGuid();
+        var lockId = Guid.NewGuid();
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Pending, SeatLocks = [new Entities.SeatLock { Id = lockId }] };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+        _repositoryMock.Setup(r => r.BeginTransactionAsync()).ReturnsAsync(Mock.Of<IDbContextTransaction>());
+
+        var (success, error) = await _service.CancelReservationAsync(id);
+
+        success.Should().BeTrue();
+        error.Should().BeNull();
+        _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(id, ReservationStatus.Cancelled), Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelReservationAsync_WithConfirmedReservation_ReturnsFailureWithoutTouchingLocks()
+    {
+        var id = Guid.NewGuid();
+        var lockId = Guid.NewGuid();
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Confirmed, SeatLocks = [new Entities.SeatLock { Id = lockId }] };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+
+        var (success, error) = await _service.CancelReservationAsync(id);
+
+        success.Should().BeFalse();
+        error.Should().Be("Only locked or pending reservations can be cancelled");
+        _repositoryMock.Verify(r => r.BeginTransactionAsync(), Times.Never);
+        _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(It.IsAny<Guid>(), It.IsAny<ReservationStatus>()), Times.Never);
+        _repositoryMock.Verify(r => r.DeleteSeatLocksAsync(It.IsAny<IEnumerable<Guid>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CancelReservationAsync_WithNonExistingReservation_ReturnsFailure()
     {
         var id = Guid.NewGuid();
         _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync((Entities.Reservation?)null);
 
-        var result = await _service.CancelReservationAsync(id);
+        var (success, error) = await _service.CancelReservationAsync(id);
 
-        result.Should().BeFalse();
+        success.Should().BeFalse();
+        error.Should().Be("Reservation not found");
     }
 
     [Fact]

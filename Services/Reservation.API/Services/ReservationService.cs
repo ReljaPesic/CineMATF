@@ -188,10 +188,13 @@ public class ReservationService(
         return (true, null);
     }
 
-    public async Task<bool> CancelReservationAsync(Guid id)
+    public async Task<(bool Success, string? ErrorMessage)> CancelReservationAsync(Guid id)
     {
         var reservation = await _repository.GetReservationByIdAsync(id);
-        if (reservation == null) return false;
+        if (reservation == null) return (false, "Reservation not found");
+
+        if (reservation.Status != ReservationStatus.Locked && reservation.Status != ReservationStatus.Pending)
+            return (false, "Only locked or pending reservations can be cancelled");
 
         await using var transaction = await _repository.BeginTransactionAsync();
         try
@@ -206,7 +209,7 @@ public class ReservationService(
             throw;
         }
 
-        return true;
+        return (true, null);
     }
 
     public async Task ExpireReservationAsync(Guid id)

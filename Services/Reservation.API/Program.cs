@@ -25,7 +25,10 @@ builder.Services.AddSingleton<ITicketPricingService, TicketPricingService>();
 builder.Services.AddSingleton<IReservationFactory, ReservationFactory>();
 builder.Services.AddAutoMapper(typeof(ReservationMappingProfile));
 builder.Services.AddHostedService<ReservationCleanupService>();
-builder.Services.AddHostedService<DataSeeder>();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddHostedService<DataSeeder>();
+}
 
 var app = builder.Build();
 
