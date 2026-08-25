@@ -9,6 +9,7 @@ global using Entities = Reservation.API.Domain.Entities;
 global using Reservation.API.Domain.Enums;
 global using Reservation.API.DTOs.Requests;
 global using Reservation.API.DTOs.Responses;
+global using Reservation.API.ExternalServices;
 global using Reservation.API.Settings;
 global using Reservation.API.Repositories;
 global using Reservation.API.Services;

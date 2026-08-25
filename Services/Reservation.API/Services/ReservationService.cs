@@ -5,24 +5,34 @@ using Entities = Reservation.API.Domain.Entities;
 using Reservation.API.Domain.Enums;
 using Reservation.API.DTOs.Requests;
 using Reservation.API.DTOs.Responses;
+using Reservation.API.ExternalServices;
 using Reservation.API.Settings;
 using Reservation.API.Repositories;
 using Reservation.API.Services.Pricing;
 
 namespace Reservation.API.Services;
 
-public class ReservationService(IReservationRepository repository, IMapper mapper, IReservationFactory factory, IOptions<ReservationOptions> options) : IReservationService
+public class ReservationService(
+    IReservationRepository repository,
+    IMapper mapper,
+    IReservationFactory factory,
+    IOptions<ReservationOptions> options,
+    ICinemaApiClient cinemaApiClient) : IReservationService
 {
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     private readonly IReservationFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
     private readonly ReservationOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+    private readonly ICinemaApiClient _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
 
     public async Task<AvailableSeatsResponse> GetAvailableSeatsAsync(Guid screeningId)
     {
         var activeLocks = await _repository.GetActiveLocksByScreeningAsync(screeningId);
         var lockedSeats = _mapper.Map<IEnumerable<SeatLockResponse>>(activeLocks);
 
+        // AvailableSeats can't be computed yet: that needs this screening's hall (owned by the
+        // not-yet-built Screening service) to fetch the hall's full seat layout from Cinema.API
+        // and subtract the locked ones. Left empty until that mapping exists.
         return new AvailableSeatsResponse(screeningId, [], lockedSeats);
     }
 
@@ -50,9 +60,27 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
             return (false, $"Some seats are already locked: {string.Join(", ", lockedSeatIds)}", null);
         }
 
+        var seats = new List<SeatDetails>();
+        try
+        {
+            foreach (var seatId in request.SeatIds)
+            {
+                var seat = await _cinemaApiClient.GetSeatAsync(seatId);
+                if (seat == null)
+                {
+                    return (false, $"Seat {seatId} does not exist", null);
+                }
+                seats.Add(seat);
+            }
+        }
+        catch (HttpRequestException)
+        {
+            return (false, "Unable to verify seats right now, please try again later", null);
+        }
+
         var (reservation, tickets) = _factory.CreateReservation(
             Guid.NewGuid(), request.UserId, request.ScreeningId,
-            ReservationStatus.Locked, request.SeatIds);
+            ReservationStatus.Locked, seats);
 
         await using var transaction = await _repository.BeginTransactionAsync();
         try

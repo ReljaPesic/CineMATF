@@ -4,6 +4,7 @@ public class ReservationServiceTests
 {
     private readonly Mock<IReservationRepository> _repositoryMock;
     private readonly Mock<IReservationFactory> _factoryMock;
+    private readonly Mock<ICinemaApiClient> _cinemaApiClientMock;
     private readonly IMapper _mapper;
     private readonly ReservationService _service;
 
@@ -11,13 +12,18 @@ public class ReservationServiceTests
     {
         _repositoryMock = new Mock<IReservationRepository>();
         _factoryMock = new Mock<IReservationFactory>();
+        _cinemaApiClientMock = new Mock<ICinemaApiClient>();
 
         var config = new MapperConfiguration(cfg => cfg.AddProfile<Mapping.ReservationMappingProfile>());
         _mapper = config.CreateMapper();
 
         var options = Options.Create(new ReservationOptions { LockDurationMinutes = 10 });
-        _service = new ReservationService(_repositoryMock.Object, _mapper, _factoryMock.Object, options);
+        _service = new ReservationService(_repositoryMock.Object, _mapper, _factoryMock.Object, options, _cinemaApiClientMock.Object);
     }
+
+    private void SetUpSeat(Guid seatId, string seatType = "Standard") =>
+        _cinemaApiClientMock.Setup(c => c.GetSeatAsync(seatId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeatDetails(seatId, Row: 1, Number: 1, SeatType: seatType));
 
     [Fact]
     public async Task CreateReservationAsync_WithEmptyUserId_ReturnsFailureWithoutHittingRepository()
@@ -64,6 +70,42 @@ public class ReservationServiceTests
     }
 
     [Fact]
+    public async Task CreateReservationAsync_WithNonExistentSeat_ReturnsFailureWithoutStartingTransaction()
+    {
+        var screeningId = Guid.NewGuid();
+        var seatId = Guid.NewGuid();
+        var request = new CreateReservationRequest(screeningId, [seatId], Guid.NewGuid());
+
+        _repositoryMock.Setup(r => r.GetActiveLocksBySeatsAsync(screeningId, request.SeatIds)).ReturnsAsync([]);
+        _cinemaApiClientMock.Setup(c => c.GetSeatAsync(seatId, It.IsAny<CancellationToken>())).ReturnsAsync((SeatDetails?)null);
+
+        var (success, error, response) = await _service.CreateReservationAsync(request);
+
+        success.Should().BeFalse();
+        error.Should().Contain(seatId.ToString());
+        response.Should().BeNull();
+        _repositoryMock.Verify(r => r.BeginTransactionAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateReservationAsync_WhenCinemaApiUnreachable_ReturnsFailure()
+    {
+        var screeningId = Guid.NewGuid();
+        var seatId = Guid.NewGuid();
+        var request = new CreateReservationRequest(screeningId, [seatId], Guid.NewGuid());
+
+        _repositoryMock.Setup(r => r.GetActiveLocksBySeatsAsync(screeningId, request.SeatIds)).ReturnsAsync([]);
+        _cinemaApiClientMock.Setup(c => c.GetSeatAsync(seatId, It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("unreachable"));
+
+        var (success, error, response) = await _service.CreateReservationAsync(request);
+
+        success.Should().BeFalse();
+        error.Should().Be("Unable to verify seats right now, please try again later");
+        response.Should().BeNull();
+        _repositoryMock.Verify(r => r.BeginTransactionAsync(), Times.Never);
+    }
+
+    [Fact]
     public async Task CreateReservationAsync_WithValidRequest_LocksSeatsCreatesTicketsAndCommits()
     {
         var screeningId = Guid.NewGuid();
@@ -72,6 +114,7 @@ public class ReservationServiceTests
         var request = new CreateReservationRequest(screeningId, [seatId], userId);
 
         _repositoryMock.Setup(r => r.GetActiveLocksBySeatsAsync(screeningId, request.SeatIds)).ReturnsAsync([]);
+        SetUpSeat(seatId);
 
         var reservationId = Guid.NewGuid();
         var reservation = new Entities.Reservation
@@ -86,7 +129,7 @@ public class ReservationServiceTests
         {
             new() { Id = Guid.NewGuid(), ReservationId = reservationId, SeatId = seatId, Price = 10m, QrCode = "qr" }
         };
-        _factoryMock.Setup(f => f.CreateReservation(It.IsAny<Guid>(), userId, screeningId, ReservationStatus.Locked, request.SeatIds))
+        _factoryMock.Setup(f => f.CreateReservation(It.IsAny<Guid>(), userId, screeningId, ReservationStatus.Locked, It.Is<IEnumerable<SeatDetails>>(seats => seats.Single().SeatId == seatId)))
             .Returns((reservation, tickets));
 
         var transactionMock = new Mock<IDbContextTransaction>();
@@ -116,6 +159,7 @@ public class ReservationServiceTests
         var request = new CreateReservationRequest(screeningId, [seatId], userId);
 
         _repositoryMock.Setup(r => r.GetActiveLocksBySeatsAsync(screeningId, request.SeatIds)).ReturnsAsync([]);
+        SetUpSeat(seatId);
 
         var reservationId = Guid.NewGuid();
         var reservation = new Entities.Reservation
@@ -126,7 +170,7 @@ public class ReservationServiceTests
             Status = ReservationStatus.Locked,
             TotalPrice = 10m
         };
-        _factoryMock.Setup(f => f.CreateReservation(It.IsAny<Guid>(), userId, screeningId, ReservationStatus.Locked, request.SeatIds))
+        _factoryMock.Setup(f => f.CreateReservation(It.IsAny<Guid>(), userId, screeningId, ReservationStatus.Locked, It.IsAny<IEnumerable<SeatDetails>>()))
             .Returns((reservation, new List<Entities.Ticket>()));
 
         var transactionMock = new Mock<IDbContextTransaction>();
@@ -153,9 +197,10 @@ public class ReservationServiceTests
         var request = new CreateReservationRequest(screeningId, [seatId], userId);
 
         _repositoryMock.Setup(r => r.GetActiveLocksBySeatsAsync(screeningId, request.SeatIds)).ReturnsAsync([]);
+        SetUpSeat(seatId);
 
         var reservation = new Entities.Reservation { Id = Guid.NewGuid(), UserId = userId, ScreeningId = screeningId, Status = ReservationStatus.Locked };
-        _factoryMock.Setup(f => f.CreateReservation(It.IsAny<Guid>(), userId, screeningId, ReservationStatus.Locked, request.SeatIds))
+        _factoryMock.Setup(f => f.CreateReservation(It.IsAny<Guid>(), userId, screeningId, ReservationStatus.Locked, It.IsAny<IEnumerable<SeatDetails>>()))
             .Returns((reservation, new List<Entities.Ticket>()));
 
         var transactionMock = new Mock<IDbContextTransaction>();
