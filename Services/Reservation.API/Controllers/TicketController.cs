@@ -24,7 +24,7 @@ public class TicketController(IReservationService service) : ControllerBase
     public async Task<ActionResult<TicketResponse>> GetTicket(Guid id)
     {
         var ticket = await _service.GetTicketByIdAsync(id);
-        if (ticket != null)
+        if (ticket == null)
         {
             return NotFound();
         }
