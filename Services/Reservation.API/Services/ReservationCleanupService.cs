@@ -15,8 +15,6 @@ public class ReservationCleanupService(IServiceProvider serviceProvider) : Backg
             var repository = scope.ServiceProvider.GetRequiredService<IReservationRepository>();
             var service = scope.ServiceProvider.GetRequiredService<IReservationService>();
 
-            await repository.CleanExpiredLocksAsync();
-
             var expiredReservations = await repository.GetExpiredReservationsAsync();
             foreach (var reservation in expiredReservations)
             {

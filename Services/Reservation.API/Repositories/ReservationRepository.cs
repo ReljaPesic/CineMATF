@@ -26,11 +26,13 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
         return seatLock;
     }
 
+    // Confirmed reservations block the seat indefinitely; anything else only blocks it until the hold expires.
     public async Task<IEnumerable<Entities.SeatLock>> GetActiveLocksByScreeningAsync(Guid screeningId)
     {
         return await _context.SeatLocks
             .AsNoTracking()
-            .Where(s => s.ScreeningId == screeningId && s.ExpiresAt > DateTime.UtcNow && s.ReservationId == null)
+            .Where(s => s.ScreeningId == screeningId
+                        && (s.Reservation!.Status == ReservationStatus.Confirmed || s.ExpiresAt > DateTime.UtcNow))
             .ToListAsync();
     }
 
@@ -38,7 +40,8 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
     {
         return await _context.SeatLocks
             .AsNoTracking()
-            .Where(s => s.ScreeningId == screeningId && seatIds.Contains(s.SeatId) && s.ExpiresAt > DateTime.UtcNow && s.ReservationId == null)
+            .Where(s => s.ScreeningId == screeningId && seatIds.Contains(s.SeatId)
+                        && (s.Reservation!.Status == ReservationStatus.Confirmed || s.ExpiresAt > DateTime.UtcNow))
             .ToListAsync();
     }
 
@@ -96,19 +99,6 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
         reservation.Status = status;
         await _context.SaveChangesAsync();
         return true;
-    }
-
-    public async Task CleanExpiredLocksAsync()
-    {
-        var expiredLocks = await _context.SeatLocks
-            .Where(s => s.ExpiresAt <= DateTime.UtcNow && s.ReservationId == null)
-            .ToListAsync();
-
-        if (expiredLocks.Any())
-        {
-            _context.SeatLocks.RemoveRange(expiredLocks);
-            await _context.SaveChangesAsync();
-        }
     }
 
     public async Task<IEnumerable<Entities.Reservation>> GetExpiredReservationsAsync()
