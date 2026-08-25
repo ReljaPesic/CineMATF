@@ -1,0 +1,6 @@
+@Screening.API_HostAddress = http://localhost:5138
+
+GET {{Screening.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
