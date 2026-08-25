@@ -1,19 +1,22 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Entities = Reservation.API.Domain.Entities;
 using Reservation.API.Domain.Enums;
 using Reservation.API.DTOs.Requests;
 using Reservation.API.DTOs.Responses;
+using Reservation.API.Options;
 using Reservation.API.Repositories;
 using Reservation.API.Services.Pricing;
 
 namespace Reservation.API.Services;
 
-public class ReservationService(IReservationRepository repository, IMapper mapper, IReservationFactory factory) : IReservationService
+public class ReservationService(IReservationRepository repository, IMapper mapper, IReservationFactory factory, IOptions<ReservationOptions> options) : IReservationService
 {
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     private readonly IReservationFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+    private readonly ReservationOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
 
     public async Task<AvailableSeatsResponse> GetAvailableSeatsAsync(Guid screeningId)
     {
@@ -50,7 +53,7 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
                     SeatId = seatId,
                     UserId = request.UserId,
                     LockedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(_options.LockDurationMinutes),
                     ReservationId = createdReservation.Id
                 };
                 await _repository.LockSeatAsync(seatLock);

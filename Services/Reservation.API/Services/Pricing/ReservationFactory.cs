@@ -1,11 +1,14 @@
+using Microsoft.Extensions.Options;
 using Entities = Reservation.API.Domain.Entities;
 using Reservation.API.Domain.Enums;
+using Reservation.API.Options;
 
 namespace Reservation.API.Services.Pricing;
 
-public class ReservationFactory(ITicketPricingService pricing) : IReservationFactory
+public class ReservationFactory(ITicketPricingService pricing, IOptions<ReservationOptions> options) : IReservationFactory
 {
     private readonly ITicketPricingService _pricing = pricing ?? throw new ArgumentNullException(nameof(pricing));
+    private readonly ReservationOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
 
     public (Entities.Reservation reservation, List<Entities.Ticket> tickets) CreateReservation(
         Guid id, Guid userId, Guid screeningId, ReservationStatus status,
@@ -27,6 +30,7 @@ public class ReservationFactory(ITicketPricingService pricing) : IReservationFac
             ScreeningId = screeningId,
             Status = status,
             TotalPrice = _pricing.CalculateTotalPrice(tickets.Count),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(_options.LockDurationMinutes),
         };
 
         return (reservation, tickets);

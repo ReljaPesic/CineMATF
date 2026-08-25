@@ -10,7 +10,7 @@ public class Reservation
     public ReservationStatus Status { get; set; } = ReservationStatus.Locked;
     public decimal TotalPrice { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(10);
+    public DateTime ExpiresAt { get; set; }
 
     public ICollection<Ticket> Tickets { get; set; } = [];
     public ICollection<SeatLock> SeatLocks { get; set; } = [];

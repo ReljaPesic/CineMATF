@@ -1,5 +1,6 @@
 using Reservation.API.Data;
 using Reservation.API.Mapping;
+using Reservation.API.Options;
 using Reservation.API.Repositories;
 using Reservation.API.Services;
 using Reservation.API.Services.Pricing;
@@ -9,7 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-builder.Services.AddDbContext<ReservationDbContext>(options => 
+builder.Services.Configure<ReservationOptions>(builder.Configuration.GetSection("ReservationOptions"));
+builder.Services.AddDbContext<ReservationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
