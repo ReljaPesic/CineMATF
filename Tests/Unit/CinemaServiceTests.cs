@@ -289,6 +289,31 @@ public class CinemaServiceTests
     }
 
     [Fact]
+    public async Task GetSeatByIdAsync_WithExistingId_ReturnsSeatResponse()
+    {
+        var seat = new Seat { Id = Guid.NewGuid(), HallId = Guid.NewGuid(), Row = 3, Number = 5, SeatType = SeatType.VIP };
+        _repositoryMock.Setup(r => r.GetSeatByIdAsync(seat.Id)).ReturnsAsync(seat);
+
+        var result = await _service.GetSeatByIdAsync(seat.Id);
+
+        result.Should().NotBeNull();
+        result!.Row.Should().Be(3);
+        result.Number.Should().Be(5);
+        result.SeatType.Should().Be("VIP");
+    }
+
+    [Fact]
+    public async Task GetSeatByIdAsync_WithNonExistingId_ReturnsNull()
+    {
+        var seatId = Guid.NewGuid();
+        _repositoryMock.Setup(r => r.GetSeatByIdAsync(seatId)).ReturnsAsync((Seat?)null);
+
+        var result = await _service.GetSeatByIdAsync(seatId);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public async Task UpdateSeatTypeAsync_WithValidData_ReturnsSeatResponse()
     {
         var cinemaId = Guid.NewGuid();

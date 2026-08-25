@@ -9,9 +9,26 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
+  reservationdb:
+    image: postgres:16
+    container_name: reservationdb
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${RESERVATION_DB_NAME}
+      POSTGRES_USER: ${RESERVATION_DB_USER}
+      POSTGRES_PASSWORD: ${RESERVATION_DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - reservationpgdata:/var/lib/postgresql/data
     restart: unless-stopped
     networks:
       - cinema-network
@@ -39,13 +56,33 @@ services:
       - .env
     environment:
       - ConnectionStrings__Default=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}
-    ports:
-      - "8000:8000"
     depends_on:
       - cinemadb
     restart: unless-stopped
     networks:
       - cinema-network
+
+  reservationapi:
+    build:
+      context: .
+      dockerfile: Services/Reservation.API/Dockerfile
+    container_name: reservationapi
+    env_file:
+      - .env
+    environment:
+      - ConnectionStrings__Default=Host=${RESERVATION_DB_HOST};Port=${RESERVATION_DB_PORT};Database=${RESERVATION_DB_NAME};Username=${RESERVATION_DB_USER};Password=${RESERVATION_DB_PASSWORD}
+      - ASPNETCORE_ENVIRONMENT=Development
+      - CinemaApi__BaseUrl=http://cinemaapi:8080
+    ports:
+      - "8002:8080"
+    depends_on:
+      - reservationdb
+      - cinemaapi
+    restart: unless-stopped
+    networks:
+      - cinema-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   cinema-network:
@@ -54,3 +91,4 @@ networks:
 volumes:
   pgdata:
   pgadmin_data:
+  reservationpgdata:

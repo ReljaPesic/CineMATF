@@ -121,4 +121,14 @@ public class CinemaController(ICinemaService service) : ControllerBase
         await service.CreateSeatsAsync(cinemaId, hallId);
         return CreatedAtAction(nameof(GetSeats), new { cinemaId, hallId }, new { message = "Seats created successfully" });
     }
+
+    [HttpGet("seats/{seatId:guid}")]
+    [ProducesResponseType(typeof(SeatResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SeatResponse>> GetSeatById(Guid seatId)
+    {
+        var seat = await service.GetSeatByIdAsync(seatId);
+        if (seat == null) return NotFound();
+        return Ok(seat);
+    }
 }

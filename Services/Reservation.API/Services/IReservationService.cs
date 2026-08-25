@@ -1,0 +1,19 @@
+using Reservation.API.DTOs.Requests;
+using Reservation.API.DTOs.Responses;
+
+namespace Reservation.API.Services;
+
+public interface IReservationService
+{
+    Task<AvailableSeatsResponse> GetAvailableSeatsAsync(Guid screeningId);
+    Task<(bool Success, string? ErrorMessage, ReservationResponse? Response)> CreateReservationAsync(CreateReservationRequest request);
+    Task<ReservationResponse?> GetReservationByIdAsync(Guid id);
+    Task<IEnumerable<ReservationResponse>> GetAllReservationsAsync();
+    Task<IEnumerable<TicketResponse>> GetAllTicketsAsync();
+    Task<TicketResponse?> GetTicketByIdAsync(Guid id);
+    Task<IEnumerable<TicketResponse>> GetReservationTicketsAsync(Guid reservationId);
+    Task<(bool Success, string? ErrorMessage)> PayAsync(Guid reservationId);
+    Task<(bool Success, string? ErrorMessage)> ConfirmReservationAsync(Guid reservationId, Guid paymentId);
+    Task<bool> CancelReservationAsync(Guid id);
+    Task ExpireReservationAsync(Guid id);
+}
