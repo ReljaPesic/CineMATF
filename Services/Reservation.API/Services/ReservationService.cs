@@ -28,6 +28,11 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
 
     public async Task<(bool Success, string? ErrorMessage, ReservationResponse? Response)> CreateReservationAsync(CreateReservationRequest request)
     {
+        if (request.UserId == Guid.Empty)
+        {
+            return (false, "UserId must be provided", null);
+        }
+
         var duplicateSeatIds = request.SeatIds
             .GroupBy(seatId => seatId)
             .Where(group => group.Count() > 1)

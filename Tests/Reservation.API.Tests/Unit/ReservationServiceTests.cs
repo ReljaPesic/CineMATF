@@ -20,6 +20,19 @@ public class ReservationServiceTests
     }
 
     [Fact]
+    public async Task CreateReservationAsync_WithEmptyUserId_ReturnsFailureWithoutHittingRepository()
+    {
+        var request = new CreateReservationRequest(Guid.NewGuid(), [Guid.NewGuid()], Guid.Empty);
+
+        var (success, error, response) = await _service.CreateReservationAsync(request);
+
+        success.Should().BeFalse();
+        error.Should().Be("UserId must be provided");
+        response.Should().BeNull();
+        _repositoryMock.Verify(r => r.GetActiveLocksBySeatsAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<Guid>>()), Times.Never);
+    }
+
+    [Fact]
     public async Task CreateReservationAsync_WithDuplicateSeatIds_ReturnsFailureWithoutHittingRepository()
     {
         var seatId = Guid.NewGuid();
