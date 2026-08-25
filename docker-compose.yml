@@ -56,8 +56,6 @@ services:
       - .env
     environment:
       - ConnectionStrings__Default=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}
-    ports:
-      - "8000:8000"
     depends_on:
       - cinemadb
     restart: unless-stopped
