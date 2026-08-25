@@ -39,7 +39,7 @@ public class MovieRepository(IMovieContext context) : IMovieRepository
     public async Task<bool> UpdateMovieAsync(Entities.Movie movie)
     {
         var result = await context.Movies.ReplaceOneAsync(m => m.Id == movie.Id, movie);
-        return result.IsAcknowledged && result.ModifiedCount > 0;
+        return result.IsAcknowledged && result.MatchedCount > 0;
     }
 
     public async Task<bool> DeleteMovieAsync(Guid id)
