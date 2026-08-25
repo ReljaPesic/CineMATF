@@ -28,6 +28,16 @@ public class ReservationService(IReservationRepository repository, IMapper mappe
 
     public async Task<(bool Success, string? ErrorMessage, ReservationResponse? Response)> CreateReservationAsync(CreateReservationRequest request)
     {
+        var duplicateSeatIds = request.SeatIds
+            .GroupBy(seatId => seatId)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToList();
+        if (duplicateSeatIds.Count != 0)
+        {
+            return (false, $"Duplicate seat ids in request: {string.Join(", ", duplicateSeatIds)}", null);
+        }
+
         var existingLocks = await _repository.GetActiveLocksBySeatsAsync(request.ScreeningId, request.SeatIds);
         if (existingLocks.Any())
         {
