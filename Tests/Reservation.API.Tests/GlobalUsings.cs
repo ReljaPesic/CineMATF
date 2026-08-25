@@ -1,0 +1,15 @@
+global using Xunit;
+global using FluentAssertions;
+global using Moq;
+global using AutoMapper;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Storage;
+global using Microsoft.Extensions.Options;
+global using Entities = Reservation.API.Domain.Entities;
+global using Reservation.API.Domain.Enums;
+global using Reservation.API.DTOs.Requests;
+global using Reservation.API.DTOs.Responses;
+global using Reservation.API.Settings;
+global using Reservation.API.Repositories;
+global using Reservation.API.Services;
+global using Reservation.API.Services.Pricing;
