@@ -5,7 +5,7 @@ using Entities = Reservation.API.Domain.Entities;
 using Reservation.API.Domain.Enums;
 using Reservation.API.DTOs.Requests;
 using Reservation.API.DTOs.Responses;
-using Reservation.API.Options;
+using Reservation.API.Settings;
 using Reservation.API.Repositories;
 using Reservation.API.Services.Pricing;
 

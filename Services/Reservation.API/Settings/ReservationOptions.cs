@@ -1,4 +1,4 @@
-namespace Reservation.API.Options;
+namespace Reservation.API.Settings;
 
 public class ReservationOptions
 {

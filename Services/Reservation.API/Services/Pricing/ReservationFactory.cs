@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using Entities = Reservation.API.Domain.Entities;
 using Reservation.API.Domain.Enums;
-using Reservation.API.Options;
+using Reservation.API.Settings;
 
 namespace Reservation.API.Services.Pricing;
 

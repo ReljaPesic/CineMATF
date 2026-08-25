@@ -1,6 +1,6 @@
 using Reservation.API.Data;
 using Reservation.API.Mapping;
-using Reservation.API.Options;
+using Reservation.API.Settings;
 using Reservation.API.Repositories;
 using Reservation.API.Services;
 using Reservation.API.Services.Pricing;
