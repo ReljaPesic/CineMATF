@@ -71,7 +71,7 @@ services:
       - ConnectionStrings__Default=Host=reservationdb;Port=5432;Database=ReservationServiceDb;Username=reservationuser;Password=reservationpass
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      - "8001:8000"
+      - "8002:8080"
     depends_on:
       - reservationdb
     restart: unless-stopped
