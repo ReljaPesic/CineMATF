@@ -22,6 +22,8 @@ builder.Services.AddAutoMapper(typeof(ScreeningMappingProfile));
 
 var app = builder.Build();
 
+await app.EnsureCreatedAsync();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
