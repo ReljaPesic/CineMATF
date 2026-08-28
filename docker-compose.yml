@@ -123,6 +123,26 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  screeningapi:
+    build:
+      context: .
+      dockerfile: Services/Screening.API/Dockerfile
+    container_name: screeningapi
+    env_file:
+      - .env
+    environment:
+      - ConnectionStrings__Default=Host=screeningdb;Port=5432;Database=ScreeningDB;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "8003:8080"
+    depends_on:
+      - screeningdb
+    restart: unless-stopped
+    networks:
+      - cinema-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 networks:
   cinema-network:
     driver: bridge
