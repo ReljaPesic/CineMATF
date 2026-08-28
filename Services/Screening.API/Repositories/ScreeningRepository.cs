@@ -14,9 +14,9 @@ public class ScreeningRepository(IScreeningContext context) : IScreeningReposito
             SELECT id AS "Id", movieid AS "MovieId", hallid AS "HallId", cinemaid AS "CinemaId",
                    starttime AS "StartTime", format AS "Format", status AS "Status"
             FROM screenings
-            WHERE (@MovieId IS NULL OR movieid = @MovieId)
-              AND (@CinemaId IS NULL OR cinemaid = @CinemaId)
-              AND (@Date IS NULL OR starttime::date = @Date)
+            WHERE (@MovieId::uuid IS NULL OR movieid = @MovieId::uuid)
+              AND (@CinemaId::uuid IS NULL OR cinemaid = @CinemaId::uuid)
+              AND (@Date::date IS NULL OR starttime::date = @Date::date)
             ORDER BY starttime
             """;
 
