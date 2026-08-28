@@ -1,12 +1,20 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Screening.API.Data;
+using Screening.API.Grpc;
 using Screening.API.Mapping;
 using Screening.API.Repositories;
 using Screening.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1AndHttp2);
+});
+
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+builder.Services.AddGrpc();
 builder.Services.AddSingleton<IScreeningContext, ScreeningDbContext>();
 builder.Services.AddScoped<IScreeningRepository, ScreeningRepository>();
 builder.Services.AddScoped<IScreeningService, ScreeningService>();
@@ -22,4 +30,5 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapControllers();
+app.MapGrpcService<ScreeningGrpcService>();
 app.Run();

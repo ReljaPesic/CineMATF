@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option csharp_namespace = "Screening.API.Grpc";
+
+import "google/protobuf/timestamp.proto";
+
+package screening;
+
+service ScreeningGrpc {
+  rpc GetScreening (GetScreeningRequest) returns (GetScreeningReply);
+}
+
+message GetScreeningRequest {
+  string id = 1;
+}
+
+message GetScreeningReply {
+  string id = 1;
+  string movie_id = 2;
+  string hall_id = 3;
+  string cinema_id = 4;
+  google.protobuf.Timestamp start_time = 5;
+  string format = 6;
+  string status = 7;
+}
