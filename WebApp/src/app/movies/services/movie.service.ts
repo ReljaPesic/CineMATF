@@ -3,10 +3,11 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Genre, Movie, MovieRequest, PagedResponse } from '../models/movie.model';
+import { Genre, Movie, MovieRequest } from '../models/movie.model';
+import { PagedResponse } from '../../shared/models/shared.models';
 
 // This component is responsible for making POST requests to server 
-// Each endpoint in the Movie service has a method that comunicates with it
+// Each endpoint in the Movie service has a method that communicates with it
 
 @Injectable({ providedIn: 'root' })
 export class MovieService {

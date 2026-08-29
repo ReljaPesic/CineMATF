@@ -37,11 +37,3 @@ export interface Movie {
 
 
 export type MovieRequest = Omit<Movie, 'id'>;
-
-
-export interface PagedResponse<T> {
-  data: T[];
-  page: number;
-  pageSize: number;
-  totalCount: number;
-}
