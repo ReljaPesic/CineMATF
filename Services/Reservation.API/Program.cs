@@ -6,6 +6,9 @@ using Reservation.API.Repositories;
 using Reservation.API.Services;
 using Reservation.API.Services.Pricing;
 using Microsoft.EntityFrameworkCore;
+using Screening.API.Grpc;
+
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +22,12 @@ builder.Services.AddHttpClient<ICinemaApiClient, CinemaApiClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["CinemaApi:BaseUrl"]
         ?? throw new InvalidOperationException("CinemaApi:BaseUrl is not configured"));
 });
+builder.Services.AddGrpcClient<ScreeningGrpc.ScreeningGrpcClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["ScreeningApi:BaseUrl"]
+        ?? throw new InvalidOperationException("ScreeningApi:BaseUrl is not configured"));
+});
+builder.Services.AddScoped<IScreeningApiClient, ScreeningApiClient>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddSingleton<ITicketPricingService, TicketPricingService>();

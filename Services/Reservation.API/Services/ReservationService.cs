@@ -1,4 +1,5 @@
 using AutoMapper;
+using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Entities = Reservation.API.Domain.Entities;
@@ -17,22 +18,25 @@ public class ReservationService(
     IMapper mapper,
     IReservationFactory factory,
     IOptions<ReservationOptions> options,
-    ICinemaApiClient cinemaApiClient) : IReservationService
+    ICinemaApiClient cinemaApiClient,
+    IScreeningApiClient screeningApiClient) : IReservationService
 {
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     private readonly IReservationFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
     private readonly ReservationOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     private readonly ICinemaApiClient _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
+    private readonly IScreeningApiClient _screeningApiClient = screeningApiClient ?? throw new ArgumentNullException(nameof(screeningApiClient));
 
     public async Task<AvailableSeatsResponse> GetAvailableSeatsAsync(Guid screeningId)
     {
         var activeLocks = await _repository.GetActiveLocksByScreeningAsync(screeningId);
         var lockedSeats = _mapper.Map<IEnumerable<SeatLockResponse>>(activeLocks);
 
-        // AvailableSeats can't be computed yet: that needs this screening's hall (owned by the
-        // not-yet-built Screening service) to fetch the hall's full seat layout from Cinema.API
-        // and subtract the locked ones. Left empty until that mapping exists.
+        // AvailableSeats still can't be computed: Screening.API can now give us the HallId
+        // (via IScreeningApiClient), but ICinemaApiClient only exposes GetSeatAsync(single id),
+        // not a bulk "seats for hall" lookup, so there's no way to fetch the hall's full seat
+        // layout yet. Left empty until Cinema.API's client gets that endpoint.
         return new AvailableSeatsResponse(screeningId, [], lockedSeats);
     }
 
@@ -51,6 +55,29 @@ public class ReservationService(
         if (duplicateSeatIds.Count != 0)
         {
             return (false, $"Duplicate seat ids in request: {string.Join(", ", duplicateSeatIds)}", null);
+        }
+
+        ScreeningDetails? screening;
+        try
+        {
+            screening = await _screeningApiClient.GetScreeningAsync(request.ScreeningId);
+        }
+        catch (RpcException)
+        {
+            return (false, "Unable to verify screening right now, please try again later", null);
+        }
+
+        if (screening == null)
+        {
+            return (false, "Screening not found", null);
+        }
+        if (screening.Status != "Available")
+        {
+            return (false, $"Screening is not available for booking (status: {screening.Status})", null);
+        }
+        if (screening.StartTime <= DateTime.UtcNow)
+        {
+            return (false, "Screening has already started", null);
         }
 
         var existingLocks = await _repository.GetActiveLocksBySeatsAsync(request.ScreeningId, request.SeatIds);

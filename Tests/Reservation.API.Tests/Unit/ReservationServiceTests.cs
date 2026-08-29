@@ -5,6 +5,7 @@ public class ReservationServiceTests
     private readonly Mock<IReservationRepository> _repositoryMock;
     private readonly Mock<IReservationFactory> _factoryMock;
     private readonly Mock<ICinemaApiClient> _cinemaApiClientMock;
+    private readonly Mock<IScreeningApiClient> _screeningApiClientMock;
     private readonly IMapper _mapper;
     private readonly ReservationService _service;
 
@@ -13,12 +14,15 @@ public class ReservationServiceTests
         _repositoryMock = new Mock<IReservationRepository>();
         _factoryMock = new Mock<IReservationFactory>();
         _cinemaApiClientMock = new Mock<ICinemaApiClient>();
+        _screeningApiClientMock = new Mock<IScreeningApiClient>();
+        _screeningApiClientMock.Setup(c => c.GetScreeningAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScreeningDetails(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow.AddDays(1), "TwoD", "Available"));
 
         var config = new MapperConfiguration(cfg => cfg.AddProfile<Mapping.ReservationMappingProfile>());
         _mapper = config.CreateMapper();
 
         var options = Options.Create(new ReservationOptions { LockDurationMinutes = 10 });
-        _service = new ReservationService(_repositoryMock.Object, _mapper, _factoryMock.Object, options, _cinemaApiClientMock.Object);
+        _service = new ReservationService(_repositoryMock.Object, _mapper, _factoryMock.Object, options, _cinemaApiClientMock.Object, _screeningApiClientMock.Object);
     }
 
     private void SetUpSeat(Guid seatId, string seatType = "Standard") =>
@@ -50,6 +54,53 @@ public class ReservationServiceTests
         error.Should().Contain(seatId.ToString());
         response.Should().BeNull();
         _repositoryMock.Verify(r => r.GetActiveLocksBySeatsAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<Guid>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateReservationAsync_WithNonExistentScreening_ReturnsFailure()
+    {
+        var screeningId = Guid.NewGuid();
+        var request = new CreateReservationRequest(screeningId, [Guid.NewGuid()], Guid.NewGuid());
+        _screeningApiClientMock.Setup(c => c.GetScreeningAsync(screeningId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ScreeningDetails?)null);
+
+        var (success, error, response) = await _service.CreateReservationAsync(request);
+
+        success.Should().BeFalse();
+        error.Should().Be("Screening not found");
+        response.Should().BeNull();
+        _repositoryMock.Verify(r => r.GetActiveLocksBySeatsAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<Guid>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateReservationAsync_WithUnavailableScreening_ReturnsFailure()
+    {
+        var screeningId = Guid.NewGuid();
+        var request = new CreateReservationRequest(screeningId, [Guid.NewGuid()], Guid.NewGuid());
+        _screeningApiClientMock.Setup(c => c.GetScreeningAsync(screeningId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScreeningDetails(screeningId, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow.AddDays(1), "TwoD", "FullyBooked"));
+
+        var (success, error, response) = await _service.CreateReservationAsync(request);
+
+        success.Should().BeFalse();
+        error.Should().Contain("FullyBooked");
+        response.Should().BeNull();
+        _repositoryMock.Verify(r => r.GetActiveLocksBySeatsAsync(It.IsAny<Guid>(), It.IsAny<IEnumerable<Guid>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateReservationAsync_WithPastScreening_ReturnsFailure()
+    {
+        var screeningId = Guid.NewGuid();
+        var request = new CreateReservationRequest(screeningId, [Guid.NewGuid()], Guid.NewGuid());
+        _screeningApiClientMock.Setup(c => c.GetScreeningAsync(screeningId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ScreeningDetails(screeningId, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow.AddMinutes(-1), "TwoD", "Available"));
+
+        var (success, error, response) = await _service.CreateReservationAsync(request);
+
+        success.Should().BeFalse();
+        error.Should().Be("Screening has already started");
+        response.Should().BeNull();
     }
 
     [Fact]
