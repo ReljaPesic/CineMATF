@@ -1,0 +1,11 @@
+global using Xunit;
+global using FluentAssertions;
+global using Moq;
+global using AutoMapper;
+global using Grpc.Core;
+global using Entities = Screening.API.Entities;
+global using Screening.API.Entities;
+global using Screening.API.DTOs;
+global using Screening.API.Grpc;
+global using Screening.API.Repositories;
+global using Screening.API.Services;
