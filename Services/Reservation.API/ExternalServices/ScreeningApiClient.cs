@@ -19,8 +19,7 @@ public class ScreeningApiClient(ScreeningGrpc.ScreeningGrpcClient client) : IScr
                 Guid.Parse(reply.HallId),
                 Guid.Parse(reply.CinemaId),
                 reply.StartTime.ToDateTime(),
-                reply.Format,
-                reply.Status);
+                reply.Format);
         }
         catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
         {

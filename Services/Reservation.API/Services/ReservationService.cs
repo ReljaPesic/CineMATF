@@ -28,16 +28,22 @@ public class ReservationService(
     private readonly ICinemaApiClient _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
     private readonly IScreeningApiClient _screeningApiClient = screeningApiClient ?? throw new ArgumentNullException(nameof(screeningApiClient));
 
-    public async Task<AvailableSeatsResponse> GetAvailableSeatsAsync(Guid screeningId)
+    public async Task<AvailableSeatsResponse?> GetAvailableSeatsAsync(Guid screeningId)
     {
+        var screening = await _screeningApiClient.GetScreeningAsync(screeningId);
+        if (screening == null)
+        {
+            return null;
+        }
+
+        var allSeats = await _cinemaApiClient.GetSeatsByHallAsync(screening.CinemaId, screening.HallId);
         var activeLocks = await _repository.GetActiveLocksByScreeningAsync(screeningId);
+        var lockedSeatIds = activeLocks.Select(l => l.SeatId).ToHashSet();
+
+        var availableSeats = allSeats.Select(s => s.SeatId).Where(seatId => !lockedSeatIds.Contains(seatId));
         var lockedSeats = _mapper.Map<IEnumerable<SeatLockResponse>>(activeLocks);
 
-        // AvailableSeats still can't be computed: Screening.API can now give us the HallId
-        // (via IScreeningApiClient), but ICinemaApiClient only exposes GetSeatAsync(single id),
-        // not a bulk "seats for hall" lookup, so there's no way to fetch the hall's full seat
-        // layout yet. Left empty until Cinema.API's client gets that endpoint.
-        return new AvailableSeatsResponse(screeningId, [], lockedSeats);
+        return new AvailableSeatsResponse(screeningId, availableSeats, lockedSeats);
     }
 
     public async Task<(bool Success, string? ErrorMessage, ReservationResponse? Response)> CreateReservationAsync(CreateReservationRequest request)
@@ -70,10 +76,6 @@ public class ReservationService(
         if (screening == null)
         {
             return (false, "Screening not found", null);
-        }
-        if (screening.Status != "Available")
-        {
-            return (false, $"Screening is not available for booking (status: {screening.Status})", null);
         }
         if (screening.StartTime <= DateTime.UtcNow)
         {

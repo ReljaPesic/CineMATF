@@ -12,7 +12,7 @@ public class ScreeningRepository(IScreeningContext context) : IScreeningReposito
     {
         const string sql = """
             SELECT id AS "Id", movieid AS "MovieId", hallid AS "HallId", cinemaid AS "CinemaId",
-                   starttime AS "StartTime", format AS "Format", status AS "Status"
+                   starttime AS "StartTime", format AS "Format"
             FROM screenings
             WHERE (@MovieId::uuid IS NULL OR movieid = @MovieId::uuid)
               AND (@CinemaId::uuid IS NULL OR cinemaid = @CinemaId::uuid)
@@ -33,7 +33,7 @@ public class ScreeningRepository(IScreeningContext context) : IScreeningReposito
     {
         const string sql = """
             SELECT id AS "Id", movieid AS "MovieId", hallid AS "HallId", cinemaid AS "CinemaId",
-                   starttime AS "StartTime", format AS "Format", status AS "Status"
+                   starttime AS "StartTime", format AS "Format"
             FROM screenings
             WHERE id = @Id
             """;
@@ -47,8 +47,8 @@ public class ScreeningRepository(IScreeningContext context) : IScreeningReposito
         screening.Id = Guid.NewGuid();
 
         const string sql = """
-            INSERT INTO screenings (id, movieid, hallid, cinemaid, starttime, format, status)
-            VALUES (@Id, @MovieId, @HallId, @CinemaId, @StartTime, @Format, @Status)
+            INSERT INTO screenings (id, movieid, hallid, cinemaid, starttime, format)
+            VALUES (@Id, @MovieId, @HallId, @CinemaId, @StartTime, @Format)
             """;
 
         using var connection = _context.GetConnection();
@@ -61,7 +61,7 @@ public class ScreeningRepository(IScreeningContext context) : IScreeningReposito
         const string sql = """
             UPDATE screenings
             SET movieid = @MovieId, hallid = @HallId, cinemaid = @CinemaId,
-                starttime = @StartTime, format = @Format, status = @Status
+                starttime = @StartTime, format = @Format
             WHERE id = @Id
             """;
 

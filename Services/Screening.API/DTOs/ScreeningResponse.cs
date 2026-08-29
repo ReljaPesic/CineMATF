@@ -8,6 +8,5 @@ public record ScreeningResponse(
     Guid HallId,
     Guid CinemaId,
     DateTime StartTime,
-    ScreeningFormat Format,
-    ScreeningStatus Status
+    ScreeningFormat Format
 );

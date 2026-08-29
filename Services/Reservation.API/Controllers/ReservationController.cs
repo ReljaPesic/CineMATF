@@ -27,12 +27,13 @@ public class ReservationController(IReservationService service) : ControllerBase
         return Ok(reservation);
     }
 
-    //this one is for the testing before we imlement the movie service
     [HttpGet("screenings/{screeningId:guid}/available-seats")]
     [ProducesResponseType(typeof(AvailableSeatsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AvailableSeatsResponse>> GetAvailableSeats(Guid screeningId)
     {
         var response = await service.GetAvailableSeatsAsync(screeningId);
+        if (response == null) return NotFound();
         return Ok(response);
     }
 

@@ -33,7 +33,6 @@ public class ScreeningService(IScreeningRepository repository, IMapper mapper) :
 
         var screening = mapper.Map<Entities.Screening>(request);
         screening.Id = id;
-        screening.Status = existing.Status;
 
         var updated = await repository.UpdateScreeningAsync(screening);
         return updated ? mapper.Map<ScreeningResponse>(screening) : null;

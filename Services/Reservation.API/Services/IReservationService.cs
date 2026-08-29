@@ -5,7 +5,7 @@ namespace Reservation.API.Services;
 
 public interface IReservationService
 {
-    Task<AvailableSeatsResponse> GetAvailableSeatsAsync(Guid screeningId);
+    Task<AvailableSeatsResponse?> GetAvailableSeatsAsync(Guid screeningId);
     Task<(bool Success, string? ErrorMessage, ReservationResponse? Response)> CreateReservationAsync(CreateReservationRequest request);
     Task<ReservationResponse?> GetReservationByIdAsync(Guid id);
     Task<IEnumerable<ReservationResponse>> GetAllReservationsAsync();

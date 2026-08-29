@@ -28,8 +28,7 @@ public class ScreeningGrpcService(IScreeningService service) : ScreeningGrpc.Scr
             HallId = screening.HallId.ToString(),
             CinemaId = screening.CinemaId.ToString(),
             StartTime = Timestamp.FromDateTime(DateTime.SpecifyKind(screening.StartTime, DateTimeKind.Utc)),
-            Format = screening.Format.ToString(),
-            Status = screening.Status.ToString()
+            Format = screening.Format.ToString()
         };
     }
 }

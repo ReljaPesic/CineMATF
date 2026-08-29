@@ -11,8 +11,7 @@ public static class ScreeningSchemaInitializer
             hallid UUID NOT NULL,
             cinemaid UUID NOT NULL,
             starttime TIMESTAMP NOT NULL,
-            format INTEGER NOT NULL,
-            status INTEGER NOT NULL
+            format INTEGER NOT NULL
         );
         """;
 

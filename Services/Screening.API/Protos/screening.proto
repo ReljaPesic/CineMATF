@@ -21,5 +21,4 @@ message GetScreeningReply {
   string cinema_id = 4;
   google.protobuf.Timestamp start_time = 5;
   string format = 6;
-  string status = 7;
 }
