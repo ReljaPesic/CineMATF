@@ -1,44 +1,51 @@
 using Microsoft.AspNetCore.Mvc;
-using Screening.API.Entities;
+using Screening.API.DTOs;
+using Screening.API.Services;
 
 namespace Screening.API.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]
-public class ScreeningController : ControllerBase
+public class ScreeningController(IScreeningService service) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Entities.Screening>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetScreenings(
+    [ProducesResponseType(typeof(IEnumerable<ScreeningResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ScreeningResponse>>> GetScreenings(
         [FromQuery] Guid? movieId,
         [FromQuery] DateOnly? date,
         [FromQuery] Guid? cinemaId)
     {
-        throw new NotImplementedException();
+        var screenings = await service.GetScreeningsAsync(movieId, date, cinemaId);
+        return Ok(screenings);
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(Entities.Screening), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ScreeningResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetScreeningById(Guid id)
+    public async Task<ActionResult<ScreeningResponse>> GetScreeningById(Guid id)
     {
-        throw new NotImplementedException();
+        var screening = await service.GetScreeningByIdAsync(id);
+        if (screening == null) return NotFound();
+        return Ok(screening);
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(Entities.Screening), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ScreeningResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateScreening([FromBody] Entities.Screening screening)
+    public async Task<ActionResult<ScreeningResponse>> CreateScreening([FromBody] ScreeningRequest request)
     {
-        throw new NotImplementedException();
+        var screening = await service.CreateScreeningAsync(request);
+        return CreatedAtAction(nameof(GetScreeningById), new { id = screening.Id }, screening);
     }
 
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(Entities.Screening), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ScreeningResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateScreening(Guid id, [FromBody] Entities.Screening screening)
+    public async Task<ActionResult<ScreeningResponse>> UpdateScreening(Guid id, [FromBody] ScreeningRequest request)
     {
-        throw new NotImplementedException();
+        var screening = await service.UpdateScreeningAsync(id, request);
+        if (screening == null) return NotFound();
+        return Ok(screening);
     }
 
     [HttpDelete("{id:guid}")]
@@ -46,6 +53,8 @@ public class ScreeningController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteScreening(Guid id)
     {
-        throw new NotImplementedException();
+        var deleted = await service.DeleteScreeningAsync(id);
+        if (!deleted) return NotFound();
+        return NoContent();
     }
 }

@@ -112,11 +112,34 @@ services:
       - ConnectionStrings__Default=Host=${RESERVATION_DB_HOST};Port=${RESERVATION_DB_PORT};Database=${RESERVATION_DB_NAME};Username=${RESERVATION_DB_USER};Password=${RESERVATION_DB_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
       - CinemaApi__BaseUrl=http://cinemaapi:8080
+      - ScreeningApi__BaseUrl=http://screeningapi:8081
     ports:
       - "8002:8080"
     depends_on:
       - reservationdb
       - cinemaapi
+      - screeningapi
+    restart: unless-stopped
+    networks:
+      - cinema-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  screeningapi:
+    build:
+      context: .
+      dockerfile: Services/Screening.API/Dockerfile
+    container_name: screeningapi
+    env_file:
+      - .env
+    environment:
+      - ConnectionStrings__Default=Host=screeningdb;Port=5432;Database=ScreeningDB;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "8003:8080"
+      - "8004:8081"
+    depends_on:
+      - screeningdb
     restart: unless-stopped
     networks:
       - cinema-network
