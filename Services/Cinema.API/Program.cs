@@ -1,9 +1,11 @@
 using Cinema.API.Converters;
 using Cinema.API.Data;
+using Cinema.API.Entities;
 using Cinema.API.Mapping;
 using Cinema.API.Repositories;
 using Cinema.API.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new CityEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<SeatType>());
     });
 builder.Services.AddDbContext<CinemaDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<ICinemaRepository, CinemaRepository>();
