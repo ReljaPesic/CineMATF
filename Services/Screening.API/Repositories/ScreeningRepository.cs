@@ -44,7 +44,8 @@ public class ScreeningRepository(IScreeningContext context) : IScreeningReposito
 
     public async Task<Entities.Screening> CreateScreeningAsync(Entities.Screening screening)
     {
-        screening.Id = Guid.NewGuid();
+        if (screening.Id == Guid.Empty)
+            screening.Id = Guid.NewGuid();
 
         const string sql = """
             INSERT INTO screenings (id, movieid, hallid, cinemaid, starttime, format)

@@ -4,10 +4,16 @@ using Reservation.API.Services.Pricing;
 
 namespace Reservation.API.Services;
 
-public class DataSeeder(IServiceProvider serviceProvider, IReservationFactory factory) : IHostedService
+public class DataSeeder(IServiceProvider serviceProvider, IReservationFactory factory, ICinemaApiClient cinemaApiClient) : IHostedService
 {
     private readonly IServiceProvider _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     private readonly IReservationFactory _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+    private readonly ICinemaApiClient _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
+
+    // Cinema/hall ids match the hardcoded seed data in Cinema.API (DataSeeder)
+    private static readonly Guid CineMaxCinemaId = new("cccccccc-cccc-cccc-cccc-000000000001");
+    private static readonly Guid CineMaxHall1Id = new("bbbbbbbb-bbbb-bbbb-0001-000000000001");
+    private static readonly Guid CineMaxHall2Id = new("bbbbbbbb-bbbb-bbbb-0001-000000000002");
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -17,12 +23,20 @@ public class DataSeeder(IServiceProvider serviceProvider, IReservationFactory fa
         if (context.Reservations.Any())
             return;
 
-        var screeningId1 = new Guid("11111111-1111-1111-1111-111111111111");
-        var screeningId2 = new Guid("22222222-2222-2222-2222-222222222222");
+        // Screening ids match the hardcoded seed data in Screening.API (DataSeeder)
+        var screeningId1 = new Guid("77777777-7777-7777-7777-000000000001"); // Inception @ CineMax Hall 1
+        var screeningId2 = new Guid("77777777-7777-7777-7777-000000000002"); // Interstellar @ CineMax Hall 2
 
-        var seat1 = new SeatDetails(new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), Row: 1, Number: 1, SeatType: "Standard");
-        var seat2 = new SeatDetails(new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab"), Row: 1, Number: 2, SeatType: "Standard");
-        var seat3 = new SeatDetails(new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaac"), Row: 2, Number: 1, SeatType: "VIP");
+        // Seat ids are not deterministic in Cinema.API, so fetch the real seats for the halls
+        // used above instead of hardcoding ids that would never match.
+        var hall1Seats = (await _cinemaApiClient.GetSeatsByHallAsync(CineMaxCinemaId, CineMaxHall1Id, cancellationToken))
+            .OrderBy(s => s.Row).ThenBy(s => s.Number).ToList();
+        var hall2Seats = (await _cinemaApiClient.GetSeatsByHallAsync(CineMaxCinemaId, CineMaxHall2Id, cancellationToken))
+            .OrderBy(s => s.Row).ThenBy(s => s.Number).ToList();
+
+        var seat1 = hall1Seats[0];
+        var seat2 = hall1Seats[1];
+        var seat3 = hall2Seats[0];
 
         var (res1, tickets1) = _factory.CreateReservation(
             id: new Guid("33333333-3333-3333-3333-333333333333"),
