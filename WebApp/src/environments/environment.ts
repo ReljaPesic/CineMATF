@@ -3,6 +3,7 @@
 export const environment = {
   production: true,
   api: {
-    movies: 'http://localhost:5011/api/v1'
+    movies: 'http://localhost:5011/api/v1',
+    cinema: 'http://localhost:5000/api/v1'
   },
 };

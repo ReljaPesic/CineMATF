@@ -14,6 +14,12 @@ export enum SeatType{
     Accessible = 'Accessible'
 }
 
+/** Every city value, for filter dropdowns and the cinema form. */
+export const ALL_CITIES: City[] = Object.values(City);
+
+/** Every seat type, for the seat-grid type picker and legend. */
+export const ALL_SEAT_TYPES: SeatType[] = Object.values(SeatType);
+
 export interface Cinema {
     id: string,
     name: string,
@@ -76,7 +82,7 @@ export interface SeatResponse{
 export interface CreateHallsRequest{
     halls: HallRequest[]
 }
-interface FailedHall{
+export interface FailedHall{
         name: string,
         error: string
 }

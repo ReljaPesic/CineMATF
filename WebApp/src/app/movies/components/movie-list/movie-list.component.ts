@@ -2,8 +2,9 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
-import { ALL_GENRES, Genre, Movie, PagedResponse } from '../../models/movie.model';
+import { ALL_GENRES, Genre, Movie } from '../../models/movie.model';
 import { MovieService } from '../../services/movie.service';
+import { PagedResponse } from '../../../shared/models/shared.models';
 
 @Component({
   selector: 'app-movie-list',
