@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.RegularExpressions;
 using AutoMapper;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
@@ -13,13 +15,14 @@ using Reservation.API.Services.Pricing;
 
 namespace Reservation.API.Services;
 
-public class ReservationService(
+public partial class ReservationService(
     IReservationRepository repository,
     IMapper mapper,
     IReservationFactory factory,
     IOptions<ReservationOptions> options,
     ICinemaApiClient cinemaApiClient,
-    IScreeningApiClient screeningApiClient) : IReservationService
+    IScreeningApiClient screeningApiClient,
+    IMovieApiClient movieApiClient) : IReservationService
 {
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -27,6 +30,7 @@ public class ReservationService(
     private readonly ReservationOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     private readonly ICinemaApiClient _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
     private readonly IScreeningApiClient _screeningApiClient = screeningApiClient ?? throw new ArgumentNullException(nameof(screeningApiClient));
+    private readonly IMovieApiClient _movieApiClient = movieApiClient ?? throw new ArgumentNullException(nameof(movieApiClient));
 
     public async Task<AvailableSeatsResponse?> GetAvailableSeatsAsync(Guid screeningId)
     {
@@ -259,4 +263,47 @@ public class ReservationService(
             throw;
         }
     }
+
+    public async Task<(bool Success, string? ErrorMessage, byte[]? Content, string? FileName)> GetTicketFileAsync(Guid ticketId)
+    {
+        var ticket = await _repository.GetTicketByIdAsync(ticketId);
+        if (ticket?.Reservation == null)
+            return (false, "Ticket not found", null, null);
+
+        if (ticket.Reservation.Status != ReservationStatus.Confirmed)
+            return (false, "Ticket is only available for confirmed reservations", null, null);
+
+        var screening = await _screeningApiClient.GetScreeningAsync(ticket.Reservation.ScreeningId);
+        if (screening == null)
+            return (false, "Screening not found", null, null);
+
+        var cinema = await _cinemaApiClient.GetCinemaAsync(screening.CinemaId);
+        var movie = await _movieApiClient.GetMovieAsync(screening.MovieId);
+        var cinemaName = cinema?.Name ?? "Unknown Cinema";
+        var movieTitle = movie?.Title ?? "Unknown Movie";
+
+        var content = $"""
+            CineMATF Ticket
+            ===============
+            Movie: {movieTitle}
+            Cinema: {cinemaName}{(cinema == null ? "" : $" ({cinema.City})")}
+            Screening: {screening.StartTime:yyyy-MM-dd HH:mm} ({screening.Format})
+
+            Ticket ID: {ticket.Id}
+            Reservation ID: {ticket.ReservationId}
+            Seat ID: {ticket.SeatId}
+            Seat: Row {ticket.SeatRow}, Number {ticket.SeatNumber}
+            Price: {ticket.Price:0.00}
+            QR Code: {ticket.QrCode}
+            """;
+
+        var fileName = $"ticket-{SanitizeForFileName(cinemaName)}-{SanitizeForFileName(movieTitle)}-{ticket.Id}.txt";
+        return (true, null, Encoding.UTF8.GetBytes(content), fileName);
+    }
+
+    private static string SanitizeForFileName(string value) =>
+        InvalidFileNameCharsRegex().Replace(value.Trim().Replace(' ', '-'), "");
+
+    [GeneratedRegex("[^a-zA-Z0-9-]")]
+    private static partial Regex InvalidFileNameCharsRegex();
 }

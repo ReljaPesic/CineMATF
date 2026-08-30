@@ -22,6 +22,11 @@ builder.Services.AddHttpClient<ICinemaApiClient, CinemaApiClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["CinemaApi:BaseUrl"]
         ?? throw new InvalidOperationException("CinemaApi:BaseUrl is not configured"));
 });
+builder.Services.AddHttpClient<IMovieApiClient, MovieApiClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["MovieApi:BaseUrl"]
+        ?? throw new InvalidOperationException("MovieApi:BaseUrl is not configured"));
+});
 builder.Services.AddGrpcClient<ScreeningGrpc.ScreeningGrpcClient>(o =>
 {
     o.Address = new Uri(builder.Configuration["ScreeningApi:BaseUrl"]

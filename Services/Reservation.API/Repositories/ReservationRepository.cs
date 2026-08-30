@@ -80,6 +80,7 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
     {
         return await _context.Tickets
             .AsNoTracking()
+            .Include(t => t.Reservation)
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
