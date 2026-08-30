@@ -1,0 +1,43 @@
+<section class="cinema-form">
+  <a class="back" (click)="cancel()">‹ Cancel</a>
+
+  <h1>{{ isEdit ? 'Edit cinema' : 'New cinema' }}</h1>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else {
+    @if (error) {
+      <p class="status status--error">{{ error }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" type="text" formControlName="name" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="err">Name is required (max 100 characters).</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="city">City</label>
+        <select id="city" formControlName="city">
+          <option value="" disabled>Select a city…</option>
+          @for (city of cities; track city) {
+            <option [value]="city">{{ city }}</option>
+          }
+        </select>
+        @if (form.controls.city.touched && form.controls.city.invalid) {
+          <small class="err">Pick a city.</small>
+        }
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          {{ saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create cinema' }}
+        </button>
+        <button type="button" class="btn" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  }
+</section>
