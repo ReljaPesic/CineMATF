@@ -65,21 +65,6 @@ public class ReservationController(IReservationService service) : ControllerBase
         return Ok();
     }
 
-    [HttpPost("{id:guid}/confirm")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ConfirmReservation(Guid id, [FromBody] ConfirmReservationRequest request)
-    {
-        var (Success, ErrorMessage) = await service.ConfirmReservationAsync(id, request.PaymentId);
-        if (!Success)
-            return ErrorMessage == "Reservation not found"
-                ? NotFound(new { message = ErrorMessage })
-                : BadRequest(new { message = ErrorMessage });
-
-        return Ok();
-    }
-
     [HttpPost("{id:guid}/cancel")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

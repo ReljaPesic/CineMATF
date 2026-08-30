@@ -22,7 +22,8 @@ public partial class ReservationService(
     IOptions<ReservationOptions> options,
     ICinemaApiClient cinemaApiClient,
     IScreeningApiClient screeningApiClient,
-    IMovieApiClient movieApiClient) : IReservationService
+    IMovieApiClient movieApiClient,
+    ITicketPricingService pricingService) : IReservationService
 {
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -31,6 +32,7 @@ public partial class ReservationService(
     private readonly ICinemaApiClient _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
     private readonly IScreeningApiClient _screeningApiClient = screeningApiClient ?? throw new ArgumentNullException(nameof(screeningApiClient));
     private readonly IMovieApiClient _movieApiClient = movieApiClient ?? throw new ArgumentNullException(nameof(movieApiClient));
+    private readonly ITicketPricingService _pricingService = pricingService ?? throw new ArgumentNullException(nameof(pricingService));
 
     public async Task<AvailableSeatsResponse?> GetAvailableSeatsAsync(Guid screeningId)
     {
@@ -111,7 +113,7 @@ public partial class ReservationService(
             return (false, "Unable to verify seats right now, please try again later", null);
         }
 
-        var (reservation, tickets) = _factory.CreateReservation(
+        var reservation = _factory.CreateReservation(
             Guid.NewGuid(), request.UserId, request.ScreeningId,
             ReservationStatus.Locked, seats);
 
@@ -134,8 +136,6 @@ public partial class ReservationService(
                 };
                 await _repository.LockSeatAsync(seatLock);
             }
-
-            await _repository.CreateTicketsAsync(tickets);
 
             await _repository.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -202,23 +202,51 @@ public partial class ReservationService(
         if (reservation.ExpiresAt <= DateTime.UtcNow)
             return (false, "Reservation has expired");
 
-        await _repository.UpdateReservationStatusAsync(reservationId, ReservationStatus.Pending);
+        await _repository.UpdateReservationStatusAsync(reservationId, ReservationStatus.Confirmed);
         return (true, null);
     }
 
-    public async Task<(bool Success, string? ErrorMessage)> ConfirmReservationAsync(Guid reservationId, Guid paymentId)
+    public async Task<(bool Success, string? ErrorMessage, IEnumerable<TicketResponse>? Tickets)> GenerateTicketsAsync(Guid reservationId)
     {
         var reservation = await _repository.GetReservationByIdAsync(reservationId);
-        if (reservation == null) return (false, "Reservation not found");
+        if (reservation == null) return (false, "Reservation not found", null);
 
-        if (reservation.Status != ReservationStatus.Pending)
-            return (false, "Only pending reservations can be confirmed");
+        if (reservation.Status != ReservationStatus.Confirmed)
+            return (false, "Only confirmed reservations can have tickets generated", null);
 
-        if (reservation.ExpiresAt <= DateTime.UtcNow)
-            return (false, "Reservation has expired");
+        if (reservation.Tickets.Count != 0)
+            return (true, null, _mapper.Map<IEnumerable<TicketResponse>>(reservation.Tickets));
 
-        await _repository.UpdateReservationStatusAsync(reservationId, ReservationStatus.Confirmed);
-        return (true, null);
+        var tickets = new List<Entities.Ticket>();
+        foreach (var seatLock in reservation.SeatLocks)
+        {
+            SeatDetails? seat;
+            try
+            {
+                seat = await _cinemaApiClient.GetSeatAsync(seatLock.SeatId);
+            }
+            catch (HttpRequestException)
+            {
+                continue;
+            }
+            if (seat == null) continue;
+
+            tickets.Add(new Entities.Ticket
+            {
+                Id = Guid.NewGuid(),
+                ReservationId = reservationId,
+                SeatId = seat.SeatId,
+                SeatRow = seat.Row,
+                SeatNumber = seat.Number,
+                Price = _pricingService.CalculateTicketPrice(seat.SeatType),
+                QrCode = Guid.NewGuid().ToString()
+            });
+        }
+
+        var createdTickets = await _repository.CreateTicketsAsync(tickets);
+        await _repository.SaveChangesAsync();
+
+        return (true, null, _mapper.Map<IEnumerable<TicketResponse>>(createdTickets));
     }
 
     public async Task<(bool Success, string? ErrorMessage)> CancelReservationAsync(Guid id)
@@ -226,8 +254,8 @@ public partial class ReservationService(
         var reservation = await _repository.GetReservationByIdAsync(id);
         if (reservation == null) return (false, "Reservation not found");
 
-        if (reservation.Status != ReservationStatus.Locked && reservation.Status != ReservationStatus.Pending)
-            return (false, "Only locked or pending reservations can be cancelled");
+        if (reservation.Status != ReservationStatus.Locked)
+            return (false, "Only locked reservations can be cancelled");
 
         await using var transaction = await _repository.BeginTransactionAsync();
         try

@@ -39,6 +39,21 @@ public class TicketController(IReservationService service) : ControllerBase
         return Ok(tickets);
     }
 
+    [HttpPost("reservation/{reservationId:guid}")]
+    [ProducesResponseType(typeof(IEnumerable<TicketResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<TicketResponse>>> CreateTicketsForReservation(Guid reservationId)
+    {
+        var (success, errorMessage, tickets) = await _service.GenerateTicketsAsync(reservationId);
+        if (!success)
+            return errorMessage == "Reservation not found"
+                ? NotFound(new { message = errorMessage })
+                : BadRequest(new { message = errorMessage });
+
+        return Ok(tickets);
+    }
+
     [HttpGet("{id:guid}/download")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -106,8 +106,7 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
     {
         return await _context.Reservations
             .Include(r => r.SeatLocks)
-            .Where(r => (r.Status == ReservationStatus.Locked || r.Status == ReservationStatus.Pending)
-                        && r.ExpiresAt <= DateTime.UtcNow)
+            .Where(r => r.Status == ReservationStatus.Locked && r.ExpiresAt <= DateTime.UtcNow)
             .ToListAsync();
     }
 

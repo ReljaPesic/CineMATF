@@ -6,7 +6,7 @@ namespace Reservation.API.Services.Pricing;
 
 public interface IReservationFactory
 {
-    (Entities.Reservation reservation, List<Entities.Ticket> tickets) CreateReservation(
+    Entities.Reservation CreateReservation(
         Guid id, Guid userId, Guid screeningId, ReservationStatus status,
         IEnumerable<SeatDetails> seats);
 }

@@ -11,24 +11,13 @@ public class ReservationFactory(ITicketPricingService pricing, IOptions<Reservat
     private readonly ITicketPricingService _pricing = pricing ?? throw new ArgumentNullException(nameof(pricing));
     private readonly ReservationOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
 
-    public (Entities.Reservation reservation, List<Entities.Ticket> tickets) CreateReservation(
+    public Entities.Reservation CreateReservation(
         Guid id, Guid userId, Guid screeningId, ReservationStatus status,
         IEnumerable<SeatDetails> seats)
     {
         var seatList = seats.ToList();
 
-        var tickets = seatList.Select(seat => new Entities.Ticket
-        {
-            Id = Guid.NewGuid(),
-            ReservationId = id,
-            SeatId = seat.SeatId,
-            SeatRow = seat.Row,
-            SeatNumber = seat.Number,
-            Price = _pricing.CalculateTicketPrice(seat.SeatType),
-            QrCode = Guid.NewGuid().ToString()
-        }).ToList();
-
-        var reservation = new Entities.Reservation
+        return new Entities.Reservation
         {
             Id = id,
             UserId = userId,
@@ -37,7 +26,5 @@ public class ReservationFactory(ITicketPricingService pricing, IOptions<Reservat
             TotalPrice = _pricing.CalculateTotalPrice(seatList.Select(seat => seat.SeatType)),
             ExpiresAt = DateTime.UtcNow.AddMinutes(_options.LockDurationMinutes),
         };
-
-        return (reservation, tickets);
     }
 }

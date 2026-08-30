@@ -14,7 +14,7 @@ public interface IReservationService
     Task<IEnumerable<TicketResponse>> GetReservationTicketsAsync(Guid reservationId);
     Task<(bool Success, string? ErrorMessage, byte[]? Content, string? FileName)> GetTicketFileAsync(Guid ticketId);
     Task<(bool Success, string? ErrorMessage)> PayAsync(Guid reservationId);
-    Task<(bool Success, string? ErrorMessage)> ConfirmReservationAsync(Guid reservationId, Guid paymentId);
+    Task<(bool Success, string? ErrorMessage, IEnumerable<TicketResponse>? Tickets)> GenerateTicketsAsync(Guid reservationId);
     Task<(bool Success, string? ErrorMessage)> CancelReservationAsync(Guid id);
     Task ExpireReservationAsync(Guid id);
 }
