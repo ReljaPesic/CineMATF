@@ -23,6 +23,7 @@ builder.Services.AddSingleton<IScreeningContext, ScreeningDbContext>();
 builder.Services.AddScoped<IScreeningRepository, ScreeningRepository>();
 builder.Services.AddScoped<IScreeningService, ScreeningService>();
 builder.Services.AddAutoMapper(typeof(ScreeningMappingProfile));
+builder.Services.AddHostedService<DataSeeder>();
 
 var app = builder.Build();
 
