@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using Cinema.API.Entities;
 
 namespace Cinema.API.DTOs;
 
 public record UpdateSeatTypeRequest(
-    [Required] string SeatType
+    [Required] SeatType SeatType
 );
