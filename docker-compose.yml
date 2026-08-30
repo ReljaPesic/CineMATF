@@ -113,12 +113,14 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - CinemaApi__BaseUrl=http://cinemaapi:8080
       - ScreeningApi__BaseUrl=http://screeningapi:8081
+      - MovieApi__BaseUrl=http://movieapi:8080
     ports:
       - "8002:8080"
     depends_on:
       - reservationdb
       - cinemaapi
       - screeningapi
+      - movieapi
     restart: unless-stopped
     networks:
       - cinema-network

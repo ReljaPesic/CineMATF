@@ -6,6 +6,7 @@ public class ReservationServiceTests
     private readonly Mock<IReservationFactory> _factoryMock;
     private readonly Mock<ICinemaApiClient> _cinemaApiClientMock;
     private readonly Mock<IScreeningApiClient> _screeningApiClientMock;
+    private readonly Mock<IMovieApiClient> _movieApiClientMock;
     private readonly IMapper _mapper;
     private readonly ReservationService _service;
 
@@ -15,6 +16,7 @@ public class ReservationServiceTests
         _factoryMock = new Mock<IReservationFactory>();
         _cinemaApiClientMock = new Mock<ICinemaApiClient>();
         _screeningApiClientMock = new Mock<IScreeningApiClient>();
+        _movieApiClientMock = new Mock<IMovieApiClient>();
         _screeningApiClientMock.Setup(c => c.GetScreeningAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ScreeningDetails(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow.AddDays(1), "TwoD"));
 
@@ -22,7 +24,7 @@ public class ReservationServiceTests
         _mapper = config.CreateMapper();
 
         var options = Options.Create(new ReservationOptions { LockDurationMinutes = 10 });
-        _service = new ReservationService(_repositoryMock.Object, _mapper, _factoryMock.Object, options, _cinemaApiClientMock.Object, _screeningApiClientMock.Object);
+        _service = new ReservationService(_repositoryMock.Object, _mapper, _factoryMock.Object, options, _cinemaApiClientMock.Object, _screeningApiClientMock.Object, _movieApiClientMock.Object);
     }
 
     private void SetUpSeat(Guid seatId, string seatType = "Standard") =>

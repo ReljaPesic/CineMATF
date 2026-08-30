@@ -25,4 +25,16 @@ public class CinemaApiClient(HttpClient httpClient) : ICinemaApiClient
         var seats = await response.Content.ReadFromJsonAsync<IEnumerable<CinemaSeatResponse>>(cancellationToken);
         return seats?.Select(s => new SeatDetails(s.Id, s.Row, s.Number, s.SeatType)) ?? [];
     }
+
+    private record CinemaApiResponse(Guid Id, string Name, string City);
+
+    public async Task<CinemaDetails?> GetCinemaAsync(Guid cinemaId, CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.GetAsync($"api/v1/cinema/{cinemaId}", cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound) return null;
+        response.EnsureSuccessStatusCode();
+
+        var cinema = await response.Content.ReadFromJsonAsync<CinemaApiResponse>(cancellationToken);
+        return cinema == null ? null : new CinemaDetails(cinema.Id, cinema.Name, cinema.City);
+    }
 }
