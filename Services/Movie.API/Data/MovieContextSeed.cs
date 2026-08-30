@@ -14,7 +14,7 @@ public class MovieContextSeed
         {
             new()
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.Parse("ffffffff-ffff-ffff-ffff-000000000001"),
                 Title = "Inception",
                 Description = "A thief who steals corporate secrets through dream-sharing technology.",
                 DurationMinutes = 148,
@@ -29,7 +29,7 @@ public class MovieContextSeed
             },
             new()
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.Parse("ffffffff-ffff-ffff-ffff-000000000002"),
                 Title = "The Godfather",
                 Description = "The aging patriarch of an organized crime dynasty transfers control to his son.",
                 DurationMinutes = 175,
@@ -44,7 +44,7 @@ public class MovieContextSeed
             },
             new()
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.Parse("ffffffff-ffff-ffff-ffff-000000000003"),
                 Title = "The Dark Knight",
                 Description = "Batman faces the Joker, a criminal mastermind who plunges Gotham into anarchy.",
                 DurationMinutes = 152,
@@ -59,7 +59,7 @@ public class MovieContextSeed
             },
             new()
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.Parse("ffffffff-ffff-ffff-ffff-000000000004"),
                 Title = "Interstellar",
                 Description = "A team of explorers travel through a wormhole in space to ensure humanity's survival.",
                 DurationMinutes = 169,
@@ -74,7 +74,7 @@ public class MovieContextSeed
             },
             new()
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.Parse("ffffffff-ffff-ffff-ffff-000000000005"),
                 Title = "The Shining",
                 Description = "A family heads to an isolated hotel for the winter where an evil presence influences the father.",
                 DurationMinutes = 146,
