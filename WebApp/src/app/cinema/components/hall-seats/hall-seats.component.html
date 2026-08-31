@@ -1,0 +1,70 @@
+<section class="hall-seats">
+  <a class="back" [routerLink]="['/cinemas', cinemaId]">‹ Back to cinema</a>
+
+  <h1>Seats</h1>
+
+  @if (error) {
+    <p class="status status--error">{{ error }}</p>
+  }
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (totalSeats === 0) {
+    <p class="status">This hall has no seats yet.</p>
+    <button type="button" class="btn btn--primary" (click)="generateSeats()" [disabled]="generating">
+      {{ generating ? 'Generating…' : 'Generate seats' }}
+    </button>
+  } @else {
+    <p class="hall-seats__count">{{ totalSeats }} seats — click one to change its type.</p>
+
+    <div class="screen">Screen</div>
+
+    <div class="grid">
+      @for (row of rows; track row.row) {
+        <div class="grid__row">
+          <span class="grid__label">{{ row.row }}</span>
+          @for (seat of row.seats; track seat.id) {
+            <button
+              type="button"
+              class="seat"
+              [class.seat--selected]="selectedSeat?.id === seat.id"
+              [attr.data-type]="seat.seatType"
+              [disabled]="updatingSeatId === seat.id"
+              (click)="select(seat)"
+              [attr.title]="'Row ' + seat.row + ', seat ' + seat.number + ' — ' + seat.seatType"
+            >
+              {{ seat.number }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="legend">
+      @for (type of seatTypes; track type) {
+        <span class="legend__item">
+          <span class="seat seat--legend" [attr.data-type]="type"></span>
+          {{ type }}
+        </span>
+      }
+    </div>
+
+    @if (selectedSeat) {
+      <div class="type-picker">
+        <span class="type-picker__label">
+          Row {{ selectedSeat.row }}, seat {{ selectedSeat.number }} — set type:
+        </span>
+        @for (type of seatTypes; track type) {
+          <button
+            type="button"
+            class="btn btn--ghost"
+            [disabled]="updatingSeatId === selectedSeat.id || selectedSeat.seatType === type"
+            (click)="setType(type)"
+          >
+            {{ type }}
+          </button>
+        }
+      </div>
+    }
+  }
+</section>

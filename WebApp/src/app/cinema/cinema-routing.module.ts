@@ -4,6 +4,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { CinemaListComponent } from './components/cinema-list/cinema-list.component';
 import { CinemaFormComponent } from './components/cinema-form/cinema-form.component';
 import { CinemaDetailComponent } from './components/cinema-detail/cinema-detail.component';
+import { HallSeatsComponent } from './components/hall-seats/hall-seats.component';
 
 
 const routes: Routes = [
@@ -11,6 +12,7 @@ const routes: Routes = [
   { path: 'new', component: CinemaFormComponent },
   { path: ':id/edit', component: CinemaFormComponent },
   { path: ':id', component: CinemaDetailComponent },
+  { path: ':id/halls/:hallId/seats', component: HallSeatsComponent}
 ]
 
 @NgModule({
