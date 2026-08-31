@@ -1,4 +1,4 @@
-import { Genre, Movie, MovieRequest } from "../app/movies/models/movie.model";
+import { Genre, Movie, MovieRequest } from "../app/movie/models/movie.model";
 
 export const MOCK_MOVIES : Movie[]= [
     {
