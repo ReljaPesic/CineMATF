@@ -62,7 +62,7 @@
         @for (screening of screenings; track screening.id) {
           <tr>
             <td data-label="Movie">
-              <a>{{ getMovieTitle(screening.movieId) }}</a>
+              <a [routerLink]="[screening.id]">{{ getMovieTitle(screening.movieId) }}</a>
             </td>
             <td data-label="Cinema">{{ getCinemaName(screening.cinemaId) }}</td>
             <td data-label="Starts">{{ screening.startTime | date: 'medium' }}</td>

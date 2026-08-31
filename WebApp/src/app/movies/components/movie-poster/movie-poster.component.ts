@@ -2,7 +2,7 @@ import { Component, Input, OnChanges } from '@angular/core';
 
 @Component({
   selector: 'app-movie-poster',
-  standalone: false,
+  standalone: true,
   templateUrl: './movie-poster.component.html',
   styleUrl: './movie-poster.component.css',
 })

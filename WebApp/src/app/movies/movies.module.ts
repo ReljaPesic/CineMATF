@@ -14,7 +14,6 @@ import { MovieFormComponent } from './components/movie-form/movie-form.component
   declarations: [
     MovieListComponent,
     MovieDetailComponent,
-    MoviePosterComponent,
     MovieFormComponent,
   ],
   imports: [
@@ -22,6 +21,7 @@ import { MovieFormComponent } from './components/movie-form/movie-form.component
     FormsModule,
     ReactiveFormsModule,
     MoviesRoutingModule,
+    MoviePosterComponent,
   ],
 })
 export class MoviesModule {}
