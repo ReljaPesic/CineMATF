@@ -87,6 +87,9 @@
           </div>
         }
         <button type="button" class="btn btn--ghost" (click)="addActor()">+ Add actor</button>
+         @if(form.controls.actors.touched){
+               <small class="err">Pick at least one actress or actor.</small>
+          }
       </div>
 
       <div class="preview field--wide">

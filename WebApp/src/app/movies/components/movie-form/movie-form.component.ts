@@ -35,7 +35,7 @@ export class MovieFormComponent implements OnInit {
     rating: [7, [Validators.required, Validators.min(0), Validators.max(10)]],
     coverImage: [''],
     genres: [[] as Genre[], Validators.required],
-    actors: this.fb.array<FormGroup>([]),
+    actors: this.fb.array<FormGroup>([], [Validators.required]),
   });
 
   get actors(): FormArray<FormGroup> {
