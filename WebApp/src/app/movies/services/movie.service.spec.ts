@@ -9,8 +9,9 @@ import {
 import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
-import { Genre, Movie, MovieRequest, PagedResponse } from '../models/movie.model';
+import { Genre, Movie } from '../models/movie.model';
 import { MovieService } from './movie.service';
+import { PagedResponse } from '../../shared/models/shared.models';
 import { MOCK_MOVIE, MOCK_MOVIE_REQUEST, MOCK_MOVIES, MOCK_MOVIES_GENRE } from '../../../testing/mock_movies_data';
 
 
