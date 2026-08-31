@@ -27,12 +27,13 @@ public class ReservationController(IReservationService service) : ControllerBase
         return Ok(reservation);
     }
 
-    //this one is for the testing before we imlement the movie service
     [HttpGet("screenings/{screeningId:guid}/available-seats")]
     [ProducesResponseType(typeof(AvailableSeatsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AvailableSeatsResponse>> GetAvailableSeats(Guid screeningId)
     {
         var response = await service.GetAvailableSeatsAsync(screeningId);
+        if (response == null) return NotFound();
         return Ok(response);
     }
 
@@ -56,21 +57,6 @@ public class ReservationController(IReservationService service) : ControllerBase
     public async Task<IActionResult> Pay(Guid id)
     {
         var (Success, ErrorMessage) = await service.PayAsync(id);
-        if (!Success)
-            return ErrorMessage == "Reservation not found"
-                ? NotFound(new { message = ErrorMessage })
-                : BadRequest(new { message = ErrorMessage });
-
-        return Ok();
-    }
-
-    [HttpPost("{id:guid}/confirm")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ConfirmReservation(Guid id, [FromBody] ConfirmReservationRequest request)
-    {
-        var (Success, ErrorMessage) = await service.ConfirmReservationAsync(id, request.PaymentId);
         if (!Success)
             return ErrorMessage == "Reservation not found"
                 ? NotFound(new { message = ErrorMessage })

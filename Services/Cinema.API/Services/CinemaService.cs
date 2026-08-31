@@ -107,10 +107,7 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
         if (seat == null || seat.HallId != hall.Id)
             throw new KeyNotFoundException($"Seat with ID {seatId} not found in hall {hallId}");
 
-        if (!Enum.TryParse<SeatType>(request.SeatType, true, out var seatType))
-            throw new ArgumentException($"Invalid seat type: {request.SeatType}");
-
-        seat.SeatType = seatType;
+        seat.SeatType = request.SeatType;
         await repository.UpdateSeatAsync(seat);
         return mapper.Map<SeatResponse>(seat);
     }

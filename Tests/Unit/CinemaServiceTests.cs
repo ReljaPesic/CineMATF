@@ -320,7 +320,7 @@ public class CinemaServiceTests
         var hallId = Guid.NewGuid();
         var hall = new Hall { Id = hallId, CinemaId = cinemaId, Name = "Hall 1" };
         var seat = new Seat { Id = Guid.NewGuid(), HallId = hallId, Row = 1, Number = 1, SeatType = SeatType.Standard };
-        var request = new UpdateSeatTypeRequest("VIP");
+        var request = new UpdateSeatTypeRequest(SeatType.VIP);
 
         _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync(hall);
         _repositoryMock.Setup(r => r.GetSeatByIdAsync(seat.Id)).ReturnsAsync(seat);
@@ -333,29 +333,12 @@ public class CinemaServiceTests
     }
 
     [Fact]
-    public async Task UpdateSeatTypeAsync_WithInvalidSeatType_ThrowsArgumentException()
-    {
-        var cinemaId = Guid.NewGuid();
-        var hallId = Guid.NewGuid();
-        var hall = new Hall { Id = hallId, CinemaId = cinemaId, Name = "Hall 1" };
-        var seat = new Seat { Id = Guid.NewGuid(), HallId = hallId, Row = 1, Number = 1, SeatType = SeatType.Standard };
-        var request = new UpdateSeatTypeRequest("InvalidType");
-
-        _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync(hall);
-        _repositoryMock.Setup(r => r.GetSeatByIdAsync(seat.Id)).ReturnsAsync(seat);
-
-        var action = () => _service.UpdateSeatTypeAsync(cinemaId, hallId, seat.Id, request);
-
-        await action.Should().ThrowAsync<ArgumentException>();
-    }
-
-    [Fact]
     public async Task UpdateSeatTypeAsync_WithNonExistingHall_ThrowsKeyNotFoundException()
     {
         var cinemaId = Guid.NewGuid();
         var hallId = Guid.NewGuid();
         var seatId = Guid.NewGuid();
-        var request = new UpdateSeatTypeRequest("VIP");
+        var request = new UpdateSeatTypeRequest(SeatType.VIP);
 
         _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync((Hall?)null);
 
@@ -371,7 +354,7 @@ public class CinemaServiceTests
         var hallId = Guid.NewGuid();
         var hall = new Hall { Id = hallId, CinemaId = cinemaId, Name = "Hall 1" };
         var seatId = Guid.NewGuid();
-        var request = new UpdateSeatTypeRequest("VIP");
+        var request = new UpdateSeatTypeRequest(SeatType.VIP);
 
         _repositoryMock.Setup(r => r.GetHallByIdAsync(hallId, cinemaId)).ReturnsAsync(hall);
         _repositoryMock.Setup(r => r.GetSeatByIdAsync(seatId)).ReturnsAsync((Seat?)null);

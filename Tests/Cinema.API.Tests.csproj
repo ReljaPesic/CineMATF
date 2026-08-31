@@ -26,6 +26,7 @@
   <ItemGroup>
     <Compile Remove="Movie.API.Tests/**/*.cs" />
     <Compile Remove="Reservation.API.Tests/**/*.cs" />
+    <Compile Remove="Screening.API.Tests/**/*.cs" />
   </ItemGroup>
 
 </Project>

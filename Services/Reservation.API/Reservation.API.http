@@ -13,16 +13,11 @@ Content-Type: application/json
   "userId": "00000000-0000-0000-0000-000000000001"
 }
 
-### Pay for a reservation (Locked → Pending)
+### Pay for a reservation (Locked → Confirmed)
 POST {{Reservation_HostAddress}}/api/v1/reservations/00000000-0000-0000-0000-000000000001/pay
 
-### Confirm reservation (Pending → Confirmed)
-POST {{Reservation_HostAddress}}/api/v1/reservations/00000000-0000-0000-0000-000000000001/confirm
-Content-Type: application/json
-
-{
-  "paymentId": "00000000-0000-0000-0000-000000000001"
-}
+### Generate tickets for a confirmed reservation
+POST {{Reservation_HostAddress}}/api/v1/Ticket/reservation/00000000-0000-0000-0000-000000000001
 
 ### Get reservation by ID
 GET {{Reservation_HostAddress}}/api/v1/reservations/00000000-0000-0000-0000-000000000001

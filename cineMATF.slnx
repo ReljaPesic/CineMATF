@@ -9,5 +9,6 @@
     <Project Path="Tests/Cinema.API.Tests.csproj" />
     <Project Path="Tests/Movie.API.Tests/Movie.API.Tests.csproj" />
     <Project Path="Tests/Reservation.API.Tests/Reservation.API.Tests.csproj" />
+    <Project Path="Tests/Screening.API.Tests/Screening.API.Tests.csproj" />
   </Folder>
 </Solution>
