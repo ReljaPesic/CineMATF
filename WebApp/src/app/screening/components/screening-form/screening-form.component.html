@@ -1,0 +1,80 @@
+<section class="screening-form">
+  <a class="back" (click)="cancel()">‹ Cancel</a>
+
+  <h1>{{ isEdit ? 'Edit screening' : 'New screening' }}</h1>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else {
+    @if (error) {
+      <p class="status status--error">{{ error }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+      <div class="field field--wide">
+        <label for="movieId">Movie</label>
+        <select id="movieId" formControlName="movieId">
+          <option value="" disabled>Select a movie…</option>
+          @for (movie of movies; track movie.id) {
+            <option [value]="movie.id">{{ movie.title }}</option>
+          }
+        </select>
+        @if (form.controls.movieId.touched && form.controls.movieId.invalid) {
+          <small class="err">Pick a movie.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="cinemaId">Cinema</label>
+        <select id="cinemaId" formControlName="cinemaId">
+          <option value="" disabled>Select a cinema…</option>
+          @for (cinema of cinemas; track cinema.id) {
+            <option [value]="cinema.id">{{ cinema.name }} — {{ cinema.city }}</option>
+          }
+        </select>
+        @if (form.controls.cinemaId.touched && form.controls.cinemaId.invalid) {
+          <small class="err">Pick a cinema.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="hallId">Hall</label>
+        <select id="hallId" formControlName="hallId">
+          <option value="" disabled>
+            {{ !form.controls.cinemaId.value ? 'Pick a cinema first' : hallsLoading ? 'Loading halls…' : 'Select a hall…' }}
+          </option>
+          @for (hall of halls; track hall.id) {
+            <option [value]="hall.id">{{ hall.name }}</option>
+          }
+        </select>
+        @if (form.controls.hallId.touched && form.controls.hallId.invalid) {
+          <small class="err">Pick a hall.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="startTime">Starts at</label>
+        <input id="startTime" type="datetime-local" formControlName="startTime" />
+        @if (form.controls.startTime.touched && form.controls.startTime.invalid) {
+          <small class="err">Start time is required.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="format">Format</label>
+        <select id="format" formControlName="format">
+          @for (format of formats; track format) {
+            <option [value]="format">{{ formatLabels[format] }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="actions field--wide">
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          {{ saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create screening' }}
+        </button>
+        <button type="button" class="btn" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  }
+</section>

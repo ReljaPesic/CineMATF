@@ -1,6 +1,7 @@
 <section class="screening-list">
   <header class="screening-list__header">
     <h1>Screenings</h1>
+    <a class="btn btn--primary" routerLink="new">+ New screening</a>
   </header>
 
   <div class="screening-list__filters">
@@ -69,6 +70,7 @@
             <td data-label="Format">{{ formatLabels[screening.format] }}</td>
             <td data-label="Actions">
               <span class="actions-cell">
+                <a [routerLink]="[screening.id, 'edit']">Edit</a>
                 <button
                   type="button"
                   class="link-btn link-btn--danger"

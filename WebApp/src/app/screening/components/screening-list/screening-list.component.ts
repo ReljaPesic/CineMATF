@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 
-import { Movie } from '../../../movies/models/movie.model';
-import { MovieService } from '../../../movies/services/movie.service';
+import { Movie } from '../../../movie/models/movie.model;
+import { MovieService } from '../../../movie/services/movie.service;
 import { Cinema } from '../../../cinema/models/cinema.model';
 import { CinemaService } from '../../../cinema/services/cinema.service';
 import { SCREENING_FORMAT_LABELS, Screening, ScreeningFilter } from '../../models/screening.model';
