@@ -41,7 +41,7 @@
         @for (cinema of cinemas; track cinema.id) {
           <tr>
             <td data-label="Name">
-              <a>{{ cinema.name }}</a>
+              <a [routerLink]="[cinema.id]">{{ cinema.name }}</a>
             </td>
             <td data-label="City">{{ cinema.city }}</td>
             <td data-label="Actions">

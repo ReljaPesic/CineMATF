@@ -79,7 +79,8 @@ export class CinemaFormComponent implements OnInit {
     save$.subscribe({
       next: (cinema) => {
         this.saving = false;
-        this.router.navigate(['/cinemas']);
+        const id = this.cinemaId ?? cinema.id;
+        this.router.navigate(['/cinemas', id]);
       },
       error: (err: HttpErrorResponse) => {
         this.saving = false;
