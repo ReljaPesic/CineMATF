@@ -11,6 +11,10 @@ export const routes: Routes = [
     path: 'cinemas',
     loadChildren: () => import('./cinema/cinema.module').then((m) => m.CinemaModule),
   },
+  {
+    path: 'screenings',
+    loadChildren: () => import('./screening/screening.module').then((m) => m.ScreeningModule),
+  },
   // Unknown URL -> back to the list.
-  { path: '**', redirectTo: 'movies' },
+  { path: '**', redirectTo: 'screenings' },
 ];

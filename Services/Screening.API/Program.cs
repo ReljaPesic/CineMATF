@@ -18,6 +18,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 builder.Services.AddGrpc();
 builder.Services.AddSingleton<IScreeningContext, ScreeningDbContext>();
 builder.Services.AddScoped<IScreeningRepository, ScreeningRepository>();
@@ -26,6 +33,7 @@ builder.Services.AddAutoMapper(typeof(ScreeningMappingProfile));
 builder.Services.AddHostedService<DataSeeder>();
 
 var app = builder.Build();
+app.UseCors("CorsPolicy");
 
 await app.EnsureCreatedAsync();
 

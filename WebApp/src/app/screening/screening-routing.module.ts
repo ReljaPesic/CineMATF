@@ -1,10 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-const routes: Routes = [];
+import { ScreeningListComponent } from './components/screening-list/screening-list.component';
+
+
+const routes: Routes = [
+  { path: '', component: ScreeningListComponent }
+];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class ScreeningRoutingModule { }
+export class ScreeningRoutingModule {}
