@@ -1,0 +1,4 @@
+CREATE DATABASE "cinemadb";
+CREATE DATABASE "ReservationServiceDb";
+CREATE DATABASE "ScreeningDB";
+CREATE DATABASE "IdentityDB";

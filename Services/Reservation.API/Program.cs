@@ -19,6 +19,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.Configure<ReservationOptions>(builder.Configuration.GetSection("ReservationOptions"));
 
+<<<<<<< ours
 // JWT bearer
 var jwt = builder.Configuration.GetSection("JwtSettings");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -39,6 +40,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
+=======
+// CORS: let the Angular dev server (http://localhost:4200) call this API from
+// the browser. Mirrors the policy in Cinema.API / Screening.API / Movie.API.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyMethod()
+              .AllowAnyHeader());
+});
+>>>>>>> theirs
 builder.Services.AddDbContext<ReservationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHttpClient<ICinemaApiClient, CinemaApiClient>(client =>
@@ -82,8 +94,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+<<<<<<< ours
 app.UseAuthentication();
 app.UseAuthorization();
+=======
+app.UseCors("CorsPolicy");
+>>>>>>> theirs
 
 app.MapControllers();
 app.Run();

@@ -1,55 +1,25 @@
 services:
-  cinemadb:
+  postgres:
     image: postgres:16
-    container_name: cinemadb
+    container_name: postgres
     env_file:
       - .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5434:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - cinema-network
-
-  reservationdb:
-    image: postgres:16
-    container_name: reservationdb
-    env_file:
-      - .env
-    environment:
-      POSTGRES_DB: ${RESERVATION_DB_NAME}
-      POSTGRES_USER: ${RESERVATION_DB_USER}
-      POSTGRES_PASSWORD: ${RESERVATION_DB_PASSWORD}
-    ports:
       - "5433:5432"
     volumes:
-      - reservationpgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
     restart: unless-stopped
     networks:
       - cinema-network
-
-  identitydb:
-    image: postgres:16
-    container_name: identitydb
-    env_file:
-      - .env
-    environment:
-      POSTGRES_DB: ${IDENTITY_DB_NAME}
-      POSTGRES_USER: ${IDENTITY_DB_USER}
-      POSTGRES_PASSWORD: ${IDENTITY_DB_PASSWORD}
-    ports:
-      # 5433/5434/5435 are already taken by the other service DBs.
-      - "5436:5432"
-    volumes:
-      - identitypgdata:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - cinema-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
 
   pgadmin:
     image: dpage/pgadmin4
@@ -65,6 +35,17 @@ services:
     networks:
       - cinema-network
 
+  moviedb:
+    image: mongo:7
+    container_name: moviedb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
   cinemaapi:
     build:
       context: .
@@ -73,20 +54,10 @@ services:
     env_file:
       - .env
     environment:
-      - ConnectionStrings__Default=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=cinemadb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
-      - cinemadb
-    restart: unless-stopped
-    networks:
-      - cinema-network
-
-  moviedb:
-    image: mongo:7
-    container_name: moviedb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodata:/data/db
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - cinema-network
@@ -104,21 +75,6 @@ services:
     networks:
       - cinema-network
 
-  screeningdb:
-    image: postgres:16
-    container_name: screeningdb
-    environment:
-      POSTGRES_DB: ScreeningDB
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5435:5432"
-    volumes:
-      - screeningpgdata:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - cinema-network
-
   reservationapi:
     build:
       context: .
@@ -127,7 +83,7 @@ services:
     env_file:
       - .env
     environment:
-      - ConnectionStrings__Default=Host=${RESERVATION_DB_HOST};Port=${RESERVATION_DB_PORT};Database=${RESERVATION_DB_NAME};Username=${RESERVATION_DB_USER};Password=${RESERVATION_DB_PASSWORD}
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=ReservationServiceDb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
       - CinemaApi__BaseUrl=http://cinemaapi:8080
       - ScreeningApi__BaseUrl=http://screeningapi:8081
@@ -135,10 +91,14 @@ services:
     ports:
       - "8002:8080"
     depends_on:
-      - reservationdb
-      - cinemaapi
-      - screeningapi
-      - movieapi
+      postgres:
+        condition: service_healthy
+      cinemaapi:
+        condition: service_started
+      screeningapi:
+        condition: service_started
+      movieapi:
+        condition: service_started
     restart: unless-stopped
     networks:
       - cinema-network
@@ -153,13 +113,14 @@ services:
     env_file:
       - .env
     environment:
-      - ConnectionStrings__Default=Host=screeningdb;Port=5432;Database=ScreeningDB;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=ScreeningDB;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8003:8080"
       - "8004:8081"
     depends_on:
-      - screeningdb
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - cinema-network
@@ -174,16 +135,13 @@ services:
     env_file:
       - .env
     environment:
-      # Identity.API reads the "IdentityConnectionString" key (not "Default").
-      # The __ maps to the ConnectionStrings section; this env var overrides the
-      # localhost value in appsettings.Development.json when running in compose.
-      - ConnectionStrings__IdentityConnectionString=Host=identitydb;Port=5432;Database=${IDENTITY_DB_NAME};Username=${IDENTITY_DB_USER};Password=${IDENTITY_DB_PASSWORD}
+      - ConnectionStrings__IdentityConnectionString=Host=postgres;Port=5432;Database=IdentityDB;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      # 8000-8004 are used by the other APIs.
       - "8005:8080"
     depends_on:
-      - identitydb
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - cinema-network
@@ -198,6 +156,3 @@ volumes:
   pgdata:
   pgadmin_data:
   mongodata:
-  screeningpgdata:
-  reservationpgdata:
-  identitypgdata:

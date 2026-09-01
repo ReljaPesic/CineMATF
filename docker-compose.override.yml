@@ -27,12 +27,13 @@ services:
     env_file:
       - .env
     environment:
-      - ConnectionStrings__Default=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=cinemadb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8000:8080"
     depends_on:
-      - cinemadb
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - cinema-network
