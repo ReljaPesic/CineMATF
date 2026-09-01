@@ -5,8 +5,11 @@ using Reservation.API.Settings;
 using Reservation.API.Repositories;
 using Reservation.API.Services;
 using Reservation.API.Services.Pricing;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Screening.API.Grpc;
+using System.Text;
 
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -15,6 +18,39 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.Configure<ReservationOptions>(builder.Configuration.GetSection("ReservationOptions"));
+
+<<<<<<< ours
+// JWT bearer
+var jwt = builder.Configuration.GetSection("JwtSettings");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwt["Issuer"],
+            ValidAudience = jwt["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwt["SecretKey"]
+                    ?? throw new InvalidOperationException("JwtSettings:SecretKey is not configured"))),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+builder.Services.AddAuthorization();
+=======
+// CORS: let the Angular dev server (http://localhost:4200) call this API from
+// the browser. Mirrors the policy in Cinema.API / Screening.API / Movie.API.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyMethod()
+              .AllowAnyHeader());
+});
+>>>>>>> theirs
 builder.Services.AddDbContext<ReservationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHttpClient<ICinemaApiClient, CinemaApiClient>(client =>
@@ -57,6 +93,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+<<<<<<< ours
+app.UseAuthentication();
+app.UseAuthorization();
+=======
+app.UseCors("CorsPolicy");
+>>>>>>> theirs
 
 app.MapControllers();
 app.Run();
