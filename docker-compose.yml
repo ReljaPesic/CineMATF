@@ -33,6 +33,24 @@ services:
     networks:
       - cinema-network
 
+  identitydb:
+    image: postgres:16
+    container_name: identitydb
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${IDENTITY_DB_NAME}
+      POSTGRES_USER: ${IDENTITY_DB_USER}
+      POSTGRES_PASSWORD: ${IDENTITY_DB_PASSWORD}
+    ports:
+      # 5433/5434/5435 are already taken by the other service DBs.
+      - "5436:5432"
+    volumes:
+      - identitypgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
@@ -148,6 +166,30 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  identityapi:
+    build:
+      context: .
+      dockerfile: Services/Identity.API/Dockerfile
+    container_name: identityapi
+    env_file:
+      - .env
+    environment:
+      # Identity.API reads the "IdentityConnectionString" key (not "Default").
+      # The __ maps to the ConnectionStrings section; this env var overrides the
+      # localhost value in appsettings.Development.json when running in compose.
+      - ConnectionStrings__IdentityConnectionString=Host=identitydb;Port=5432;Database=${IDENTITY_DB_NAME};Username=${IDENTITY_DB_USER};Password=${IDENTITY_DB_PASSWORD}
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      # 8000-8004 are used by the other APIs.
+      - "8005:8080"
+    depends_on:
+      - identitydb
+    restart: unless-stopped
+    networks:
+      - cinema-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 networks:
   cinema-network:
     driver: bridge
@@ -158,3 +200,4 @@ volumes:
   mongodata:
   screeningpgdata:
   reservationpgdata:
+  identitypgdata:
