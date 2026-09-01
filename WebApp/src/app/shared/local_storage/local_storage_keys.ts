@@ -1,4 +1,5 @@
-export enum LocalStorageKeys{
-    AppState = 'appState'
-    
+export enum LocalStorageKeys {
+  AppState = 'appState',
+  AccessToken = 'accessToken',
+  RefreshToken = 'refreshToken',
 }

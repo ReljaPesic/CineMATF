@@ -1,8 +1,20 @@
 import { Routes } from '@angular/router';
 
+import { authGuard } from './shared/guards/auth.guard';
+
 export const routes: Routes = [
   // Land on the movies list by default
-  { path: '', redirectTo: 'movies', pathMatch: 'full' },
+  { path: '', redirectTo: 'screenings', pathMatch: 'full' },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./auth/components/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'profile',
+    loadChildren: () => import('./user/user.module').then((m) => m.UserModule),
+    canActivate: [authGuard],
+  },
   {
     path: 'movies',
     loadChildren: () => import('./movie/movies.module').then((m) => m.MoviesModule),
