@@ -3,11 +3,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
-import { MovieService } from '../../../movie/services/movie.service;
+
 import { CinemaService } from '../../../cinema/services/cinema.service';
 import { HallResponse } from '../../../cinema/models/cinema.model';
 import { SCREENING_FORMAT_LABELS, Screening } from '../../models/screening.model';
 import { ScreeningService } from '../../services/screening.service';
+import { MovieService } from '../../../movie/services/movie.service';
 
 @Component({
   selector: 'app-screening-detail',
