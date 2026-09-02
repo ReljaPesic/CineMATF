@@ -1,0 +1,84 @@
+<section class="reservation-form">
+  <a class="back" (click)="cancel()">‹ Cancel</a>
+
+  <h1>Book seats</h1>
+
+  @if (error) {
+    <p class="status status--error">{{ error }}</p>
+  }
+
+  <div class="field">
+    <label for="screening">Screening</label>
+    @if (loadingScreenings) {
+      <p class="status">Loading screenings…</p>
+    } @else if (screenings.length === 0) {
+      <p class="status">No upcoming screenings to book.</p>
+    } @else {
+      <select
+        id="screening"
+        class="filter-input"
+        [(ngModel)]="selectedScreeningId"
+        (ngModelChange)="onScreeningChange()"
+      >
+        <option value="">Select a screening…</option>
+        @for (screening of screenings; track screening.id) {
+          <option [value]="screening.id">{{ screeningLabel(screening) }}</option>
+        }
+      </select>
+    }
+  </div>
+
+  @if (selectedScreeningId) {
+    @if (loadingSeats) {
+      <p class="status">Loading seat map…</p>
+    } @else if (seatError) {
+      <p class="status status--error">{{ seatError }}</p>
+    } @else if (rows.length > 0) {
+      <div class="screen">Screen</div>
+
+      <div class="grid">
+        @for (row of rows; track row.row) {
+          <div class="grid__row">
+            <span class="grid__label">{{ row.row }}</span>
+            @for (seat of row.seats; track seat.id) {
+              <button
+                type="button"
+                class="seat"
+                [class.seat--selected]="selectedSeatIds.has(seat.id)"
+                [class.seat--taken]="!seat.available"
+                [attr.data-type]="seat.available ? seat.seatType : null"
+                [disabled]="!seat.available || submitting"
+                (click)="toggleSeat(seat)"
+                [attr.title]="
+                  'Row ' + seat.row + ', seat ' + seat.number + ' — ' +
+                  (seat.available ? seat.seatType : 'taken')
+                "
+              >
+                {{ seat.number }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="booking-bar">
+        <span class="booking-bar__summary">
+          {{ selectedCount }} seat{{ selectedCount === 1 ? '' : 's' }} selected
+          @if (selectedCount > 0) {
+            — est. {{ estimatedTotal | currency: 'EUR' }}
+          }
+        </span>
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="selectedCount === 0 || submitting"
+          (click)="submit()"
+        >
+          {{ submitting ? 'Reserving…' : 'Reserve seats' }}
+        </button>
+      </div>
+    } @else {
+      <p class="status">This screening's hall has no seats yet.</p>
+    }
+  }
+</section>

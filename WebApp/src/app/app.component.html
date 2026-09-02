@@ -2,6 +2,7 @@
   <span class="app-header__brand">{{ title }}</span>
   <nav class="app-header__nav">
     <a routerLink="/screenings" routerLinkActive="active">Screenings</a>
+    <a routerLink="/reservations" routerLinkActive="active">Reservations</a>
     <a routerLink="/movies" routerLinkActive="active">Movies</a>
     <a routerLink="/cinemas" routerLinkActive="active">Cinemas</a>
   </nav>
@@ -12,6 +13,7 @@
       <button type="button" class="link-btn" (click)="logout()">Log out</button>
     } @else {
       <a routerLink="/login" routerLinkActive="active">Log in</a>
+      <a routerLink="/register" routerLinkActive="active">Sign up</a>
     }
   </div>
 </header>

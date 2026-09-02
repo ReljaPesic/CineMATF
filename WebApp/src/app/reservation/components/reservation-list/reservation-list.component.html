@@ -1,0 +1,58 @@
+<section class="reservation-list">
+  <header class="reservation-list__header">
+    <h1>Reservations</h1>
+    <a class="btn btn--primary" routerLink="new">+ Book seats</a>
+  </header>
+
+  <div class="reservation-list__filters">
+    <select
+      class="filter-input"
+      [(ngModel)]="selectedStatus"
+      aria-label="Filter by status"
+    >
+      <option value="">All statuses</option>
+      @for (status of statuses; track status) {
+        <option [value]="status">{{ status }}</option>
+      }
+    </select>
+
+    @if (selectedStatus) {
+      <button type="button" class="link-btn" (click)="selectedStatus = ''">Clear</button>
+    }
+  </div>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (error) {
+    <p class="status status--error">{{ error }}</p>
+  } @else if (visibleReservations.length === 0) {
+    <p class="status">No reservations found.</p>
+  } @else {
+    <table class="reservation-table">
+      <thead>
+        <tr>
+          <th>Screening</th>
+          <th>Status</th>
+          <th>Seats</th>
+          <th>Total</th>
+          <th>Booked</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (reservation of visibleReservations; track reservation.id) {
+          <tr>
+            <td data-label="Screening">
+              <a [routerLink]="[reservation.id]">{{ screeningLabel(reservation.screeningId) }}</a>
+            </td>
+            <td data-label="Status">
+              <span class="badge" [attr.data-status]="reservation.status">{{ reservation.status }}</span>
+            </td>
+            <td data-label="Seats">{{ seatCount(reservation) || '—' }}</td>
+            <td data-label="Total">{{ reservation.totalPrice | currency: 'EUR' }}</td>
+            <td data-label="Booked">{{ reservation.createdAt | date: 'medium' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

@@ -1,0 +1,57 @@
+<section class="register">
+  <h1>Create an account</h1>
+  <p class="register__hint">
+    Password: at least 8 characters, with an uppercase and a lowercase letter, a digit, and a symbol.
+  </p>
+
+  <form class="register__form" (ngSubmit)="submit()">
+    @if (error) {
+      <p class="status status--error">{{ error }}</p>
+    }
+
+    <div class="register__row">
+      <div class="field">
+        <label for="firstName">First name</label>
+        <input id="firstName" name="firstName" class="text-input" [(ngModel)]="form.firstName" required />
+      </div>
+      <div class="field">
+        <label for="lastName">Last name</label>
+        <input id="lastName" name="lastName" class="text-input" [(ngModel)]="form.lastName" required />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="userName">Username</label>
+      <input id="userName" name="userName" class="text-input" [(ngModel)]="form.userName"
+             autocomplete="username" required />
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" class="text-input" [(ngModel)]="form.email"
+             autocomplete="email" required />
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" class="text-input" [(ngModel)]="form.password"
+             autocomplete="new-password" required />
+    </div>
+
+    <div class="field">
+      <label for="cardNumber">Card number</label>
+      <input id="cardNumber" name="cardNumber" class="text-input" [(ngModel)]="form.cardNumber" required />
+    </div>
+
+    <div class="field">
+      <label for="phoneNumber">Phone number <span class="field__optional">(optional)</span></label>
+      <input id="phoneNumber" name="phoneNumber" class="text-input" [(ngModel)]="form.phoneNumber" />
+    </div>
+
+    <button type="submit" class="btn btn--primary" [disabled]="submitting">
+      {{ submitting ? 'Creating…' : 'Create account' }}
+    </button>
+  </form>
+
+  <p class="register__foot">Already have an account? <a routerLink="/login">Sign in</a></p>
+</section>

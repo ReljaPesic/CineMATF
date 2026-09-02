@@ -1,31 +1,43 @@
-.login {
-  max-width: 22rem;
-  margin: 3rem auto;
-  padding: 1.75rem;
+.register {
+  max-width: 34rem;
+  margin: 2.5rem auto;
+  padding: 1.75rem 2rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
 }
 
-.login h1 {
+.register h1 {
   margin: 0 0 0.25rem;
   font-size: 1.4rem;
 }
 
-.login__hint {
+.register__hint {
   margin: 0 0 1.5rem;
   font-size: 0.85rem;
   color: var(--text-muted);
 }
 
-.login__hint code {
-  color: var(--text);
-}
-
-.login__form {
+.register__form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.register__row {
+  display: flex;
+  gap: 1rem;
+}
+
+.register__row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 30rem) {
+  .register__row {
+    flex-direction: column;
+  }
 }
 
 .field {
@@ -37,6 +49,10 @@
 .field label {
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+.field__optional {
+  font-weight: 400;
 }
 
 .text-input {
@@ -88,13 +104,13 @@
   background: var(--primary-hover);
 }
 
-.login__foot {
+.register__foot {
   margin: 1.5rem 0 0;
   font-size: 0.9rem;
   color: var(--text-muted);
   text-align: center;
 }
 
-.login__foot a {
+.register__foot a {
   color: var(--primary);
 }

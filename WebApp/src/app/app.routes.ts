@@ -11,6 +11,11 @@ export const routes: Routes = [
       import('./auth/components/login/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'register',
+    loadComponent: () =>
+      import('./auth/components/register/register.component').then((m) => m.RegisterComponent),
+  },
+  {
     path: 'profile',
     loadChildren: () => import('./user/user.module').then((m) => m.UserModule),
     canActivate: [authGuard],
@@ -26,6 +31,11 @@ export const routes: Routes = [
   {
     path: 'screenings',
     loadChildren: () => import('./screening/screening.module').then((m) => m.ScreeningModule),
+  },
+  {
+    path: 'reservations',
+    loadChildren: () =>
+      import('./reservation/reservation.module').then((m) => m.ReservationModule),
   },
   // Unknown URL -> back to the list.
   { path: '**', redirectTo: 'screenings' },
