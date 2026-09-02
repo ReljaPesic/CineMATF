@@ -14,12 +14,15 @@ internal static class TestJwt
     private const string Audience = "CineMATF.Services";
     private const string SecretKey = "MyVerySecretMessageThatOnlyIKnow";
 
-    public static string CreateFor(Guid userId, string role = "User")
+    public const string AdminRole = "Admin";
+    public const string UserRole = "User";
+
+    public static string CreateFor(Guid userId, string role = UserRole)
     {
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new(ClaimTypes.Name, $"test-{role.ToLowerInvariant()}"),
+            new(ClaimTypes.Name, $"test-{role.ToLowerInvariant()}-{userId:N}"),
             new(ClaimTypes.Role, role),
         };
 
