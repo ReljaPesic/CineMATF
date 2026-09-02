@@ -61,7 +61,7 @@ describe('MovieService', () => {
     const req = httpMock.expectOne(`${baseUrl}?page=${response.page}&pageSize=${response.pageSize}`);
 
     // The service method should be GET
-    expect(req.request.method).toBe('GET')
+    expect(req.request.method).toBe('GET');
     // The service should default to page 1, pageSize 10.
     expect(req.request.params.get('page')).toBe('1');
     expect(req.request.params.get('pageSize')).toBe('10');
