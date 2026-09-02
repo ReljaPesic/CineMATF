@@ -5,6 +5,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { ALL_GENRES, Genre, Movie } from '../../models/movie.model';
 import { MovieService } from '../../services/movie.service';
 import { PagedResponse } from '../../../shared/models/shared.models';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-movie-list',
@@ -15,6 +16,7 @@ import { PagedResponse } from '../../../shared/models/shared.models';
 export class MovieListComponent implements OnInit {
 
   private readonly movieService = inject(MovieService);
+  readonly isAdmin = inject(AuthService).isAdmin;
 
   movies: Movie[] = [];
 

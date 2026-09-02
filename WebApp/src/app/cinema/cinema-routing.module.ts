@@ -5,14 +5,14 @@ import { CinemaListComponent } from './components/cinema-list/cinema-list.compon
 import { CinemaFormComponent } from './components/cinema-form/cinema-form.component';
 import { CinemaDetailComponent } from './components/cinema-detail/cinema-detail.component';
 import { HallSeatsComponent } from './components/hall-seats/hall-seats.component';
-
+import { adminGuard } from '../shared/guards/admin.guard';
 
 const routes: Routes = [
   { path: '', component: CinemaListComponent },
-  { path: 'new', component: CinemaFormComponent },
-  { path: ':id/edit', component: CinemaFormComponent },
+  { path: 'new', component: CinemaFormComponent, canActivate: [adminGuard] },
+  { path: ':id/edit', component: CinemaFormComponent, canActivate: [adminGuard] },
   { path: ':id', component: CinemaDetailComponent },
-  { path: ':id/halls/:hallId/seats', component: HallSeatsComponent}
+  { path: ':id/halls/:hallId/seats', component: HallSeatsComponent, canActivate: [adminGuard] }
 ]
 
 @NgModule({

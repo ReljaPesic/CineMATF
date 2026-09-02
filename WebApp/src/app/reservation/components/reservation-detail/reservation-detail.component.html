@@ -1,5 +1,5 @@
 <section class="reservation-detail">
-  <a class="back" routerLink="/reservations">‹ Back to reservations</a>
+  <a class="back" [routerLink]="backLink">‹ Back</a>
 
   @if (loading) {
     <p class="status">Loading…</p>

@@ -1,7 +1,9 @@
 <section class="screening-list">
   <header class="screening-list__header">
     <h1>Screenings</h1>
-    <a class="btn btn--primary" routerLink="new">+ New screening</a>
+    @if (isAdmin()) {
+      <a class="btn btn--primary" routerLink="new">+ New screening</a>
+    }
   </header>
 
   <div class="screening-list__filters">
@@ -56,7 +58,9 @@
           <th>Cinema</th>
           <th>Starts</th>
           <th>Format</th>
-          <th><span class="sr-only">Actions</span></th>
+          @if (isAdmin()) {
+            <th><span class="sr-only">Actions</span></th>
+          }
         </tr>
       </thead>
       <tbody>
@@ -68,19 +72,21 @@
             <td data-label="Cinema">{{ getCinemaName(screening.cinemaId) }}</td>
             <td data-label="Starts">{{ screening.startTime | date: 'medium' }}</td>
             <td data-label="Format">{{ formatLabels[screening.format] }}</td>
-            <td data-label="Actions">
-              <span class="actions-cell">
-                <a [routerLink]="[screening.id, 'edit']">Edit</a>
-                <button
-                  type="button"
-                  class="link-btn link-btn--danger"
-                  (click)="delete(screening)"
-                  [disabled]="deletingId === screening.id"
-                >
-                  {{ deletingId === screening.id ? 'Deleting…' : 'Delete' }}
-                </button>
-              </span>
-            </td>
+            @if (isAdmin()) {
+              <td data-label="Actions">
+                <span class="actions-cell">
+                  <a [routerLink]="[screening.id, 'edit']">Edit</a>
+                  <button
+                    type="button"
+                    class="link-btn link-btn--danger"
+                    (click)="delete(screening)"
+                    [disabled]="deletingId === screening.id"
+                  >
+                    {{ deletingId === screening.id ? 'Deleting…' : 'Delete' }}
+                  </button>
+                </span>
+              </td>
+            }
           </tr>
         }
       </tbody>

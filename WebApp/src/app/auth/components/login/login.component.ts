@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { AuthService } from '../../services/auth.service';
@@ -15,7 +15,6 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
 
   userName = '';
   password = '';
@@ -28,7 +27,7 @@ export class LoginComponent {
     this.submitting = true;
     this.error = null;
 
-    this.auth.login({ userName: this.userName, password: this.password }).subscribe({
+    this.auth.login({ userName: this.userName.trim(), password: this.password }).subscribe({
       next: () => {
         const returnUrl = '/screenings';
         this.router.navigateByUrl(returnUrl);

@@ -13,12 +13,14 @@
         <h1>{{ cinema.name }}</h1>
         <p class="cinema-detail__meta">{{ cinema.city }}</p>
       </div>
-      <span class="cinema-detail__actions">
-        <a class="btn" [routerLink]="['edit']">Edit</a>
-        <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
-          {{ deleting ? 'Deleting…' : 'Delete' }}
-        </button>
-      </span>
+      @if (isAdmin()) {
+        <span class="cinema-detail__actions">
+          <a class="btn" [routerLink]="['edit']">Edit</a>
+          <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
+            {{ deleting ? 'Deleting…' : 'Delete' }}
+          </button>
+        </span>
+      }
     </header>
 
     <h2>Halls</h2>
@@ -41,22 +43,25 @@
                 {{ hall.totalRows }} × {{ hall.seatsPerRow }} · {{ seatCount(hall) }} seats
               </span>
             </div>
-            <span class="hall-row__actions">
-              <a [routerLink]="['halls', hall.id, 'seats']">Edit</a>
-              <button
-                type="button"
-                class="link-btn link-btn--danger"
-                (click)="deleteHall(hall)"
-                [disabled]="deletingHallId === hall.id"
-              >
-                {{ deletingHallId === hall.id ? 'Deleting…' : 'Delete' }}
-              </button>
-            </span>
+            @if (isAdmin()) {
+              <span class="hall-row__actions">
+                <a [routerLink]="['halls', hall.id, 'seats']">Edit</a>
+                <button
+                  type="button"
+                  class="link-btn link-btn--danger"
+                  (click)="deleteHall(hall)"
+                  [disabled]="deletingHallId === hall.id"
+                >
+                  {{ deletingHallId === hall.id ? 'Deleting…' : 'Delete' }}
+                </button>
+              </span>
+            }
           </li>
         }
       </ul>
     }
 
+    @if (isAdmin()) {
     <form class="hall-form" [formGroup]="hallForm" (ngSubmit)="addHall()">
       <h3>Add a hall</h3>
       <div class="hall-form__grid">
@@ -86,5 +91,6 @@
         {{ addingHall ? 'Adding…' : '+ Add hall' }}
       </button>
     </form>
+    }
   }
 </section>

@@ -2,9 +2,11 @@
   <span class="app-header__brand">{{ title }}</span>
   <nav class="app-header__nav">
     <a routerLink="/screenings" routerLinkActive="active">Screenings</a>
-    <a routerLink="/reservations" routerLinkActive="active">Reservations</a>
     <a routerLink="/movies" routerLinkActive="active">Movies</a>
-    <a routerLink="/cinemas" routerLinkActive="active">Cinemas</a>
+    @if (isAdmin()) {
+      <a routerLink="/cinemas" routerLinkActive="active">Cinemas</a>
+      <a routerLink="/reservations" routerLinkActive="active">Reservations</a>
+    }
   </nav>
 
   <div class="app-header__auth">

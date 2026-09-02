@@ -29,8 +29,9 @@ export interface RefreshTokenRequest {
 
 // The bits of the signed-in user we keep around, decoded from the JWT.
 export interface CurrentUser {
-  id: string; // the "sub" claim = Identity user id (used as reservation userId)
+  id: string; 
   username: string;
   email: string | null;
   roles: string[];
+  cardNumber: string | null;
 }

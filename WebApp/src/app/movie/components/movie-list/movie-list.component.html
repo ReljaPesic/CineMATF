@@ -1,7 +1,9 @@
 <section class="movie-list">
   <header class="movie-list__header">
     <h1>Movies</h1>
-    <a class="btn btn--primary" routerLink="new">+ New movie</a>
+    @if (isAdmin()) {
+      <a class="btn btn--primary" routerLink="new">+ New movie</a>
+    }
   </header>
 
   <div class="movie-list__filters">
@@ -46,7 +48,9 @@
           <th>Duration</th>
           <th>Rating</th>
           <th>Released</th>
-          <th><span class="sr-only">Actions</span></th>
+          @if (isAdmin()) {
+            <th><span class="sr-only">Actions</span></th>
+          }
         </tr>
       </thead>
       <tbody>
@@ -63,19 +67,21 @@
             <td data-label="Duration">{{ movie.durationMinutes }} min</td>
             <td data-label="Rating">{{ movie.rating | number: '1.1-1' }}</td>
             <td data-label="Released">{{ movie.releaseDate | date: 'mediumDate' }}</td>
-            <td data-label="Actions">
-              <span class="actions-cell">
-                <a [routerLink]="[movie.id, 'edit']">Edit</a>
-                <button
-                  type="button"
-                  class="link-btn link-btn--danger"
-                  (click)="delete(movie)"
-                  [disabled]="deletingId === movie.id"
-                >
-                  {{ deletingId === movie.id ? 'Deleting…' : 'Delete' }}
-                </button>
-              </span>
-            </td>
+            @if (isAdmin()) {
+              <td data-label="Actions">
+                <span class="actions-cell">
+                  <a [routerLink]="[movie.id, 'edit']">Edit</a>
+                  <button
+                    type="button"
+                    class="link-btn link-btn--danger"
+                    (click)="delete(movie)"
+                    [disabled]="deletingId === movie.id"
+                  >
+                    {{ deletingId === movie.id ? 'Deleting…' : 'Delete' }}
+                  </button>
+                </span>
+              </td>
+            }
           </tr>
         }
       </tbody>

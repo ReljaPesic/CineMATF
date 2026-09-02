@@ -4,54 +4,193 @@
     Password: at least 8 characters, with an uppercase and a lowercase letter, a digit, and a symbol.
   </p>
 
-  <form class="register__form" (ngSubmit)="submit()">
+  <form class="register__form" [formGroup]="registerForm" (ngSubmit)="submit()">
     @if (error) {
       <p class="status status--error">{{ error }}</p>
     }
-
     <div class="register__row">
       <div class="field">
         <label for="firstName">First name</label>
-        <input id="firstName" name="firstName" class="text-input" [(ngModel)]="form.firstName" required />
+      <input 
+        id="firstName" 
+        type="text" 
+        class="text-input" 
+        formControlName="firstName"
+        [class.is-invalid]="firstName?.invalid && firstName?.touched"
+        autocomplete="given-name"
+        placeholder="Enter your first name"
+      />
+      @if (firstName?.invalid && firstName?.touched) {
+        <div class="error-messages">
+          @if (firstName?.hasError('required')) {
+            <p class="status status--error">First name is required</p>
+          }
+          @if (firstName?.hasError('minlength')) {
+            <p class="status status--error">First name must be at least 2 characters</p>
+          }
+      </div>
+      }
+    </div>
+
+    <div class="field">
+      <label for="lastName">Last name</label>
+      <input 
+        id="lastName" 
+        type="text" 
+        class="text-input" 
+        formControlName="lastName"
+        [class.is-invalid]="lastName?.invalid && lastName?.touched"
+        autocomplete="family-name"
+        placeholder="Enter your last name"
+      />
+      @if (lastName?.invalid && lastName?.touched) {
+        <div class="error-messages">
+          @if (lastName?.hasError('required')) {
+            <p class="status status--error">Last name is required</p>
+          }
+          @if (lastName?.hasError('minlength')) {
+            <p class="status status--error">Last name must be at least 2 characters</p>
+          }
+    </div>
+      }
+    </div>
+  </div>
+      <div class="field">
+    <label for="userName">Username</label>
+    <input 
+      id="userName" 
+      type="text" 
+      class="text-input" 
+      formControlName="userName"
+      [class.is-invalid]="userName?.invalid && userName?.touched"
+      autocomplete="username"
+      placeholder="Choose a username"
+    />
+    @if (userName?.invalid && userName?.touched) {
+      <div class="error-messages">
+        @if (userName?.hasError('required')) {
+          <p class="status status--error">Username is required</p>
+        }
+        @if (userName?.hasError('minlength')) {
+          <p class="status status--error">Username must be at least 3 characters</p>
+        }
+      </div>
+    }
       </div>
       <div class="field">
-        <label for="lastName">Last name</label>
-        <input id="lastName" name="lastName" class="text-input" [(ngModel)]="form.lastName" required />
+    <label for="email">Email</label>
+    <input 
+      id="email" 
+      type="email" 
+      class="text-input" 
+      formControlName="email"
+      [class.is-invalid]="email?.invalid && email?.touched"
+      autocomplete="email"
+      placeholder="Enter your email address"
+    />
+    @if (email?.invalid && email?.touched) {
+      <div class="error-messages">
+        @if (email?.hasError('required')) {
+          <p class="status status--error">Email is required</p>
+        }
+        @if (email?.hasError('email')) {
+          <p class="status status--error">Please enter a valid email address</p>
+        }
       </div>
+    }
     </div>
-
-    <div class="field">
-      <label for="userName">Username</label>
-      <input id="userName" name="userName" class="text-input" [(ngModel)]="form.userName"
-             autocomplete="username" required />
-    </div>
-
-    <div class="field">
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" class="text-input" [(ngModel)]="form.email"
-             autocomplete="email" required />
-    </div>
-
+  <div class="register__row">
     <div class="field">
       <label for="password">Password</label>
-      <input id="password" name="password" type="password" class="text-input" [(ngModel)]="form.password"
-             autocomplete="new-password" required />
+      <input 
+        id="password" 
+        type="password" 
+        class="text-input" 
+        formControlName="password"
+        [class.is-invalid]="password?.invalid && password?.touched"
+        autocomplete="new-password"
+        placeholder="Create a password"
+      />
+      @if (password?.invalid && password?.touched) {
+        <div class="error-messages">
+          @if (password?.hasError('required')) {
+            <p class="status status--error">Password is required</p>
+          }
+          @if (password?.hasError('minlength')) {
+            <p class="status status--error">Password must be at least 6 characters</p>
+          }
+        </div>
+      }
     </div>
 
     <div class="field">
-      <label for="cardNumber">Card number</label>
-      <input id="cardNumber" name="cardNumber" class="text-input" [(ngModel)]="form.cardNumber" required />
+      <label for="confirmPassword">Confirm password</label>
+      <input 
+        id="confirmPassword" 
+        type="password" 
+        class="text-input" 
+        formControlName="confirmPassword"
+        [class.is-invalid]="
+          (confirmPassword?.invalid && confirmPassword?.touched) || 
+          (registerForm?.hasError('passwordMismatch') && confirmPassword.touched)
+        "
+        autocomplete="new-password"
+        placeholder="Confirm your password"
+      />
+      @if (confirmPassword?.touched) {
+        <div class="error-messages">
+          @if (confirmPassword?.hasError('required')) {
+            <p class="status status--error">Please confirm your password</p>
+          }
+          @if (registerForm?.hasError('passwordMismatch')) {
+            <p class="status status--error">Passwords do not match</p>
+          }
+        </div>
+      }
+    </div>
+  </div>
+  <div class="field">
+    <label for="cardNumber">Card number</label>
+    <input 
+      id="cardNumber" 
+      type="text" 
+      class="text-input" 
+      formControlName="cardNumber"
+      [class.is-invalid]="cardNumber?.invalid && cardNumber?.touched"
+      placeholder="1234 5678 9012 3456"
+      maxlength="19"
+    />
+    @if (cardNumber?.invalid && cardNumber?.touched) {
+      <div class="error-messages">
+        @if (cardNumber?.hasError('required')) {
+          <p class="status status--error">Card number is required</p>
+        }
+        @if (cardNumber?.hasError('pattern')) {
+          <p class="status status--error">Enter a valid 16-digit card number</p>
+        }
+      </div>
+    }
     </div>
 
-    <div class="field">
-      <label for="phoneNumber">Phone number <span class="field__optional">(optional)</span></label>
-      <input id="phoneNumber" name="phoneNumber" class="text-input" [(ngModel)]="form.phoneNumber" />
-    </div>
-
+  <div class="field">
+    <label for="phoneNumber">
+      Phone number <span class="field__optional">(optional)</span>
+    </label>
+    <input 
+      id="phoneNumber" 
+      type="tel" 
+      class="text-input" 
+      formControlName="phoneNumber"
+      autocomplete="tel"
+      placeholder="Enter your phone number (optional)"
+    />
+  </div>
     <button type="submit" class="btn btn--primary" [disabled]="submitting">
       {{ submitting ? 'Creating…' : 'Create account' }}
     </button>
   </form>
 
-  <p class="register__foot">Already have an account? <a routerLink="/login">Sign in</a></p>
+  <p class="register__foot">
+    Already have an account? <a routerLink="/login">Sign in</a>
+  </p>
 </section>

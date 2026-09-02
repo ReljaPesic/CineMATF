@@ -7,11 +7,12 @@ import { LocalStorageService } from '../../shared/local_storage/local-storage.se
 import { LocalStorageKeys } from '../../shared/local_storage/local_storage_keys';
 import { AuthResponse, CurrentUser, LoginRequest, RegisterRequest } from '../models/auth.model';
 
-// Claim URIs that Identity.API's TokenService writes into the JWT
+// Claim keys that Identity.API's TokenService writes into the JWT.
 const NAME_CLAIM = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name';
 const NAMEID_CLAIM = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier';
 const EMAIL_CLAIM = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
 const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
+const CARD_CLAIM = 'cardNumber';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -81,8 +82,7 @@ export class AuthService {
     this.currentUser.set(user);
   }
 
-  // Reads the JWT payload without verifying the signature - the APIs do that.
-  // Returns null for a missing, malformed, or expired token.
+  // Reads the JWT payload without verifying the signature 
   private decode(token: string | null): CurrentUser | null {
     if (!token) return null;
     try {
@@ -95,13 +95,11 @@ export class AuthService {
 
       const rawRoles = payload[ROLE_CLAIM] ?? [];
       return {
-        // "sub" is the standard spot for the user id; nameidentifier is the
-        // fallback. Identity.API must put one of them in the token, otherwise
-        // there is no id to book reservations with.
         id: payload.sub ?? payload[NAMEID_CLAIM] ?? '',
         username: payload[NAME_CLAIM] ?? payload.sub ?? '',
         email: payload.email ?? payload[EMAIL_CLAIM] ?? null,
         roles: Array.isArray(rawRoles) ? rawRoles : [rawRoles],
+        cardNumber: payload[CARD_CLAIM] || null,
       };
     } catch {
       return null;

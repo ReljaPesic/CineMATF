@@ -19,10 +19,21 @@
         <header class="movie-detail__header">
           <h1>{{ movie.title }}</h1>
           <span class="movie-detail__actions">
-            <a class="btn" [routerLink]="['edit']">Edit</a>
-            <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
-              {{ deleting ? 'Deleting…' : 'Delete' }}
-            </button>
+            @if (isLoggedIn() && !isAdmin()) {
+              <a
+                class="btn btn--primary"
+                [routerLink]="['/reservations/new']"
+                [queryParams]="{ movieId: movie.id }"
+              >
+                Book seats
+              </a>
+            }
+            @if (isAdmin()) {
+              <a class="btn" [routerLink]="['edit']">Edit</a>
+              <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
+                {{ deleting ? 'Deleting…' : 'Delete' }}
+              </button>
+            }
           </span>
         </header>
 

@@ -12,7 +12,9 @@
     @if (loadingScreenings) {
       <p class="status">Loading screenings…</p>
     } @else if (screenings.length === 0) {
-      <p class="status">No upcoming screenings to book.</p>
+      <p class="status">
+        {{ filterMovieTitle ? 'No upcoming screenings for this movie.' : 'No upcoming screenings to book.' }}
+      </p>
     } @else {
       <select
         id="screening"
@@ -61,11 +63,30 @@
         }
       </div>
 
+      @if (selectedCount > 0) {
+        <div class="payment">
+          <div class="field">
+            <label for="card">Card number</label>
+            <input
+              id="card"
+              name="card"
+              class="filter-input"
+              placeholder="0000 0000 0000 0000"
+              [(ngModel)]="cardNumber"
+              autocomplete="off"
+            />
+          </div>
+          <p class="payment__note">
+            Prefilled from your account — demo only, no real payment is taken.
+          </p>
+        </div>
+      }
+
       <div class="booking-bar">
         <span class="booking-bar__summary">
           {{ selectedCount }} seat{{ selectedCount === 1 ? '' : 's' }} selected
           @if (selectedCount > 0) {
-            — est. {{ estimatedTotal | currency: 'EUR' }}
+            — {{ estimatedTotal | currency: 'EUR' }}
           }
         </span>
         <button
@@ -74,7 +95,7 @@
           [disabled]="selectedCount === 0 || submitting"
           (click)="submit()"
         >
-          {{ submitting ? 'Reserving…' : 'Reserve seats' }}
+          {{ submitting ? 'Processing…' : 'Buy tickets' }}
         </button>
       </div>
     } @else {

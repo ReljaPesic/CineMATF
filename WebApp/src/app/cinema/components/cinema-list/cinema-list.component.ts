@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { PagedResponse } from '../../../shared/models/shared.models';
 import { ALL_CITIES, Cinema, City } from '../../models/cinema.model';
 import { CinemaService } from '../../services/cinema.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-cinema-list',
@@ -12,6 +13,7 @@ import { CinemaService } from '../../services/cinema.service';
 })
 export class CinemaListComponent implements OnInit {
   private readonly cinemaService = inject(CinemaService);
+  readonly isAdmin = inject(AuthService).isAdmin;
 
   cinemas: Cinema[] = [];
 
