@@ -1,5 +1,7 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Cinema.API.Authorization;
 using Cinema.API.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -11,6 +13,9 @@ namespace Cinema.API.Tests.Integration;
 public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<CinemaApiFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
+
+    private void AuthenticateAs(string role) =>
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestJwt.CreateFor(role));
 
     [Fact]
     public async Task GetCinemas_ReturnsEmptyList_WhenNoCinemas()
@@ -33,6 +38,7 @@ public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<Cin
     [Fact]
     public async Task CreateCinema_ReturnsCreated_WhenValidRequest()
     {
+        AuthenticateAs(Roles.Admin);
         var request = new { name = "CineMax", city = "Beograd" };
 
         var response = await _client.PostAsJsonAsync("/api/v1/cinema", request);
@@ -43,6 +49,7 @@ public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<Cin
     [Fact]
     public async Task CreateCinema_ReturnsBadRequest_WhenInvalidName()
     {
+        AuthenticateAs(Roles.Admin);
         var request = new { name = "", city = "Beograd" };
 
         var response = await _client.PostAsJsonAsync("/api/v1/cinema", request);
@@ -51,8 +58,30 @@ public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<Cin
     }
 
     [Fact]
+    public async Task CreateCinema_ReturnsUnauthorized_WhenNoToken()
+    {
+        var request = new { name = "CineMax", city = "Beograd" };
+
+        var response = await _client.PostAsJsonAsync("/api/v1/cinema", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task CreateCinema_ReturnsForbidden_WhenCallerIsNotAdmin()
+    {
+        AuthenticateAs("User");
+        var request = new { name = "CineMax", city = "Beograd" };
+
+        var response = await _client.PostAsJsonAsync("/api/v1/cinema", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task UpdateCinema_ReturnsNotFound_WhenNotExists()
     {
+        AuthenticateAs(Roles.Admin);
         var id = Guid.NewGuid();
         var request = new { name = "Updated Cinema", city = "Beograd" };
 
@@ -62,13 +91,37 @@ public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<Cin
     }
 
     [Fact]
+    public async Task UpdateCinema_ReturnsForbidden_WhenCallerIsNotAdmin()
+    {
+        AuthenticateAs("User");
+        var id = Guid.NewGuid();
+        var request = new { name = "Updated Cinema", city = "Beograd" };
+
+        var response = await _client.PutAsJsonAsync($"/api/v1/cinema/{id}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task DeleteCinema_ReturnsNotFound_WhenNotExists()
     {
+        AuthenticateAs(Roles.Admin);
         var id = Guid.NewGuid();
 
         var response = await _client.DeleteAsync($"/api/v1/cinema/{id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteCinema_ReturnsForbidden_WhenCallerIsNotAdmin()
+    {
+        AuthenticateAs("User");
+        var id = Guid.NewGuid();
+
+        var response = await _client.DeleteAsync($"/api/v1/cinema/{id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]
