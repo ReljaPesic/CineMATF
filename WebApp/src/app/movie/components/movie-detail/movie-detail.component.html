@@ -1,0 +1,56 @@
+<section class="movie-detail">
+  <a class="back" routerLink="/movies">‹ Back to movies</a>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (notFound) {
+    <p class="status status--error">Movie not found.</p>
+  } @else if (error) {
+    <p class="status status--error">{{ error }}</p>
+  } @else if (movie) {
+    <div class="movie-detail__top">
+      <app-movie-poster
+        class="movie-detail__poster"
+        [url]="movie.coverImage"
+        [title]="movie.title"
+      />
+
+      <div class="movie-detail__info">
+        <header class="movie-detail__header">
+          <h1>{{ movie.title }}</h1>
+          <span class="movie-detail__actions">
+            <a class="btn" [routerLink]="['edit']">Edit</a>
+            <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
+              {{ deleting ? 'Deleting…' : 'Delete' }}
+            </button>
+          </span>
+        </header>
+
+        <p class="movie-detail__meta">
+          {{ movie.durationMinutes }} min
+          · {{ movie.rating | number: '1.1-1' }} / 10
+          · released {{ movie.releaseDate | date: 'longDate' }}
+        </p>
+
+        <div class="chips">
+          @for (genre of movie.genres; track genre) {
+            <span class="chip">{{ genre }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <p class="movie-detail__description">{{ movie.description }}</p>
+
+    <h2>Cast</h2>
+    @if (movie.actors.length) {
+      <ul class="cast">
+        @for (actor of movie.actors; track actor.firstName + actor.lastName) {
+          <li>{{ actor.firstName }} {{ actor.lastName }}</li>
+        }
+      </ul>
+    } @else {
+      <p class="status">No cast listed.</p>
+    }
+  }
+</section>

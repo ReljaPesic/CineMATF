@@ -1,0 +1,89 @@
+<section class="screening-list">
+  <header class="screening-list__header">
+    <h1>Screenings</h1>
+    <a class="btn btn--primary" routerLink="new">+ New screening</a>
+  </header>
+
+  <div class="screening-list__filters">
+    <select
+      class="filter-input"
+      [(ngModel)]="selectedMovieId"
+      (ngModelChange)="applyFilters()"
+      aria-label="Filter by movie"
+    >
+      <option value="">All movies</option>
+      @for (movie of movies; track movie.id) {
+        <option [value]="movie.id">{{ movie.title }}</option>
+      }
+    </select>
+
+    <select
+      class="filter-input"
+      [(ngModel)]="selectedCinemaId"
+      (ngModelChange)="applyFilters()"
+      aria-label="Filter by cinema"
+    >
+      <option value="">All cinemas</option>
+      @for (cinema of cinemas; track cinema.id) {
+        <option [value]="cinema.id">{{ cinema.name }}</option>
+      }
+    </select>
+
+    <input
+      type="date"
+      class="filter-input"
+      [(ngModel)]="selectedDate"
+      (ngModelChange)="applyFilters()"
+      aria-label="Filter by date"
+    />
+
+    @if (hasFilter) {
+      <button type="button" class="link-btn" (click)="clearFilters()">Clear</button>
+    }
+  </div>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (error) {
+    <p class="status status--error">{{ error }}</p>
+  } @else if (screenings.length === 0) {
+    <p class="status">No screenings found.</p>
+  } @else {
+    <table class="screening-table">
+      <thead>
+        <tr>
+          <th>Movie</th>
+          <th>Cinema</th>
+          <th>Starts</th>
+          <th>Format</th>
+          <th><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (screening of screenings; track screening.id) {
+          <tr>
+            <td data-label="Movie">
+              <a [routerLink]="[screening.id]">{{ getMovieTitle(screening.movieId) }}</a>
+            </td>
+            <td data-label="Cinema">{{ getCinemaName(screening.cinemaId) }}</td>
+            <td data-label="Starts">{{ screening.startTime | date: 'medium' }}</td>
+            <td data-label="Format">{{ formatLabels[screening.format] }}</td>
+            <td data-label="Actions">
+              <span class="actions-cell">
+                <a [routerLink]="[screening.id, 'edit']">Edit</a>
+                <button
+                  type="button"
+                  class="link-btn link-btn--danger"
+                  (click)="delete(screening)"
+                  [disabled]="deletingId === screening.id"
+                >
+                  {{ deletingId === screening.id ? 'Deleting…' : 'Delete' }}
+                </button>
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

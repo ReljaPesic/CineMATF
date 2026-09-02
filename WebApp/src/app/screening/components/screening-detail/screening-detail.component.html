@@ -1,0 +1,58 @@
+<section class="screening-detail">
+  <a class="back" routerLink="/screenings">‹ Back to screenings</a>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (notFound) {
+    <p class="status status--error">Screening not found.</p>
+  } @else if (error) {
+    <p class="status status--error">{{ error }}</p>
+  } @else if (screening) {
+    <header class="screening-detail__header">
+      <div class="screening-detail__title">
+        <app-movie-poster
+          class="screening-detail__poster"
+          [url]="coverImage"
+          [title]="movieTitle"
+        />
+        <div>
+          <h1 class="screening-detail__movie">
+            @if (movieId) {
+              <a [routerLink]="['/movies', movieId]">{{ movieTitle }}</a>
+            } @else {
+              {{ movieTitle }}
+            }
+          </h1>
+          <p class="screening-detail__meta">
+            {{ screening.startTime | date: 'full' }}
+          </p>
+        </div>
+      </div>
+      <span class="screening-detail__actions">
+        <a class="btn" [routerLink]="['edit']">Edit</a>
+        <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
+          {{ deleting ? 'Deleting…' : 'Delete' }}
+        </button>
+      </span>
+    </header>
+
+    <dl class="facts">
+      <div>
+        <dt>Cinema</dt>
+        <dd>{{ cinemaName }}</dd>
+      </div>
+      <div>
+        <dt>Hall</dt>
+        <dd>{{ hallName }}</dd>
+      </div>
+      <div>
+        <dt>Format</dt>
+        <dd>{{ formatLabels[screening.format] }}</dd>
+      </div>
+      <div>
+        <dt>Starts</dt>
+        <dd>{{ screening.startTime | date: 'medium' }}</dd>
+      </div>
+    </dl>
+  }
+</section>

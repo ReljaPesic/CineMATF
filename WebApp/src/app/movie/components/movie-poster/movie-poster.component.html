@@ -1,0 +1,17 @@
+@if (url && !failed) {
+
+  <img
+    class="poster__img"
+    [src]="url"
+    [alt]="title + ' poster'"
+    (error)="failed = true"
+    loading="lazy"
+  />
+} @else {
+  <img
+    class="default__img"
+    src="/images/missing_image.png"
+    [alt]="title + ' poster unavailable'"
+    loading="lazy"
+  />
+}

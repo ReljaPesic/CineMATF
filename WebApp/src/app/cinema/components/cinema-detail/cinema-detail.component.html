@@ -1,0 +1,90 @@
+<section class="cinema-detail">
+  <a class="back" routerLink="/cinemas">‹ Back to cinemas</a>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (notFound) {
+    <p class="status status--error">Cinema not found.</p>
+  } @else if (error) {
+    <p class="status status--error">{{ error }}</p>
+  } @else if (cinema) {
+    <header class="cinema-detail__header">
+      <div>
+        <h1>{{ cinema.name }}</h1>
+        <p class="cinema-detail__meta">{{ cinema.city }}</p>
+      </div>
+      <span class="cinema-detail__actions">
+        <a class="btn" [routerLink]="['edit']">Edit</a>
+        <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
+          {{ deleting ? 'Deleting…' : 'Delete' }}
+        </button>
+      </span>
+    </header>
+
+    <h2>Halls</h2>
+
+    @if (hallsError) {
+      <p class="status status--error">{{ hallsError }}</p>
+    }
+
+    @if (hallsLoading) {
+      <p class="status">Loading halls…</p>
+    } @else if (halls.length === 0) {
+      <p class="status">No halls yet.</p>
+    } @else {
+      <ul class="hall-list">
+        @for (hall of halls; track hall.id) {
+          <li class="hall-row">
+            <div class="hall-row__info">
+              <span class="hall-row__name">{{ hall.name }}</span>
+              <span class="hall-row__dims">
+                {{ hall.totalRows }} × {{ hall.seatsPerRow }} · {{ seatCount(hall) }} seats
+              </span>
+            </div>
+            <span class="hall-row__actions">
+              <a [routerLink]="['halls', hall.id, 'seats']">Edit</a>
+              <button
+                type="button"
+                class="link-btn link-btn--danger"
+                (click)="deleteHall(hall)"
+                [disabled]="deletingHallId === hall.id"
+              >
+                {{ deletingHallId === hall.id ? 'Deleting…' : 'Delete' }}
+              </button>
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    <form class="hall-form" [formGroup]="hallForm" (ngSubmit)="addHall()">
+      <h3>Add a hall</h3>
+      <div class="hall-form__grid">
+        <div class="field">
+          <label for="hallName">Name</label>
+          <input id="hallName" type="text" formControlName="name" />
+          @if (hallForm.controls.name.touched && hallForm.controls.name.invalid) {
+            <small class="err">Name is required (max 50).</small>
+          }
+        </div>
+        <div class="field">
+          <label for="totalRows">Rows</label>
+          <input id="totalRows" type="number" formControlName="totalRows" />
+          @if (hallForm.controls.totalRows.touched && hallForm.controls.totalRows.invalid) {
+            <small class="err">1–100.</small>
+          }
+        </div>
+        <div class="field">
+          <label for="seatsPerRow">Seats per row</label>
+          <input id="seatsPerRow" type="number" formControlName="seatsPerRow" />
+          @if (hallForm.controls.seatsPerRow.touched && hallForm.controls.seatsPerRow.invalid) {
+            <small class="err">1–50.</small>
+          }
+        </div>
+      </div>
+      <button type="submit" class="btn btn--primary" [disabled]="addingHall">
+        {{ addingHall ? 'Adding…' : '+ Add hall' }}
+      </button>
+    </form>
+  }
+</section>

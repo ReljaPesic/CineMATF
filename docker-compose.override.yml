@@ -27,14 +27,30 @@ services:
     env_file:
       - .env
     environment:
-      - ConnectionStrings__Default=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USERNAME};Password=${DB_PASSWORD}
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=cinemadb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8000:8080"
     depends_on:
-      - cinemadb
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - cinema-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  webapp:
+    build:
+      context: ./WebApp
+      dockerfile: Dockerfile
+      target: build
+    container_name: webapp
+    command: npm start -- --host 0.0.0.0 --poll 2000
+    volumes:
+      - ./WebApp:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - cinema-network
+

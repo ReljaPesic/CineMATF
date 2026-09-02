@@ -19,8 +19,11 @@ public class TokenService(IOptions<JwtSettings> jwtOptions) : ITokenService
     public string CreateAccessToken(User user, IEnumerable<string> roles)
     {
         // Standard JWT claims describing the subject of the token.
+        // "sub" carries the user id - consumers (e.g. the SPA) use it to know
+        // who is signed in without a second round-trip.
         var claims = new List<Claim>
         {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
             new Claim(ClaimTypes.Email, user.Email  ?? string.Empty),
         };

@@ -1,0 +1,112 @@
+<section class="movie-form">
+  <a class="back" (click)="cancel()">‹ Cancel</a>
+
+  <h1>{{ isEdit ? 'Edit movie' : 'New movie' }}</h1>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else {
+    @if (error) {
+      <p class="status status--error">{{ error }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+      <div class="field field--wide">
+        <label for="title">Title</label>
+        <input id="title" type="text" formControlName="title" />
+        @if (form.controls.title.touched && form.controls.title.invalid) {
+          <small class="err">Title is required (max 200 characters).</small>
+        }
+      </div>
+
+      <div class="field field--wide">
+        <label for="description">Description</label>
+        <textarea id="description" rows="4" formControlName="description"></textarea>
+        @if (form.controls.description.touched && form.controls.description.invalid) {
+          <small class="err">Description is required (max 2000 characters).</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="durationMinutes">Duration (minutes)</label>
+        <input id="durationMinutes" type="number" formControlName="durationMinutes" />
+        @if (form.controls.durationMinutes.touched && form.controls.durationMinutes.invalid) {
+          <small class="err">Enter a duration between 1 and 1000.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="releaseDate">Release date</label>
+        <input id="releaseDate" type="date" formControlName="releaseDate" />
+        @if (form.controls.releaseDate.touched && form.controls.releaseDate.invalid) {
+          <small class="err">Release date is required.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="rating">Rating (0–10)</label>
+        <input id="rating" type="number" step="0.1" formControlName="rating" />
+        @if (form.controls.rating.touched && form.controls.rating.invalid) {
+          <small class="err">Rating must be between 0 and 10.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="coverImage">Cover image URL</label>
+        <input id="coverImage" type="url" formControlName="coverImage" placeholder="https://…" />
+      </div>
+
+      <div class="field field--wide">
+        <span class="label">Genres</span>
+        <div class="checkbox-grid">
+          @for (genre of genres; track genre) {
+            <label class="checkbox">
+              <input
+                type="checkbox"
+                [checked]="isGenreSelected(genre)"
+                (change)="toggleGenre(genre)"
+              />
+              {{ genre }}
+            </label>
+          }
+        </div>
+        @if (form.controls.genres.touched && form.controls.genres.invalid) {
+          <small class="err">Pick at least one genre.</small>
+        }
+      </div>
+
+      <div class="field field--wide" formArrayName="actors">
+        <span class="label">Cast</span>
+        @for (actor of actors.controls; track actor; let i = $index) {
+          <div class="actor-row" [formGroupName]="i">
+            <input type="text" formControlName="firstName" placeholder="First name" />
+            <input type="text" formControlName="lastName" placeholder="Last name" />
+            <button type="button" class="btn btn--ghost" (click)="removeActor(i)" [disabled]="actors.length === 1">
+              Remove
+            </button>
+          </div>
+        }
+        <button type="button" class="btn btn--ghost" (click)="addActor()">+ Add actor</button>
+         @if(form.controls.actors.touched){
+               <small class="err">Pick at least one actress or actor.</small>
+          }
+      </div>
+
+      <div class="preview field--wide">
+        <app-movie-poster
+          class="preview__poster"
+          [url]="coverPreview"
+          [title]="form.controls.title.value || 'Preview'"
+        />
+        <span class="preview__hint">Cover preview</span>
+      </div>
+
+      <div class="actions field--wide">
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          {{ saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create movie' }}
+        </button>
+        <button type="button" class="btn" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  }
+</section>

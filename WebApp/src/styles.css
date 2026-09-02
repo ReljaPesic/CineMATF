@@ -1,1 +1,34 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles — applied app-wide (listed in angular.json "styles"). */
+
+:root {
+  --bg: #0f2430; /* page background */
+  --surface: #163240; /* cards, table body, inputs */
+  --surface-hover: #1e4356; /* row / button hover */
+  --border: #2c4a5a; /* dividers, input borders */
+
+  --text: #e7eef2; /* primary text */
+  --text-muted: #9db1bc; /* secondary text, table headers */
+
+  --primary: #F34194; /* links, primary buttons */
+  --primary-hover: #C1005A;
+  --on-primary: #06222f; /* text on a --primary fill */
+
+  --danger: #d90368; /* errors */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}

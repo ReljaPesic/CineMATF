@@ -40,12 +40,21 @@ public class UserController : ControllerBase
     }
 
     //   GET /api/v1/User/{username}
-    [Authorize(Roles = Roles.Admin)]
+    // An Admin can view anyone; a plain User can view only their own account
+    // (same rule as PUT below).
+    [Authorize(Roles = Roles.Admin + "," + Roles.User)]
     [HttpGet("{username}")]
     [ProducesResponseType(typeof(UserDetails), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserDetails>> GetUser(string username)
     {
+        if (!User.IsInRole(Roles.Admin) &&
+            !string.Equals(User.Identity?.Name, username, StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
         var user = await _userManager.Users.FirstOrDefaultAsync(u => u.UserName == username);
         if (user is null)
         {

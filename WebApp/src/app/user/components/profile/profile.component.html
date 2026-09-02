@@ -1,0 +1,56 @@
+<section class="profile">
+  <h1>My profile</h1>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else {
+    <dl class="profile__meta">
+      <div>
+        <dt>Username</dt>
+        <dd>{{ username }}</dd>
+      </div>
+      <div>
+        <dt>Role{{ roles.length === 1 ? '' : 's' }}</dt>
+        <dd>{{ roles.join(', ') || '—' }}</dd>
+      </div>
+    </dl>
+
+    <form class="profile__form" (ngSubmit)="save()">
+      @if (error) {
+        <p class="status status--error">{{ error }}</p>
+      }
+      @if (saved) {
+        <p class="status status--ok">Saved.</p>
+      }
+
+      <div class="field">
+        <label for="firstName">First name</label>
+        <input id="firstName" name="firstName" class="text-input" [(ngModel)]="form.firstName" required />
+      </div>
+
+      <div class="field">
+        <label for="lastName">Last name</label>
+        <input id="lastName" name="lastName" class="text-input" [(ngModel)]="form.lastName" required />
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" class="text-input" [(ngModel)]="form.email" required />
+      </div>
+
+      <div class="field">
+        <label for="cardNumber">Card number</label>
+        <input id="cardNumber" name="cardNumber" class="text-input" [(ngModel)]="form.cardNumber" required />
+      </div>
+
+      <div class="field">
+        <label for="phoneNumber">Phone number <span class="field__optional">(optional)</span></label>
+        <input id="phoneNumber" name="phoneNumber" class="text-input" [(ngModel)]="form.phoneNumber" />
+      </div>
+
+      <button type="submit" class="btn btn--primary" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Save changes' }}
+      </button>
+    </form>
+  }
+</section>

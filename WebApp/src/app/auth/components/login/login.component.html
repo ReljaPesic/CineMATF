@@ -1,0 +1,41 @@
+<section class="login">
+  <h1>Sign in</h1>
+  <p class="login__hint">Seeded accounts: <code>alice</code>, <code>bob</code>, <code>admin</code> — password <code>Passw0rd!</code></p>
+
+  <form class="login__form" (ngSubmit)="submit()">
+    @if (error) {
+      <p class="status status--error">{{ error }}</p>
+    }
+
+    <div class="field">
+      <label for="userName">Username</label>
+      <input
+        id="userName"
+        name="userName"
+        class="text-input"
+        [(ngModel)]="userName"
+        autocomplete="username"
+        required
+      />
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        class="text-input"
+        [(ngModel)]="password"
+        autocomplete="current-password"
+        required
+      />
+    </div>
+
+    <button type="submit" class="btn btn--primary" [disabled]="submitting || !userName || !password">
+      {{ submitting ? 'Signing in…' : 'Sign in' }}
+    </button>
+  </form>
+
+  <p class="login__foot">No account yet? <a routerLink="/register">Create one</a></p>
+</section>

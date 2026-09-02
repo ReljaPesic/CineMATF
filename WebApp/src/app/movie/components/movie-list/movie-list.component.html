@@ -1,0 +1,92 @@
+<section class="movie-list">
+  <header class="movie-list__header">
+    <h1>Movies</h1>
+    <a class="btn btn--primary" routerLink="new">+ New movie</a>
+  </header>
+
+  <div class="movie-list__filters">
+    <input
+      type="search"
+      class="filter-input"
+      placeholder="Search by title…"
+      [formControl]="searchControl"
+      aria-label="Search movies by title"
+    />
+
+    <select
+      class="filter-input"
+      [(ngModel)]="selectedGenre"
+      (ngModelChange)="onGenreChange()"
+      aria-label="Filter movies by genre"
+    >
+      <option value="">All genres</option>
+      @for (genre of genres; track genre) {
+        <option [value]="genre">{{ genre }}</option>
+      }
+    </select>
+
+    @if (hasFilter) {
+      <button type="button" class="link-btn" (click)="clearFilters()">Clear</button>
+    }
+  </div>
+
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (error) {
+    <p class="status status--error">{{ error }}</p>
+  } @else if (movies.length === 0) {
+    <p class="status">No movies found.</p>
+  } @else {
+    <table class="movie-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Genres</th>
+          <th>Duration</th>
+          <th>Rating</th>
+          <th>Released</th>
+          <th><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (movie of movies; track movie.id) {
+          <tr>
+            
+            <td data-label="Title">
+              <a class="title-cell" [routerLink]="[movie.id]">
+                <app-movie-poster class="title-cell__poster" [url]="movie.coverImage" [title]="movie.title" />
+                <span>{{ movie.title }}</span>
+              </a>
+            </td>
+            <td data-label="Genres">{{ movie.genres.join(', ') }}</td>
+            <td data-label="Duration">{{ movie.durationMinutes }} min</td>
+            <td data-label="Rating">{{ movie.rating | number: '1.1-1' }}</td>
+            <td data-label="Released">{{ movie.releaseDate | date: 'mediumDate' }}</td>
+            <td data-label="Actions">
+              <span class="actions-cell">
+                <a [routerLink]="[movie.id, 'edit']">Edit</a>
+                <button
+                  type="button"
+                  class="link-btn link-btn--danger"
+                  (click)="delete(movie)"
+                  [disabled]="deletingId === movie.id"
+                >
+                  {{ deletingId === movie.id ? 'Deleting…' : 'Delete' }}
+                </button>
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (paged && totalPages > 1) {
+      <nav class="pager">
+        <button type="button" (click)="goToPage(page - 1)" [disabled]="page === 1">‹ Prev</button>
+        <span>Page {{ page }} of {{ totalPages }}</span>
+        <button type="button" (click)="goToPage(page + 1)" [disabled]="page === totalPages">Next ›</button>
+      </nav>
+    }
+  }
+</section>

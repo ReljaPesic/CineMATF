@@ -1,0 +1,73 @@
+<section class="cinema-list">
+  <header class="cinema-list__header">
+    <h1>Cinemas</h1>
+    <a class="btn btn--primary" routerLink="new">+ New cinema</a>
+  </header>
+
+  <div class="cinema-list__filters">
+    <select
+      class="filter-input"
+      [(ngModel)]="selectedCity"
+      (ngModelChange)="onCityChange()"
+      aria-label="Filter cinemas by city"
+    >
+      <option value="">All cities</option>
+      @for (city of cities; track city) {
+        <option [value]="city">{{ city }}</option>
+      }
+    </select>
+
+    @if (hasFilter) {
+      <button type="button" class="link-btn" (click)="clearFilters()">Clear</button>
+    }
+  </div>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (error) {
+    <p class="status status--error">{{ error }}</p>
+  } @else if (cinemas.length === 0) {
+    <p class="status">No cinemas found.</p>
+  } @else {
+    <table class="cinema-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>City</th>
+          <th><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (cinema of cinemas; track cinema.id) {
+          <tr>
+            <td data-label="Name">
+              <a [routerLink]="[cinema.id]">{{ cinema.name }}</a>
+            </td>
+            <td data-label="City">{{ cinema.city }}</td>
+            <td data-label="Actions">
+              <span class="actions-cell">
+                <a [routerLink]="[cinema.id, 'edit']">Edit</a>
+                <button
+                  type="button"
+                  class="link-btn link-btn--danger"
+                  (click)="delete(cinema)"
+                  [disabled]="deletingId === cinema.id"
+                >
+                  {{ deletingId === cinema.id ? 'Deleting…' : 'Delete' }}
+                </button>
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (paged && totalPages > 1) {
+      <nav class="pager">
+        <button type="button" (click)="goToPage(page - 1)" [disabled]="page === 1">‹ Prev</button>
+        <span>Page {{ page }} of {{ totalPages }}</span>
+        <button type="button" (click)="goToPage(page + 1)" [disabled]="page === totalPages">Next ›</button>
+      </nav>
+    }
+  }
+</section>

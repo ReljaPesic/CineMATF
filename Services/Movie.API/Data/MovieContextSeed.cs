@@ -25,7 +25,8 @@ public class MovieContextSeed
                 [
                     new Actor { FirstName = "Leonardo", LastName = "DiCaprio" },
                     new Actor { FirstName = "Joseph", LastName = "Gordon-Levitt" }
-                ]
+                ],
+                CoverImage = "https://resizing.flixster.com/9pwhgvMPsrGnmEtgThnX0rVzgts=/164x246/v2/https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p7825626_p_v10_ae.jpg"
             },
             new()
             {
@@ -40,7 +41,8 @@ public class MovieContextSeed
                 [
                     new Actor { FirstName = "Marlon", LastName = "Brando" },
                     new Actor { FirstName = "Al", LastName = "Pacino" }
-                ]
+                ],
+                CoverImage = "https://resizing.flixster.com/bUcMNsOCtzx1tV8Vp6HrpWA_Vo0=/164x246/v2/https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p6326_p_v12_be.jpg"
             },
             new()
             {
@@ -55,7 +57,8 @@ public class MovieContextSeed
                 [
                     new Actor { FirstName = "Christian", LastName = "Bale" },
                     new Actor { FirstName = "Heath", LastName = "Ledger" }
-                ]
+                ],
+                CoverImage = "https://resizing.flixster.com/PD15wDF15nqGushJNAW7av9-Tyk=/164x246/v2/https://resizing.flixster.com/Wg25mLoPWxjcxXzNyaSF4VGgGE4=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzL2ZiNjZiNWFkLWVhNzEtNDRhMC1iNGIwLTFmY2FkNzllNTJlMi5qcGc="
             },
             new()
             {
@@ -70,7 +73,8 @@ public class MovieContextSeed
                 [
                     new Actor { FirstName = "Matthew", LastName = "McConaughey" },
                     new Actor { FirstName = "Anne", LastName = "Hathaway" }
-                ]
+                ],
+                CoverImage = "https://resizing.flixster.com/bd5A1TM4Xlur_sjlTlQux9HALic=/164x246/v2/https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p10543523_p_v8_as.jpg"
             },
             new()
             {
@@ -85,7 +89,23 @@ public class MovieContextSeed
                 [
                     new Actor { FirstName = "Jack", LastName = "Nicholson" },
                     new Actor { FirstName = "Shelley", LastName = "Duvall" }
-                ]
+                ],
+                CoverImage = "https://resizing.flixster.com/Rw13WXe72pRsoe_9kr6sABSsJtQ=/164x246/v2/https://resizing.flixster.com/5E5qZzbrG8KdvlmDKFjnun2HBog=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzLzA3ZGFkNTA3LTEwZjEtNDM2Yy1hYmQxLWMyMjI4ZjY1ZjBkNy5qcGc="
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Three Thousand Years of Longing",
+                Description = "While in Istanbul attending a conference, Dr. Alithea Binnie happens to encounter a Djinn offers her three wishes in exchange for his freedom.",
+                DurationMinutes = 108,
+                ReleaseDate = new DateTime(2022, 8, 26),
+                Rating = 6.7,
+                Genres = [Genre.Fantasy, Genre.Drama], 
+                Actors = [
+                    new Actor {FirstName = "Tilda", LastName = "Swinton"},
+                    new Actor {FirstName = "Idris", LastName = "Elba"}
+                ],
+                CoverImage = "https://resizing.flixster.com/cxWZS27JxQFCqlTOtrY42B3Wy7I=/164x246/v2/https://resizing.flixster.com/6e6GoR_5a8SsCzJbKR3lO4Q1YO8=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzLzgxZDgxYTgxLWRhNGItNDJkMy1hNzNmLTg5ODAwYzg0MGRkOC5qcGc="
             }
         };
 

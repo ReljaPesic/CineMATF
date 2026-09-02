@@ -1,0 +1,107 @@
+<section class="reservation-detail">
+  <a class="back" routerLink="/reservations">‹ Back to reservations</a>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (notFound) {
+    <p class="status status--error">Reservation not found.</p>
+  } @else if (reservation) {
+    <header class="reservation-detail__header">
+      <div class="reservation-detail__title">
+        <app-movie-poster
+          class="reservation-detail__poster"
+          [url]="coverImage"
+          [title]="movieTitle"
+        />
+        <div>
+          <h1 class="reservation-detail__movie">
+            @if (movieId) {
+              <a [routerLink]="['/movies', movieId]">{{ movieTitle }}</a>
+            } @else {
+              {{ movieTitle }}
+            }
+          </h1>
+          <p class="reservation-detail__meta">
+            @if (screening) {
+              {{ screening.startTime | date: 'full' }}
+            } @else {
+              Screening unavailable
+            }
+          </p>
+          <span class="badge" [attr.data-status]="reservation.status">{{ reservation.status }}</span>
+        </div>
+      </div>
+    </header>
+
+    @if (error) {
+      <p class="status status--error">{{ error }}</p>
+    }
+
+    <dl class="facts">
+      <div>
+        <dt>Cinema</dt>
+        <dd>{{ cinemaName }}</dd>
+      </div>
+      <div>
+        <dt>Hall</dt>
+        <dd>{{ hallName }}</dd>
+      </div>
+      <div>
+        <dt>Format</dt>
+        <dd>{{ screening ? formatLabels[screening.format] : '—' }}</dd>
+      </div>
+      <div>
+        <dt>Total price</dt>
+        <dd>{{ reservation.totalPrice | currency: 'EUR' }}</dd>
+      </div>
+      <div>
+        <dt>Booked</dt>
+        <dd>{{ reservation.createdAt | date: 'medium' }}</dd>
+      </div>
+      <div>
+        <dt>{{ reservation.status === Status.Locked ? 'Held until' : 'Expires' }}</dt>
+        <dd>{{ reservation.expiresAt | date: 'medium' }}</dd>
+      </div>
+    </dl>
+
+    <section class="tickets">
+      <h2>Seats</h2>
+      @if (reservation.tickets.length > 0) {
+        <ul class="ticket-list">
+          @for (ticket of reservation.tickets; track ticket.id) {
+            <li class="ticket">
+              <span class="ticket__seat">Row {{ ticket.seatRow }}, seat {{ ticket.seatNumber }}</span>
+              <span class="ticket__price">{{ ticket.price | currency: 'EUR' }}</span>
+              <a class="ticket__download" [href]="ticketUrl(ticket.id)" target="_blank" rel="noopener">
+                Download
+              </a>
+            </li>
+          }
+        </ul>
+      } @else if (reservation.status === Status.Locked) {
+        <p class="status">Seats are held. Pay to confirm the booking, then issue the tickets.</p>
+      } @else if (reservation.status === Status.Confirmed) {
+        <p class="status">Payment confirmed — tickets have not been issued yet.</p>
+      } @else {
+        <p class="status">No tickets for this reservation.</p>
+      }
+    </section>
+
+    <div class="reservation-detail__actions">
+      @if (reservation.status === Status.Locked) {
+        <button type="button" class="btn btn--primary" (click)="pay()" [disabled]="working">
+          {{ working ? 'Working…' : 'Pay & confirm' }}
+        </button>
+        <button type="button" class="btn btn--danger" (click)="cancel()" [disabled]="working">
+          Cancel
+        </button>
+      } @else if (reservation.status === Status.Confirmed && reservation.tickets.length === 0) {
+        <button type="button" class="btn btn--primary" (click)="generateTickets()" [disabled]="working">
+          {{ working ? 'Working…' : 'Issue tickets' }}
+        </button>
+      }
+    </div>
+  } @else if (error) {
+    <p class="status status--error">{{ error }}</p>
+  }
+</section>

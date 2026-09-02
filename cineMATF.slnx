@@ -5,6 +5,7 @@
     <Project Path="Services/Movie.API/Movie.API.csproj" />
     <Project Path="Services/Screening.API/Screening.API.csproj" />
     <Project Path="Services/Reservation.API/Reservation.API.csproj" />
+    <Project Path="Services/Identity.API/Identity.API.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/Cinema.API.Tests.csproj" />
