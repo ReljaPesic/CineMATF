@@ -38,6 +38,7 @@ export class ReservationFormComponent implements OnInit {
   private readonly auth = inject(AuthService);
 
   screenings: Screening[] = [];
+  private allFutureScreenings: Screening[] = [];
   private movieTitles = new Map<string, string>();
 
   selectedScreeningId = '';
@@ -52,24 +53,51 @@ export class ReservationFormComponent implements OnInit {
   submitting = false;
   error: string | null = null;
   seatError: string | null = null;
+  cardNumber: string | null | undefined = null;
+
+  filterMovieTitle: string | null = null;
+
 
   ngOnInit(): void {
+    this.cardNumber = this.auth.user()?.cardNumber;
     forkJoin({
       screenings: this.screeningService.getScreenings().pipe(catchError(() => of([] as Screening[]))),
       movies: this.movieService.getMovies(1, 100).pipe(catchError(() => of(null))),
     }).subscribe(({ screenings, movies }) => {
       this.movieTitles = new Map((movies?.data ?? []).map((m) => [m.id, m.title]));
-      this.screenings = [...screenings]
+      this.allFutureScreenings = [...screenings]
         .filter((s) => new Date(s.startTime).getTime() > Date.now())
         .sort((a, b) => a.startTime.localeCompare(b.startTime));
+      this.screenings = this.allFutureScreenings;
+
+      const params = this.route.snapshot.queryParamMap;
+
+      // ?movieId= from a movie page -> only that movie's screenings.
+      const movieId = params.get('movieId');
+      if (movieId) {
+        this.screenings = this.allFutureScreenings.filter((s) => s.movieId === movieId);
+        this.filterMovieTitle = this.movieTitles.get(movieId) ?? null;
+      }
+
       this.loadingScreenings = false;
 
-      const preselect = this.route.snapshot.queryParamMap.get('screeningId');
+      // Preselect an explicit ?screeningId=, or the only option when there is one.
+      const preselect = params.get('screeningId');
       if (preselect && this.screenings.some((s) => s.id === preselect)) {
         this.selectedScreeningId = preselect;
         this.onScreeningChange();
+      } else if (this.screenings.length === 1) {
+        this.selectedScreeningId = this.screenings[0].id;
+        this.onScreeningChange();
       }
     });
+  }
+
+  showAllScreenings(): void {
+    this.filterMovieTitle = null;
+    this.screenings = this.allFutureScreenings;
+    this.selectedScreeningId = '';
+    this.onScreeningChange();
   }
 
   screeningLabel(screening: Screening): string {
@@ -164,23 +192,39 @@ export class ReservationFormComponent implements OnInit {
 
     this.submitting = true;
     this.error = null;
+
+    let reservationId: string | null = null;
+
     this.reservationService
       .createReservation({
         screeningId: this.selectedScreeningId,
         seatIds: [...this.selectedSeatIds],
         userId,
       })
+      .pipe(
+        switchMap((reservation) => {
+          reservationId = reservation.id;
+          return this.reservationService.pay(reservation.id);
+        }),
+        switchMap(() => this.reservationService.generateTickets(reservationId!)),
+      )
       .subscribe({
-        next: (reservation) => this.router.navigate(['/reservations', reservation.id]),
+        next: () => this.router.navigate(['/reservations', reservationId]),
         error: (err: HttpErrorResponse) => {
           this.submitting = false;
-          console.error('POST /reservations failed', err);
-          this.error = err.error?.message ?? 'Could not create the reservation.';
+          console.error('Booking failed', err);
+          // If the reservation itself was created, send them to it so they can
+          // retry payment / cancel; otherwise show the error here.
+          if (reservationId) {
+            this.router.navigate(['/reservations', reservationId]);
+          } else {
+            this.error = err.error?.message ?? 'Could not complete the booking.';
+          }
         },
       });
   }
 
   cancel(): void {
-    this.router.navigate(['/reservations']);
+    this.router.navigate(['/screenings']);
   }
 }

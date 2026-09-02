@@ -18,6 +18,7 @@ export class AppComponent {
 
   readonly user = this.auth.user;
   readonly isLoggedIn = this.auth.isLoggedIn;
+  readonly isAdmin = this.auth.isAdmin;
 
   logout(): void {
     this.auth.logout();

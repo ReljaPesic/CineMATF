@@ -1,7 +1,9 @@
 <section class="cinema-list">
   <header class="cinema-list__header">
     <h1>Cinemas</h1>
-    <a class="btn btn--primary" routerLink="new">+ New cinema</a>
+    @if (isAdmin()) {
+      <a class="btn btn--primary" routerLink="new">+ New cinema</a>
+    }
   </header>
 
   <div class="cinema-list__filters">
@@ -34,7 +36,9 @@
         <tr>
           <th>Name</th>
           <th>City</th>
-          <th><span class="sr-only">Actions</span></th>
+          @if (isAdmin()) {
+            <th><span class="sr-only">Actions</span></th>
+          }
         </tr>
       </thead>
       <tbody>
@@ -44,19 +48,21 @@
               <a [routerLink]="[cinema.id]">{{ cinema.name }}</a>
             </td>
             <td data-label="City">{{ cinema.city }}</td>
-            <td data-label="Actions">
-              <span class="actions-cell">
-                <a [routerLink]="[cinema.id, 'edit']">Edit</a>
-                <button
-                  type="button"
-                  class="link-btn link-btn--danger"
-                  (click)="delete(cinema)"
-                  [disabled]="deletingId === cinema.id"
-                >
-                  {{ deletingId === cinema.id ? 'Deleting…' : 'Delete' }}
-                </button>
-              </span>
-            </td>
+            @if (isAdmin()) {
+              <td data-label="Actions">
+                <span class="actions-cell">
+                  <a [routerLink]="[cinema.id, 'edit']">Edit</a>
+                  <button
+                    type="button"
+                    class="link-btn link-btn--danger"
+                    (click)="delete(cinema)"
+                    [disabled]="deletingId === cinema.id"
+                  >
+                    {{ deletingId === cinema.id ? 'Deleting…' : 'Delete' }}
+                  </button>
+                </span>
+              </td>
+            }
           </tr>
         }
       </tbody>

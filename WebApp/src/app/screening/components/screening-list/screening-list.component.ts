@@ -7,6 +7,7 @@ import { SCREENING_FORMAT_LABELS, Screening, ScreeningFilter } from '../../model
 import { ScreeningService } from '../../services/screening.service';
 import { MovieService } from '../../../movie/services/movie.service';
 import { Movie } from '../../../movie/models/movie.model';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-screening-list',
@@ -18,6 +19,7 @@ export class ScreeningListComponent implements OnInit {
   private readonly screeningService = inject(ScreeningService);
   private readonly movieService = inject(MovieService);
   private readonly cinemaService = inject(CinemaService);
+  readonly isAdmin = inject(AuthService).isAdmin;
 
   screenings: Screening[] = [];
   movies: Movie[] = [];

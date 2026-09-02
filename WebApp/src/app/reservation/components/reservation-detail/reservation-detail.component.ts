@@ -11,6 +11,7 @@ import { ScreeningService } from '../../../screening/services/screening.service'
 import { SCREENING_FORMAT_LABELS, Screening } from '../../../screening/models/screening.model';
 import { Reservation, ReservationStatus } from '../../models/reservation.model';
 import { ReservationService } from '../../services/reservation.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-reservation-detail',
@@ -25,9 +26,15 @@ export class ReservationDetailComponent implements OnInit {
   private readonly screeningService = inject(ScreeningService);
   private readonly movieService = inject(MovieService);
   private readonly cinemaService = inject(CinemaService);
+  readonly isAdmin = inject(AuthService).isAdmin;
 
   readonly formatLabels = SCREENING_FORMAT_LABELS;
   readonly Status = ReservationStatus;
+
+  // Non-admins have no reservations list to go back to.
+  get backLink(): string {
+    return this.isAdmin() ? '/reservations' : '/screenings';
+  }
 
   reservation: Reservation | null = null;
   screening: Screening | null = null;
@@ -135,6 +142,6 @@ export class ReservationDetailComponent implements OnInit {
   }
 
   back(): void {
-    this.router.navigate(['/reservations']);
+    this.router.navigateByUrl(this.backLink);
   }
 }

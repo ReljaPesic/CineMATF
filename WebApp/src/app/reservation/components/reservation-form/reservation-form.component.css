@@ -195,6 +195,36 @@
   background: var(--primary-hover);
 }
 
+.filter-note {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.filter-note .link-btn {
+  margin-left: 0.35rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.payment {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.payment__note {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 @media (max-width: 640px) {
   .reservation-form {
     padding: 1rem;

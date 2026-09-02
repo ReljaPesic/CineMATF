@@ -9,6 +9,7 @@ import { HallResponse } from '../../../cinema/models/cinema.model';
 import { SCREENING_FORMAT_LABELS, Screening } from '../../models/screening.model';
 import { ScreeningService } from '../../services/screening.service';
 import { MovieService } from '../../../movie/services/movie.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-screening-detail',
@@ -22,6 +23,9 @@ export class ScreeningDetailComponent implements OnInit {
   private readonly screeningService = inject(ScreeningService);
   private readonly movieService = inject(MovieService);
   private readonly cinemaService = inject(CinemaService);
+  private readonly auth = inject(AuthService);
+  readonly isAdmin = this.auth.isAdmin;
+  readonly isLoggedIn = this.auth.isLoggedIn;
 
   readonly formatLabels = SCREENING_FORMAT_LABELS;
 

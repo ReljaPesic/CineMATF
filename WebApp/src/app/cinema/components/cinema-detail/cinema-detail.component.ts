@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { Cinema, HallRequest, HallResponse } from '../../models/cinema.model';
 import { CinemaService } from '../../services/cinema.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-cinema-detail',
@@ -17,6 +18,7 @@ export class CinemaDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cinemaService = inject(CinemaService);
+  readonly isAdmin = inject(AuthService).isAdmin;
 
   cinemaId!: string;
   cinema: Cinema | null = null;

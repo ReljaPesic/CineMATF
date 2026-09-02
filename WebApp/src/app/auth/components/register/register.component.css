@@ -82,6 +82,25 @@
   border: 1px solid var(--danger);
 }
 
+/* Field-level validation feedback */
+.text-input.is-invalid {
+  border-color: var(--danger);
+}
+
+.error-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* Inline field errors are plain text, not the boxed .status style */
+.error-messages .status {
+  padding: 0.15rem 0;
+  background: none;
+  border: none;
+  font-size: 0.78rem;
+}
+
 .btn {
   padding: 0.6rem 1rem;
   border: none;

@@ -5,6 +5,7 @@ import { switchMap } from 'rxjs';
 
 import { Movie } from '../../models/movie.model';
 import { MovieService } from '../../services/movie.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 
 @Component({
@@ -17,6 +18,9 @@ export class MovieDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly movieService = inject(MovieService);
+  readonly auth = inject(AuthService);
+  readonly isAdmin = this.auth.isAdmin;
+  readonly isLoggedIn = this.auth.isLoggedIn;
 
   movie: Movie | null = null;
   loading = true;
