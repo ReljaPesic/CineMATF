@@ -148,6 +148,23 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  webapp:
+    build:
+      context: ./WebApp
+      dockerfile: Dockerfile
+    container_name: webapp
+    ports:
+      - "4200:4200"
+    depends_on:
+      - cinemaapi
+      - movieapi
+      - screeningapi
+      - reservationapi
+      - identityapi
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
 networks:
   cinema-network:
     driver: bridge

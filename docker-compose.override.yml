@@ -39,3 +39,18 @@ services:
       - cinema-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  webapp:
+    build:
+      context: ./WebApp
+      dockerfile: Dockerfile
+      target: build
+    container_name: webapp
+    command: npm start -- --host 0.0.0.0 --poll 2000
+    volumes:
+      - ./WebApp:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
