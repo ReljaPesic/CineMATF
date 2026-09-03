@@ -4,7 +4,10 @@ using Reservation.API.Mapping;
 using Reservation.API.Settings;
 using Reservation.API.Repositories;
 using Reservation.API.Services;
+using Reservation.API.Services.Email;
 using Reservation.API.Services.Pricing;
+using Reservation.API.Services.Tickets;
+using QuestPDF.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +15,7 @@ using Screening.API.Grpc;
 using System.Text;
 
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +32,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.Configure<ReservationOptions>(builder.Configuration.GetSection("ReservationOptions"));
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 // JWT bearer
 var jwt = builder.Configuration.GetSection("JwtSettings");
@@ -62,6 +67,13 @@ builder.Services.AddHttpClient<IMovieApiClient, MovieApiClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["MovieApi:BaseUrl"]
         ?? throw new InvalidOperationException("MovieApi:BaseUrl is not configured"));
 });
+builder.Services.AddHttpClient<IIdentityApiClient, IdentityApiClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["IdentityApi:BaseUrl"]
+        ?? throw new InvalidOperationException("IdentityApi:BaseUrl is not configured"));
+});
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddSingleton<ITicketPdfGenerator, TicketPdfGenerator>();
 builder.Services.AddGrpcClient<ScreeningGrpc.ScreeningGrpcClient>(o =>
 {
     o.Address = new Uri(builder.Configuration["ScreeningApi:BaseUrl"]

@@ -88,6 +88,12 @@ services:
       - CinemaApi__BaseUrl=http://cinemaapi:8080
       - ScreeningApi__BaseUrl=http://screeningapi:8081
       - MovieApi__BaseUrl=http://movieapi:8080
+      - IdentityApi__BaseUrl=http://identityapi:8080
+      - EmailSettings__SmtpHost=smtp.gmail.com
+      - EmailSettings__SmtpPort=587
+      - EmailSettings__SenderEmail=${EMAIL_SENDER}
+      - EmailSettings__SenderPassword=${EMAIL_APP_PASSWORD}
+      - EmailSettings__SenderName=CineMATF
     ports:
       - "8002:8080"
     depends_on:
@@ -98,6 +104,8 @@ services:
       screeningapi:
         condition: service_started
       movieapi:
+        condition: service_started
+      identityapi:
         condition: service_started
     restart: unless-stopped
     networks:

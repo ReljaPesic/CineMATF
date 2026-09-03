@@ -89,7 +89,7 @@ public class TicketController(IReservationService service) : ControllerBase
                 ? NotFound(new { message = errorMessage })
                 : BadRequest(new { message = errorMessage });
 
-        return File(content!, "text/plain", fileName);
+        return File(content!, "application/pdf", fileName);
     }
 
     // Resolves who owns a reservation and checks it against the caller (admin or the owner themselves).

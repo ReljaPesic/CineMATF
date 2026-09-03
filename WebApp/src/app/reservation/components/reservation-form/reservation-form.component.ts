@@ -116,11 +116,17 @@ export class ReservationFormComponent implements OnInit {
 
     if (!this.selectedScreeningId) return;
 
+    // Switching screenings again before this request settles must not let a
+    // late/out-of-order response for the *previous* screening overwrite the
+    // seat map for the one the user is now looking at.
+    const requestedScreeningId = this.selectedScreeningId;
+
     this.loadingSeats = true;
     this.screeningService
-      .getScreening(this.selectedScreeningId)
+      .getScreening(requestedScreeningId)
       .pipe(
         switchMap((screening) => {
+          if (requestedScreeningId !== this.selectedScreeningId) return of(null);
           this.screening = screening;
           return forkJoin({
             available: this.reservationService.getAvailableSeats(screening.id),
@@ -129,7 +135,9 @@ export class ReservationFormComponent implements OnInit {
         }),
       )
       .subscribe({
-        next: ({ available, seats }) => {
+        next: (result) => {
+          if (!result || requestedScreeningId !== this.selectedScreeningId) return;
+          const { available, seats } = result;
           const availableIds = new Set(available.availableSeats);
           const bookable: BookableSeat[] = seats.map((s) => ({
             ...s,
@@ -140,6 +148,7 @@ export class ReservationFormComponent implements OnInit {
           this.loadingSeats = false;
         },
         error: (err: HttpErrorResponse) => {
+          if (requestedScreeningId !== this.selectedScreeningId) return;
           this.loadingSeats = false;
           console.error('Could not load seats for screening', err);
           this.seatError = 'Could not load the seat map for this screening.';
