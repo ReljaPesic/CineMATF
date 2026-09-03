@@ -72,7 +72,6 @@ export class ReservationFormComponent implements OnInit {
 
       const params = this.route.snapshot.queryParamMap;
 
-      // ?movieId= from a movie page -> only that movie's screenings.
       const movieId = params.get('movieId');
       if (movieId) {
         this.screenings = this.allFutureScreenings.filter((s) => s.movieId === movieId);
@@ -80,8 +79,6 @@ export class ReservationFormComponent implements OnInit {
       }
 
       this.loadingScreenings = false;
-      // 86 linija 
-      // Preselect an explicit ?screeningId=, or the only option when there is one.
       const preselect = params.get('screeningId');
       if (preselect && this.screenings.some((s) => s.id === preselect)) {
         this.selectedScreeningId = preselect;

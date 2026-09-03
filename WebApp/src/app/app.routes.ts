@@ -3,8 +3,8 @@ import { Routes } from '@angular/router';
 import { authGuard } from './shared/guards/auth.guard';
 
 export const routes: Routes = [
-  // Land on the screenings list by default
-  { path: '', redirectTo: 'screenings', pathMatch: 'full' },
+  // Land on the movies list by default
+  { path: '', redirectTo: 'movies', pathMatch: 'full' },
   {
     path: 'login',
     loadComponent: () =>
