@@ -80,7 +80,7 @@ export class ReservationFormComponent implements OnInit {
       }
 
       this.loadingScreenings = false;
-
+      // 86 linija 
       // Preselect an explicit ?screeningId=, or the only option when there is one.
       const preselect = params.get('screeningId');
       if (preselect && this.screenings.some((s) => s.id === preselect)) {
@@ -116,20 +116,29 @@ export class ReservationFormComponent implements OnInit {
 
     if (!this.selectedScreeningId) return;
 
+    // Which screening this load is for. The user can pick another screening
+    // before the requests below resolve; without this check a slow response for
+    // the old screening could land last and paint the wrong hall's seat map.
+    const requestedScreeningId = this.selectedScreeningId;
+
     this.loadingSeats = true;
     this.screeningService
-      .getScreening(this.selectedScreeningId)
+      .getScreening(requestedScreeningId)
       .pipe(
-        switchMap((screening) => {
-          this.screening = screening;
-          return forkJoin({
+        switchMap((screening) =>
+          forkJoin({
+            screening: of(screening),
             available: this.reservationService.getAvailableSeats(screening.id),
             seats: this.cinemaService.getSeatsByCinemaAndHallIds(screening.cinemaId, screening.hallId),
-          });
-        }),
+          }),
+        ),
       )
       .subscribe({
-        next: ({ available, seats }) => {
+        next: ({ screening, available, seats }) => {
+          // A newer selection has already superseded this request - drop it.
+          if (requestedScreeningId !== this.selectedScreeningId) return;
+
+          this.screening = screening;
           const availableIds = new Set(available.availableSeats);
           const bookable: BookableSeat[] = seats.map((s) => ({
             ...s,
@@ -140,6 +149,7 @@ export class ReservationFormComponent implements OnInit {
           this.loadingSeats = false;
         },
         error: (err: HttpErrorResponse) => {
+          if (requestedScreeningId !== this.selectedScreeningId) return;
           this.loadingSeats = false;
           console.error('Could not load seats for screening', err);
           this.seatError = 'Could not load the seat map for this screening.';
