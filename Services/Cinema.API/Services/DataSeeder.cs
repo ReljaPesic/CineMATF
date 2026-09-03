@@ -61,12 +61,42 @@ public class DataSeeder(CinemaDbContext context)
             {
                 var hall = new Hall { Id = hallId, Name = hallName, TotalRows = rows, SeatsPerRow = seatsPerRow, CinemaId = cinemaId };
                 hall.InitializeSeats();
+                AssignSeatTypes(hall);
                 _context.Halls.Add(hall);
                 _context.Seats.AddRange(hall.Seats);
             }
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    // InitializeSeats() only lays out plain Standard seats - that's the right default for a
+    // freshly-generated hall an admin will customize by hand. Seed data instead assigns a
+    // realistic mix upfront so every seat type (and its pricing) is visible without manual setup.
+    private static void AssignSeatTypes(Hall hall)
+    {
+        var byRow = hall.Seats.GroupBy(s => s.Row).ToDictionary(g => g.Key, g => g.OrderBy(s => s.Number).ToList());
+
+        // Back row: premium VIP seats.
+        foreach (var seat in byRow[hall.TotalRows - 1])
+        {
+            seat.SeatType = SeatType.VIP;
+        }
+
+        // Second-to-last row: a couple seat pair at each end, if the row is wide enough.
+        if (hall.TotalRows >= 2 && byRow[hall.TotalRows - 2].Count >= 4)
+        {
+            var row = byRow[hall.TotalRows - 2];
+            row[0].SeatType = SeatType.Couple;
+            row[1].SeatType = SeatType.Couple;
+            row[^2].SeatType = SeatType.Couple;
+            row[^1].SeatType = SeatType.Couple;
+        }
+
+        // Front row: accessible seats on the aisle.
+        var frontRow = byRow[0];
+        frontRow[0].SeatType = SeatType.Accessible;
+        frontRow[^1].SeatType = SeatType.Accessible;
     }
 }
 

@@ -83,9 +83,16 @@ export class ReservationFormComponent implements OnInit {
 
       // Preselect an explicit ?screeningId=, or the only option when there is one.
       const preselect = params.get('screeningId');
-      if (preselect && this.screenings.some((s) => s.id === preselect)) {
-        this.selectedScreeningId = preselect;
-        this.onScreeningChange();
+      if (preselect) {
+        if (this.screenings.some((s) => s.id === preselect)) {
+          this.selectedScreeningId = preselect;
+          this.onScreeningChange();
+        } else {
+          // Don't silently fall back to some other, unrelated screening
+          // (e.g. the only one left after filtering out past screenings) -
+          // that would let the user book a different movie than they picked.
+          this.error = 'That screening is no longer available for booking.';
+        }
       } else if (this.screenings.length === 1) {
         this.selectedScreeningId = this.screenings[0].id;
         this.onScreeningChange();
