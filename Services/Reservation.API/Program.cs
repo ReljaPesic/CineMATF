@@ -28,7 +28,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsPolicy", policy =>
         policy.WithOrigins("http://localhost:4200")
               .AllowAnyMethod()
-              .AllowAnyHeader());
+              .AllowAnyHeader()
+              .WithExposedHeaders("Content-Disposition"));
 });
 
 builder.Services.Configure<ReservationOptions>(builder.Configuration.GetSection("ReservationOptions"));

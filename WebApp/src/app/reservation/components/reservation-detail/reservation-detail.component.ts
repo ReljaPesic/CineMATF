@@ -137,8 +137,36 @@ export class ReservationDetailComponent implements OnInit {
     });
   }
 
-  ticketUrl(ticketId: string): string {
-    return this.reservationService.ticketDownloadUrl(ticketId);
+  downloadingTicketId: string | null = null;
+
+  downloadTicket(ticketId: string): void {
+    if (this.downloadingTicketId) return;
+    this.downloadingTicketId = ticketId;
+    this.reservationService.downloadTicket(ticketId).subscribe({
+      next: (response) => {
+        this.downloadingTicketId = null;
+        const blob = response.body;
+        if (!blob) return;
+        const fileName = this.extractFileName(response.headers.get('content-disposition')) ?? `ticket-${ticketId}.pdf`;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.downloadingTicketId = null;
+        console.error('GET /Ticket/{id}/download failed', err);
+        this.error = 'Could not download this ticket.';
+      },
+    });
+  }
+
+  private extractFileName(contentDisposition: string | null): string | null {
+    if (!contentDisposition) return null;
+    const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(contentDisposition);
+    return match ? decodeURIComponent(match[1]) : null;
   }
 
   back(): void {

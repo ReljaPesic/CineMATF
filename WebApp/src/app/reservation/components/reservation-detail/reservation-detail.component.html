@@ -72,9 +72,14 @@
             <li class="ticket">
               <span class="ticket__seat">Row {{ ticket.seatRow }}, seat {{ ticket.seatNumber }}</span>
               <span class="ticket__price">{{ ticket.price | currency: 'EUR' }}</span>
-              <a class="ticket__download" [href]="ticketUrl(ticket.id)" target="_blank" rel="noopener">
-                Download
-              </a>
+              <button
+                type="button"
+                class="ticket__download"
+                [disabled]="downloadingTicketId === ticket.id"
+                (click)="downloadTicket(ticket.id)"
+              >
+                {{ downloadingTicketId === ticket.id ? 'Downloading…' : 'Download' }}
+              </button>
             </li>
           }
         </ul>
