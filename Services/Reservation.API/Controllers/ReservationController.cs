@@ -17,13 +17,15 @@ public class ReservationController(IReservationService service) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<ReservationResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ReservationResponse>>> GetAllReservations()
     {
-        var reservations = await service.GetAllReservationsAsync();
-        if (!User.IsAdmin())
+        if (User.IsAdmin())
         {
-            var userId = User.GetUserId();
-            reservations = reservations.Where(r => r.UserId == userId);
+            return Ok(await service.GetAllReservationsAsync());
         }
-        return Ok(reservations);
+
+        var userId = User.GetUserId();
+        if (userId is null) return Forbid();
+
+        return Ok(await service.GetReservationsByUserIdAsync(userId.Value));
     }
 
     [HttpGet("{id:guid}")]

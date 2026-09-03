@@ -182,6 +182,12 @@ public partial class ReservationService(
         return _mapper.Map<IEnumerable<ReservationResponse>>(reservations);
     }
 
+    public async Task<IEnumerable<ReservationResponse>> GetReservationsByUserIdAsync(Guid userId)
+    {
+        var reservations = await _repository.GetReservationsByUserIdAsync(userId);
+        return _mapper.Map<IEnumerable<ReservationResponse>>(reservations);
+    }
+
     public async Task<IEnumerable<TicketResponse>> GetAllTicketsAsync()
     {
         var tickets = await _repository.GetAllTicketsAsync();
