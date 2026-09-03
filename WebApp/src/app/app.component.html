@@ -3,9 +3,11 @@
   <nav class="app-header__nav">
     <a routerLink="/screenings" routerLinkActive="active">Screenings</a>
     <a routerLink="/movies" routerLinkActive="active">Movies</a>
+    @if (isLoggedIn()) {
+      <a routerLink="/reservations" routerLinkActive="active">Reservations</a>
+    }
     @if (isAdmin()) {
       <a routerLink="/cinemas" routerLinkActive="active">Cinemas</a>
-      <a routerLink="/reservations" routerLinkActive="active">Reservations</a>
     }
   </nav>
 
