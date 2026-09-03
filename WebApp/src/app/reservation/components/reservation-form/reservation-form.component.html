@@ -63,6 +63,15 @@
         }
       </div>
 
+      <div class="legend">
+        @for (type of seatTypes; track type) {
+          <span class="legend__item">
+            <span class="seat seat--legend" [attr.data-type]="type"></span>
+            {{ type }}
+          </span>
+        }
+      </div>
+
       @if (selectedCount > 0) {
         <div class="payment">
           <div class="field">

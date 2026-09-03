@@ -6,7 +6,7 @@ import { catchError } from 'rxjs/operators';
 
 import { MovieService } from '../../../movie/services/movie.service';
 import { CinemaService } from '../../../cinema/services/cinema.service';
-import { SeatResponse } from '../../../cinema/models/cinema.model';
+import { ALL_SEAT_TYPES, SeatResponse } from '../../../cinema/models/cinema.model';
 import { ScreeningService } from '../../../screening/services/screening.service';
 import { Screening } from '../../../screening/models/screening.model';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -43,6 +43,8 @@ export class ReservationFormComponent implements OnInit {
 
   selectedScreeningId = '';
   screening: Screening | null = null;
+
+  readonly seatTypes = ALL_SEAT_TYPES;
 
   rows: SeatRow[] = [];
   private seatById = new Map<string, BookableSeat>();
