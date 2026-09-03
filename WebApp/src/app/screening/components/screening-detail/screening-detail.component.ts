@@ -41,6 +41,10 @@ export class ScreeningDetailComponent implements OnInit {
   error: string | null = null;
   deleting = false;
 
+  get isPast(): boolean {
+    return !!this.screening && new Date(this.screening.startTime).getTime() <= Date.now();
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
 

@@ -9,6 +9,7 @@ public interface IReservationService
     Task<(bool Success, string? ErrorMessage, ReservationResponse? Response)> CreateReservationAsync(CreateReservationRequest request);
     Task<ReservationResponse?> GetReservationByIdAsync(Guid id);
     Task<IEnumerable<ReservationResponse>> GetAllReservationsAsync();
+    Task<IEnumerable<ReservationResponse>> GetReservationsByUserIdAsync(Guid userId);
     Task<IEnumerable<TicketResponse>> GetAllTicketsAsync();
     Task<TicketResponse?> GetTicketByIdAsync(Guid id);
     Task<IEnumerable<TicketResponse>> GetReservationTicketsAsync(Guid reservationId);

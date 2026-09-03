@@ -1,6 +1,8 @@
+using Cinema.API.Authorization;
 using Cinema.API.DTOs;
 using Cinema.API.Entities;
 using Cinema.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cinema.API.Controllers;
@@ -43,6 +45,7 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return Ok(cinema);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(CinemaResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<CinemaResponse>> CreateCinema([FromBody] CinemaRequest request)
@@ -51,6 +54,7 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return CreatedAtAction(nameof(GetCinemaById), new { id = cinema.Id }, cinema);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(CinemaResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -61,6 +65,7 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return Ok(cinema);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -79,6 +84,7 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return Ok(halls);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpPost("{cinemaId:guid}/halls")]
     [ProducesResponseType(typeof(CreateHallsResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<CreateHallsResponse>> CreateHalls(Guid cinemaId, [FromBody] CreateHallsRequest request)
@@ -87,6 +93,7 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return CreatedAtAction(nameof(GetHalls), new { cinemaId }, result);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpDelete("{cinemaId:guid}/halls/{hallId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -105,6 +112,7 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return Ok(seats);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpPatch("{cinemaId:guid}/halls/{hallId:guid}/seats/{seatId:guid}")]
     [ProducesResponseType(typeof(SeatResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -114,6 +122,7 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return Ok(seat);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpPost("{cinemaId:guid}/halls/{hallId:guid}/seats")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateSeats(Guid cinemaId, Guid hallId)

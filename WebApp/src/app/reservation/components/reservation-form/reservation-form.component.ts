@@ -6,7 +6,7 @@ import { catchError } from 'rxjs/operators';
 
 import { MovieService } from '../../../movie/services/movie.service';
 import { CinemaService } from '../../../cinema/services/cinema.service';
-import { SeatResponse } from '../../../cinema/models/cinema.model';
+import { ALL_SEAT_TYPES, SeatResponse } from '../../../cinema/models/cinema.model';
 import { ScreeningService } from '../../../screening/services/screening.service';
 import { Screening } from '../../../screening/models/screening.model';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -44,6 +44,8 @@ export class ReservationFormComponent implements OnInit {
   selectedScreeningId = '';
   screening: Screening | null = null;
 
+  readonly seatTypes = ALL_SEAT_TYPES;
+
   rows: SeatRow[] = [];
   private seatById = new Map<string, BookableSeat>();
   readonly selectedSeatIds = new Set<string>();
@@ -80,9 +82,16 @@ export class ReservationFormComponent implements OnInit {
 
       this.loadingScreenings = false;
       const preselect = params.get('screeningId');
-      if (preselect && this.screenings.some((s) => s.id === preselect)) {
-        this.selectedScreeningId = preselect;
-        this.onScreeningChange();
+      if (preselect) {
+        if (this.screenings.some((s) => s.id === preselect)) {
+          this.selectedScreeningId = preselect;
+          this.onScreeningChange();
+        } else {
+          // Don't silently fall back to some other, unrelated screening
+          // (e.g. the only one left after filtering out past screenings) -
+          // that would let the user book a different movie than they picked.
+          this.error = 'That screening is no longer available for booking.';
+        }
       } else if (this.screenings.length === 1) {
         this.selectedScreeningId = this.screenings[0].id;
         this.onScreeningChange();
@@ -113,29 +122,28 @@ export class ReservationFormComponent implements OnInit {
 
     if (!this.selectedScreeningId) return;
 
-    // Which screening this load is for. The user can pick another screening
-    // before the requests below resolve; without this check a slow response for
-    // the old screening could land last and paint the wrong hall's seat map.
+    // Switching screenings again before this request settles must not let a
+    // late/out-of-order response for the *previous* screening overwrite the
+    // seat map for the one the user is now looking at.
     const requestedScreeningId = this.selectedScreeningId;
 
     this.loadingSeats = true;
     this.screeningService
       .getScreening(requestedScreeningId)
       .pipe(
-        switchMap((screening) =>
-          forkJoin({
-            screening: of(screening),
+        switchMap((screening) => {
+          if (requestedScreeningId !== this.selectedScreeningId) return of(null);
+          this.screening = screening;
+          return forkJoin({
             available: this.reservationService.getAvailableSeats(screening.id),
             seats: this.cinemaService.getSeatsByCinemaAndHallIds(screening.cinemaId, screening.hallId),
-          }),
-        ),
+          });
+        }),
       )
       .subscribe({
-        next: ({ screening, available, seats }) => {
-          // A newer selection has already superseded this request - drop it.
-          if (requestedScreeningId !== this.selectedScreeningId) return;
-
-          this.screening = screening;
+        next: (result) => {
+          if (!result || requestedScreeningId !== this.selectedScreeningId) return;
+          const { available, seats } = result;
           const availableIds = new Set(available.availableSeats);
           const bookable: BookableSeat[] = seats.map((s) => ({
             ...s,

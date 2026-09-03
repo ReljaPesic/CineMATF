@@ -69,6 +69,16 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Entities.Reservation>> GetReservationsByUserIdAsync(Guid userId)
+    {
+        return await _context.Reservations
+            .AsNoTracking()
+            .Include(r => r.Tickets)
+            .Include(r => r.SeatLocks)
+            .Where(r => r.UserId == userId)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Entities.Ticket>> GetAllTicketsAsync()
     {
         return await _context.Tickets

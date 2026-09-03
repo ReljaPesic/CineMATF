@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.RegularExpressions;
 using AutoMapper;
 using Grpc.Core;
@@ -11,7 +10,9 @@ using Reservation.API.DTOs.Responses;
 using Reservation.API.ExternalServices;
 using Reservation.API.Settings;
 using Reservation.API.Repositories;
+using Reservation.API.Services.Email;
 using Reservation.API.Services.Pricing;
+using Reservation.API.Services.Tickets;
 
 namespace Reservation.API.Services;
 
@@ -23,7 +24,11 @@ public partial class ReservationService(
     ICinemaApiClient cinemaApiClient,
     IScreeningApiClient screeningApiClient,
     IMovieApiClient movieApiClient,
-    ITicketPricingService pricingService) : IReservationService
+    IIdentityApiClient identityApiClient,
+    IEmailSender emailSender,
+    ITicketPdfGenerator ticketPdfGenerator,
+    ITicketPricingService pricingService,
+    ILogger<ReservationService> logger) : IReservationService
 {
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -32,7 +37,11 @@ public partial class ReservationService(
     private readonly ICinemaApiClient _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
     private readonly IScreeningApiClient _screeningApiClient = screeningApiClient ?? throw new ArgumentNullException(nameof(screeningApiClient));
     private readonly IMovieApiClient _movieApiClient = movieApiClient ?? throw new ArgumentNullException(nameof(movieApiClient));
+    private readonly IIdentityApiClient _identityApiClient = identityApiClient ?? throw new ArgumentNullException(nameof(identityApiClient));
+    private readonly IEmailSender _emailSender = emailSender ?? throw new ArgumentNullException(nameof(emailSender));
+    private readonly ITicketPdfGenerator _ticketPdfGenerator = ticketPdfGenerator ?? throw new ArgumentNullException(nameof(ticketPdfGenerator));
     private readonly ITicketPricingService _pricingService = pricingService ?? throw new ArgumentNullException(nameof(pricingService));
+    private readonly ILogger<ReservationService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public async Task<AvailableSeatsResponse?> GetAvailableSeatsAsync(Guid screeningId)
     {
@@ -173,6 +182,12 @@ public partial class ReservationService(
         return _mapper.Map<IEnumerable<ReservationResponse>>(reservations);
     }
 
+    public async Task<IEnumerable<ReservationResponse>> GetReservationsByUserIdAsync(Guid userId)
+    {
+        var reservations = await _repository.GetReservationsByUserIdAsync(userId);
+        return _mapper.Map<IEnumerable<ReservationResponse>>(reservations);
+    }
+
     public async Task<IEnumerable<TicketResponse>> GetAllTicketsAsync()
     {
         var tickets = await _repository.GetAllTicketsAsync();
@@ -246,7 +261,53 @@ public partial class ReservationService(
         var createdTickets = await _repository.CreateTicketsAsync(tickets);
         await _repository.SaveChangesAsync();
 
+        await SendTicketConfirmationEmailAsync(reservation, createdTickets);
+
         return (true, null, _mapper.Map<IEnumerable<TicketResponse>>(createdTickets));
+    }
+
+    // Best-effort: a failed email must not stop ticket generation from succeeding, since the
+    // ticket is always downloadable from the reservation page regardless.
+    private async Task SendTicketConfirmationEmailAsync(Entities.Reservation reservation, IEnumerable<Entities.Ticket> tickets)
+    {
+        var ticketList = tickets.ToList();
+        if (ticketList.Count == 0) return;
+
+        try
+        {
+            var user = await _identityApiClient.GetUserAsync(reservation.UserId);
+            if (user == null || string.IsNullOrWhiteSpace(user.Email))
+            {
+                _logger.LogWarning("Skipping ticket email for reservation {ReservationId}: user or email not found", reservation.Id);
+                return;
+            }
+
+            var screening = await _screeningApiClient.GetScreeningAsync(reservation.ScreeningId);
+            if (screening == null)
+            {
+                _logger.LogWarning("Skipping ticket email for reservation {ReservationId}: screening not found", reservation.Id);
+                return;
+            }
+
+            var cinema = await _cinemaApiClient.GetCinemaAsync(screening.CinemaId);
+            var movie = await _movieApiClient.GetMovieAsync(screening.MovieId);
+            var movieTitle = movie?.Title ?? "Unknown Movie";
+
+            var attachments = ticketList
+                .Select(ticket =>
+                {
+                    var (content, fileName) = BuildTicketFile(ticket, screening, cinema, movie);
+                    return (FileName: fileName, Content: content);
+                })
+                .ToList();
+
+            var recipientName = $"{user.FirstName} {user.LastName}".Trim();
+            await _emailSender.SendTicketEmailAsync(user.Email, recipientName, movieTitle, attachments);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send ticket email for reservation {ReservationId}", reservation.Id);
+        }
     }
 
     public async Task<(bool Success, string? ErrorMessage)> CancelReservationAsync(Guid id)
@@ -307,26 +368,20 @@ public partial class ReservationService(
 
         var cinema = await _cinemaApiClient.GetCinemaAsync(screening.CinemaId);
         var movie = await _movieApiClient.GetMovieAsync(screening.MovieId);
+
+        var (content, fileName) = BuildTicketFile(ticket, screening, cinema, movie);
+        return (true, null, content, fileName);
+    }
+
+    private (byte[] Content, string FileName) BuildTicketFile(
+        Entities.Ticket ticket, ScreeningDetails screening, CinemaDetails? cinema, MovieDetails? movie)
+    {
         var cinemaName = cinema?.Name ?? "Unknown Cinema";
         var movieTitle = movie?.Title ?? "Unknown Movie";
 
-        var content = $"""
-            CineMATF Ticket
-            ===============
-            Movie: {movieTitle}
-            Cinema: {cinemaName}{(cinema == null ? "" : $" ({cinema.City})")}
-            Screening: {screening.StartTime:yyyy-MM-dd HH:mm} ({screening.Format})
-
-            Ticket ID: {ticket.Id}
-            Reservation ID: {ticket.ReservationId}
-            Seat ID: {ticket.SeatId}
-            Seat: Row {ticket.SeatRow}, Number {ticket.SeatNumber}
-            Price: {ticket.Price:0.00}
-            QR Code: {ticket.QrCode}
-            """;
-
-        var fileName = $"ticket-{SanitizeForFileName(cinemaName)}-{SanitizeForFileName(movieTitle)}-{ticket.Id}.txt";
-        return (true, null, Encoding.UTF8.GetBytes(content), fileName);
+        var content = _ticketPdfGenerator.Generate(ticket, screening, cinema, movie);
+        var fileName = $"ticket-{SanitizeForFileName(cinemaName)}-{SanitizeForFileName(movieTitle)}-{ticket.Id}.pdf";
+        return (content, fileName);
     }
 
     private static string SanitizeForFileName(string value) =>

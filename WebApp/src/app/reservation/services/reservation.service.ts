@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -54,8 +54,11 @@ export class ReservationService {
     return this.http.post<Ticket[]>(`${this.ticketUrl}/reservation/${reservationId}`, null);
   }
 
-  /** GET /Ticket/{id}/download -> plain-text ticket file (open directly in the browser) */
-  ticketDownloadUrl(ticketId: string): string {
-    return `${this.ticketUrl}/${ticketId}/download`;
+  /** GET /Ticket/{id}/download -> ticket PDF, fetched via HttpClient so the auth interceptor attaches the token */
+  downloadTicket(ticketId: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.ticketUrl}/${ticketId}/download`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
   }
 }

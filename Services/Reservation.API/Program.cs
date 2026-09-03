@@ -4,11 +4,16 @@ using Reservation.API.Mapping;
 using Reservation.API.Settings;
 using Reservation.API.Repositories;
 using Reservation.API.Services;
+using Reservation.API.Services.Email;
 using Reservation.API.Services.Pricing;
+using Reservation.API.Services.Tickets;
+using QuestPDF.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Screening.API.Grpc;
 
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,10 +25,34 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
         policy.WithOrigins("http://localhost:4200")
+              .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .WithExposedHeaders("Content-Disposition"));
 });
 builder.Services.Configure<ReservationOptions>(builder.Configuration.GetSection("ReservationOptions"));
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+// JWT bearer
+var jwt = builder.Configuration.GetSection("JwtSettings");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwt["Issuer"],
+            ValidAudience = jwt["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwt["SecretKey"]
+                    ?? throw new InvalidOperationException("JwtSettings:SecretKey is not configured"))),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+builder.Services.AddAuthorization();
+
 builder.Services.AddDbContext<ReservationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHttpClient<ICinemaApiClient, CinemaApiClient>(client =>
@@ -36,6 +65,13 @@ builder.Services.AddHttpClient<IMovieApiClient, MovieApiClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["MovieApi:BaseUrl"]
         ?? throw new InvalidOperationException("MovieApi:BaseUrl is not configured"));
 });
+builder.Services.AddHttpClient<IIdentityApiClient, IdentityApiClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["IdentityApi:BaseUrl"]
+        ?? throw new InvalidOperationException("IdentityApi:BaseUrl is not configured"));
+});
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddSingleton<ITicketPdfGenerator, TicketPdfGenerator>();
 builder.Services.AddGrpcClient<ScreeningGrpc.ScreeningGrpcClient>(o =>
 {
     o.Address = new Uri(builder.Configuration["ScreeningApi:BaseUrl"]
@@ -58,7 +94,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ReservationDbContext>();
-    await db.Database.MigrateAsync();
+    if (db.Database.IsRelational())
+    {
+        await db.Database.MigrateAsync();
+    }
 }
 
 app.UseCors("CorsPolicy");

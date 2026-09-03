@@ -64,6 +64,30 @@ public class UserController : ControllerBase
         return Ok(_mapper.Map<UserDetails>(user));
     }
 
+    //   GET /api/v1/User/by-id/{id}
+    // Internal, service-to-service lookup (e.g. Reservation.API needs an email address to send
+    // ticket confirmations) — anonymous since callers here are other services, not end users.
+    [AllowAnonymous]
+    [HttpGet("by-id/{id}")]
+    [ProducesResponseType(typeof(UserContactInfo), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserContactInfo>> GetUserById(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(new UserContactInfo
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName
+        });
+    }
+
     //   PUT /api/v1/User/{username}
     // Update a user's profile fields.
     // An Admin can edit anyone 
