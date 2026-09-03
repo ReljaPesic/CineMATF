@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Screening.API.Authorization;
 using Screening.API.DTOs;
 using Screening.API.Services;
 
@@ -29,6 +31,7 @@ public class ScreeningController(IScreeningService service) : ControllerBase
         return Ok(screening);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(ScreeningResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -38,6 +41,7 @@ public class ScreeningController(IScreeningService service) : ControllerBase
         return CreatedAtAction(nameof(GetScreeningById), new { id = screening.Id }, screening);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ScreeningResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -48,6 +52,7 @@ public class ScreeningController(IScreeningService service) : ControllerBase
         return Ok(screening);
     }
 
+    [Authorize(Roles = Roles.Admin)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
