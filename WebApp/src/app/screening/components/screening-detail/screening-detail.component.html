@@ -30,7 +30,9 @@
       </div>
       <span class="screening-detail__actions">
         @if (!isAdmin()) {
-          @if (isLoggedIn()) {
+          @if (isPast) {
+            <span class="status">This screening has already ended.</span>
+          } @else if (isLoggedIn()) {
             <a class="btn btn--primary" [routerLink]="['/reservations/new']" [queryParams]="{ screeningId: screening.id }">
               Book seats
             </a>
