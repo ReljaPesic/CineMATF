@@ -1,0 +1,11 @@
+global using Xunit;
+global using FluentAssertions;
+global using Moq;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Options;
+global using Identity.API.DTOs;
+global using Identity.API.DTOs.Requests;
+global using Identity.API.DTOs.Responses;
+global using Identity.API.Entities;
+global using Identity.API.Services;
+global using Identity.API.Settings;
