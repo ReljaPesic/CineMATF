@@ -11,5 +11,6 @@
     <Project Path="Tests/Movie.API.Tests/Movie.API.Tests.csproj" />
     <Project Path="Tests/Reservation.API.Tests/Reservation.API.Tests.csproj" />
     <Project Path="Tests/Screening.API.Tests/Screening.API.Tests.csproj" />
+    <Project Path="Tests/Identity.API.Tests/Identity.API.Tests.csproj" />
   </Folder>
 </Solution>

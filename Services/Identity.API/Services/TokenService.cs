@@ -21,8 +21,10 @@ public class TokenService(IOptions<JwtSettings> jwtOptions) : ITokenService
         // Standard JWT claims describing the subject of the token.
         var claims = new List<Claim>
         {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
             new Claim(ClaimTypes.Email, user.Email  ?? string.Empty),
+            new Claim("cardNumber", user.CardNumber ?? string.Empty),
         };
         
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
