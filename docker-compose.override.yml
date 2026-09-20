@@ -11,6 +11,7 @@ services:
       - DatabaseSettings__CollectionName=Movies
     ports:
       - "8001:8080"
+      - "8007:8081"
     depends_on:
       - moviedb
     restart: unless-stopped
@@ -31,6 +32,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8000:8080"
+      - "8006:8081"
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option csharp_namespace = "Movie.API.Grpc";
+
+package movie;
+
+service MovieGrpc {
+  rpc GetMovie (GetMovieRequest) returns (MovieReply);
+}
+
+message GetMovieRequest {
+  string id = 1;
+}
+
+message MovieReply {
+  string id = 1;
+  string title = 2;
+}

@@ -36,6 +36,8 @@
 
   <ItemGroup>
     <Protobuf Include="..\Screening.API\Protos\screening.proto" GrpcServices="Client" Link="Protos\screening.proto" />
+    <Protobuf Include="..\Cinema.API\Protos\cinema.proto" GrpcServices="Client" Link="Protos\cinema.proto" />
+    <Protobuf Include="..\Movie.API\Protos\movie.proto" GrpcServices="Client" Link="Protos\movie.proto" />
   </ItemGroup>
 
 </Project>

@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Cinema.API.Grpc;
+using Movie.API.Grpc;
 using Screening.API.Grpc;
 
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -57,16 +59,18 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<ReservationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
-builder.Services.AddHttpClient<ICinemaApiClient, CinemaApiClient>(client =>
+builder.Services.AddGrpcClient<CinemaGrpc.CinemaGrpcClient>(o =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["CinemaApi:BaseUrl"]
+    o.Address = new Uri(builder.Configuration["CinemaApi:BaseUrl"]
         ?? throw new InvalidOperationException("CinemaApi:BaseUrl is not configured"));
 });
-builder.Services.AddHttpClient<IMovieApiClient, MovieApiClient>(client =>
+builder.Services.AddTransient<ICinemaApiClient, CinemaApiClient>();
+builder.Services.AddGrpcClient<MovieGrpc.MovieGrpcClient>(o =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["MovieApi:BaseUrl"]
+    o.Address = new Uri(builder.Configuration["MovieApi:BaseUrl"]
         ?? throw new InvalidOperationException("MovieApi:BaseUrl is not configured"));
 });
+builder.Services.AddScoped<IMovieApiClient, MovieApiClient>();
 builder.Services.AddHttpClient<IIdentityApiClient, IdentityApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["IdentityApi:BaseUrl"]

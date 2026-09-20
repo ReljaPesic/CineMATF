@@ -30,3 +30,9 @@ internal class FakeMovieApiClient : IMovieApiClient
     public Task<MovieDetails?> GetMovieAsync(Guid movieId, CancellationToken cancellationToken = default) =>
         Task.FromResult<MovieDetails?>(new MovieDetails(movieId, "Test Movie"));
 }
+
+internal class FakeIdentityApiClient : IIdentityApiClient
+{
+    public Task<UserContactDetails?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<UserContactDetails?>(new UserContactDetails(userId, "test-user@example.com", "Test", "User"));
+}

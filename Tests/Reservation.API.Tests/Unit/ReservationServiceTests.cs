@@ -7,6 +7,9 @@ public class ReservationServiceTests
     private readonly Mock<ICinemaApiClient> _cinemaApiClientMock;
     private readonly Mock<IScreeningApiClient> _screeningApiClientMock;
     private readonly Mock<IMovieApiClient> _movieApiClientMock;
+    private readonly Mock<IIdentityApiClient> _identityApiClientMock;
+    private readonly Mock<IEmailSender> _emailSenderMock;
+    private readonly Mock<ITicketPdfGenerator> _ticketPdfGeneratorMock;
     private readonly Mock<ITicketPricingService> _pricingServiceMock;
     private readonly IMapper _mapper;
     private readonly ReservationService _service;
@@ -18,6 +21,9 @@ public class ReservationServiceTests
         _cinemaApiClientMock = new Mock<ICinemaApiClient>();
         _screeningApiClientMock = new Mock<IScreeningApiClient>();
         _movieApiClientMock = new Mock<IMovieApiClient>();
+        _identityApiClientMock = new Mock<IIdentityApiClient>();
+        _emailSenderMock = new Mock<IEmailSender>();
+        _ticketPdfGeneratorMock = new Mock<ITicketPdfGenerator>();
         _pricingServiceMock = new Mock<ITicketPricingService>();
         _screeningApiClientMock.Setup(c => c.GetScreeningAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ScreeningDetails(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow.AddDays(1), "TwoD"));
@@ -26,7 +32,19 @@ public class ReservationServiceTests
         _mapper = config.CreateMapper();
 
         var options = Options.Create(new ReservationOptions { LockDurationMinutes = 10 });
-        _service = new ReservationService(_repositoryMock.Object, _mapper, _factoryMock.Object, options, _cinemaApiClientMock.Object, _screeningApiClientMock.Object, _movieApiClientMock.Object, _pricingServiceMock.Object);
+        _service = new ReservationService(
+            _repositoryMock.Object,
+            _mapper,
+            _factoryMock.Object,
+            options,
+            _cinemaApiClientMock.Object,
+            _screeningApiClientMock.Object,
+            _movieApiClientMock.Object,
+            _identityApiClientMock.Object,
+            _emailSenderMock.Object,
+            _ticketPdfGeneratorMock.Object,
+            _pricingServiceMock.Object,
+            Mock.Of<ILogger<ReservationService>>());
     }
 
     private void SetUpSeat(Guid seatId, string seatType = "Standard") =>

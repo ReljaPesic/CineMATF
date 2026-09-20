@@ -14,15 +14,15 @@ This is the seminar/term project for the Software Development 2 (RS2) course.
 ## Architecture
 
 The system follows a database-per-service microservices architecture. Services never read each
-other's databases directly — they talk to each other over HTTP (via typed clients in
-`ExternalServices`) or gRPC, and a screening is resolved as a plain `Guid` reference rather than a
+other's databases directly — they talk to each other over gRPC or HTTP (via typed clients in
+`ExternalServices`), and a screening is resolved as a plain `Guid` reference rather than a
 foreign key across service boundaries.
 
 | Service           | Responsibility                                             | Storage                     | Port(s) (docker-compose) |
 |-------------------|-------------------------------------------------------------|------------------------------|---------------------------|
 | `Identity.API`    | User registration/login, JWT + refresh tokens, roles        | Postgres (`IdentityDB`)      | 8005                      |
-| `Cinema.API`      | Cinemas, halls, seats                                        | Postgres (`cinemadb`)         | 8000                      |
-| `Movie.API`       | Movie catalog (title, genres, cast, rating)                  | MongoDB (`MovieDB`)           | 8001                      |
+| `Cinema.API`      | Cinemas, halls, seats; exposes a gRPC endpoint used internally | Postgres (`cinemadb`)      | 8000 (HTTP), 8006 (gRPC)  |
+| `Movie.API`       | Movie catalog (title, genres, cast, rating); exposes a gRPC endpoint used internally | MongoDB (`MovieDB`) | 8001 (HTTP), 8007 (gRPC) |
 | `Screening.API`   | Screenings (movie + hall + time + format); exposes a gRPC endpoint used internally | Postgres (`ScreeningDB`) | 8003 (HTTP), 8004 (gRPC) |
 | `Reservation.API` | Seat locking, reservations, tickets, PDF/QR ticket generation, ticket emails | Postgres (`ReservationServiceDb`) | 8002 |
 | `WebApp`          | Angular SPA consuming all of the above                       | —                              | 4200                      |
@@ -34,9 +34,10 @@ Cross-cutting concerns:
 - **Security** — Identity.API issues JWT access tokens (plus refresh tokens); every other service
   validates the same JWT via `AddJwtBearer`/`AddAuthorization`, with role-based checks (e.g. `Admin`)
   on management endpoints.
-- **Inter-service communication** — Reservation.API calls Cinema.API, Movie.API, Screening.API and
-  Identity.API over HTTP through typed clients, and calls Screening.API over **gRPC**
-  (`Services/Screening.API/Protos/screening.proto`) to resolve screening details.
+- **Inter-service communication** — Reservation.API calls Identity.API over HTTP through a typed
+  client, and calls Cinema.API, Movie.API and Screening.API over **gRPC** (via
+  `Services/Cinema.API/Protos/cinema.proto`, `Services/Movie.API/Protos/movie.proto` and
+  `Services/Screening.API/Protos/screening.proto`) to resolve seat, movie and screening details.
 - **API docs** — every service exposes Swagger/OpenAPI (`/swagger`) in development.
 
 ## Tech stack
@@ -96,6 +97,11 @@ is published on host port `5433`, see the connection strings in `.env.example`) 
 dotnet tool restore
 ```
 
+Services that expose gRPC (`Cinema.API`, `Movie.API`, `Screening.API`) listen on two ports when run
+this way: `8080` for HTTP/REST (Swagger) and `8081` for gRPC (HTTP/2). If you're running
+`Reservation.API` locally too, point its `CinemaApi:BaseUrl`, `MovieApi:BaseUrl` and
+`ScreeningApi:BaseUrl` settings at each service's `8081` gRPC port, not the Swagger port.
+
 For the front end:
 
 ```bash
@@ -129,8 +135,8 @@ npm test
 
 ```
 Services/
-  Cinema.API/         # cinemas, halls, seats
-  Movie.API/           # movie catalog (MongoDB)
+  Cinema.API/          # cinemas, halls, seats, gRPC endpoint
+  Movie.API/           # movie catalog (MongoDB), gRPC endpoint
   Screening.API/       # screenings, gRPC endpoint
   Reservation.API/     # reservations, tickets, PDF/QR generation, emails
   Identity.API/        # auth, users, roles

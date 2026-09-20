@@ -85,9 +85,9 @@ services:
     environment:
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=ReservationServiceDb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
-      - CinemaApi__BaseUrl=http://cinemaapi:8080
+      - CinemaApi__BaseUrl=http://cinemaapi:8081
       - ScreeningApi__BaseUrl=http://screeningapi:8081
-      - MovieApi__BaseUrl=http://movieapi:8080
+      - MovieApi__BaseUrl=http://movieapi:8081
       - IdentityApi__BaseUrl=http://identityapi:8080
       - EmailSettings__SmtpHost=smtp.gmail.com
       - EmailSettings__SmtpPort=587

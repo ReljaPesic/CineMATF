@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option csharp_namespace = "Cinema.API.Grpc";
+
+package cinema;
+
+service CinemaGrpc {
+  rpc GetSeat (GetSeatRequest) returns (SeatReply);
+  rpc GetSeatsByHall (GetSeatsByHallRequest) returns (SeatListReply);
+  rpc GetCinema (GetCinemaRequest) returns (CinemaReply);
+}
+
+message GetSeatRequest {
+  string id = 1;
+}
+
+message GetSeatsByHallRequest {
+  string cinema_id = 1;
+  string hall_id = 2;
+}
+
+message GetCinemaRequest {
+  string id = 1;
+}
+
+message SeatReply {
+  string id = 1;
+  int32 row = 2;
+  int32 number = 3;
+  string seat_type = 4;
+}
+
+message SeatListReply {
+  repeated SeatReply seats = 1;
+}
+
+message CinemaReply {
+  string id = 1;
+  string name = 2;
+  string city = 3;
+}

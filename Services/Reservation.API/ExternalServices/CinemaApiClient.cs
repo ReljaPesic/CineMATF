@@ -1,40 +1,48 @@
-using System.Net;
-using System.Net.Http.Json;
+using Cinema.API.Grpc;
+using Grpc.Core;
 
 namespace Reservation.API.ExternalServices;
 
-public class CinemaApiClient(HttpClient httpClient) : ICinemaApiClient
+public class CinemaApiClient(CinemaGrpc.CinemaGrpcClient client) : ICinemaApiClient
 {
-    private record CinemaSeatResponse(Guid Id, int Row, int Number, string SeatType);
-
     public async Task<SeatDetails?> GetSeatAsync(Guid seatId, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.GetAsync($"api/v1/cinema/seats/{seatId}", cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound) return null;
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            var reply = await client.GetSeatAsync(
+                new GetSeatRequest { Id = seatId.ToString() },
+                cancellationToken: cancellationToken);
 
-        var seat = await response.Content.ReadFromJsonAsync<CinemaSeatResponse>(cancellationToken);
-        return seat == null ? null : new SeatDetails(seat.Id, seat.Row, seat.Number, seat.SeatType);
+            return new SeatDetails(Guid.Parse(reply.Id), reply.Row, reply.Number, reply.SeatType);
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     public async Task<IEnumerable<SeatDetails>> GetSeatsByHallAsync(Guid cinemaId, Guid hallId, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.GetAsync($"api/v1/cinema/{cinemaId}/halls/{hallId}/seats", cancellationToken);
-        response.EnsureSuccessStatusCode();
+        var reply = await client.GetSeatsByHallAsync(
+            new GetSeatsByHallRequest { CinemaId = cinemaId.ToString(), HallId = hallId.ToString() },
+            cancellationToken: cancellationToken);
 
-        var seats = await response.Content.ReadFromJsonAsync<IEnumerable<CinemaSeatResponse>>(cancellationToken);
-        return seats?.Select(s => new SeatDetails(s.Id, s.Row, s.Number, s.SeatType)) ?? [];
+        return reply.Seats.Select(s => new SeatDetails(Guid.Parse(s.Id), s.Row, s.Number, s.SeatType));
     }
-
-    private record CinemaApiResponse(Guid Id, string Name, string City);
 
     public async Task<CinemaDetails?> GetCinemaAsync(Guid cinemaId, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.GetAsync($"api/v1/cinema/{cinemaId}", cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound) return null;
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            var reply = await client.GetCinemaAsync(
+                new GetCinemaRequest { Id = cinemaId.ToString() },
+                cancellationToken: cancellationToken);
 
-        var cinema = await response.Content.ReadFromJsonAsync<CinemaApiResponse>(cancellationToken);
-        return cinema == null ? null : new CinemaDetails(cinema.Id, cinema.Name, cinema.City);
+            return new CinemaDetails(Guid.Parse(reply.Id), reply.Name, reply.City);
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
+        {
+            return null;
+        }
     }
 }

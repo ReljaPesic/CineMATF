@@ -1,19 +1,23 @@
-using System.Net;
-using System.Net.Http.Json;
+using Movie.API.Grpc;
+using Grpc.Core;
 
 namespace Reservation.API.ExternalServices;
 
-public class MovieApiClient(HttpClient httpClient) : IMovieApiClient
+public class MovieApiClient(MovieGrpc.MovieGrpcClient client) : IMovieApiClient
 {
-    private record MovieApiResponse(Guid Id, string Title);
-
     public async Task<MovieDetails?> GetMovieAsync(Guid movieId, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.GetAsync($"api/v1/movie/{movieId}", cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound) return null;
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            var reply = await client.GetMovieAsync(
+                new GetMovieRequest { Id = movieId.ToString() },
+                cancellationToken: cancellationToken);
 
-        var movie = await response.Content.ReadFromJsonAsync<MovieApiResponse>(cancellationToken);
-        return movie == null ? null : new MovieDetails(movie.Id, movie.Title);
+            return new MovieDetails(Guid.Parse(reply.Id), reply.Title);
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
+        {
+            return null;
+        }
     }
 }

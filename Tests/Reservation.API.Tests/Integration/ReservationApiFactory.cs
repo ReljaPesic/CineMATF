@@ -25,6 +25,7 @@ public class ReservationApiFactory : WebApplicationFactory<Program>
                 d.ServiceType == typeof(ICinemaApiClient) ||
                 d.ServiceType == typeof(IMovieApiClient) ||
                 d.ServiceType == typeof(IScreeningApiClient) ||
+                d.ServiceType == typeof(IIdentityApiClient) ||
                 d.ServiceType == typeof(IHostedService)).ToList())
             {
                 services.Remove(descriptor);
@@ -50,11 +51,12 @@ public class ReservationApiFactory : WebApplicationFactory<Program>
                 .UseInMemoryDatabase(_dbName)
                 .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
 
-            // Stand in for Cinema.API/Movie.API/Screening.API so reservation creation
-            // doesn't need those services running.
+            // Stand in for Cinema.API/Movie.API/Screening.API/Identity.API so reservation
+            // creation doesn't need those services running.
             services.AddSingleton<ICinemaApiClient, FakeCinemaApiClient>();
             services.AddSingleton<IMovieApiClient, FakeMovieApiClient>();
             services.AddSingleton<IScreeningApiClient, FakeScreeningApiClient>();
+            services.AddSingleton<IIdentityApiClient, FakeIdentityApiClient>();
         });
     }
 }
