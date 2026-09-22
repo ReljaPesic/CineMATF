@@ -11,6 +11,7 @@ using Reservation.API.ExternalServices;
 using Reservation.API.Settings;
 using Reservation.API.Repositories;
 using Reservation.API.Services.Email;
+using Reservation.API.Services.Payments;
 using Reservation.API.Services.Pricing;
 using Reservation.API.Services.Tickets;
 
@@ -28,6 +29,7 @@ public partial class ReservationService(
     IEmailSender emailSender,
     ITicketPdfGenerator ticketPdfGenerator,
     ITicketPricingService pricingService,
+    IStripePaymentService stripePaymentService,
     ILogger<ReservationService> logger) : IReservationService
 {
     private readonly IReservationRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -41,6 +43,7 @@ public partial class ReservationService(
     private readonly IEmailSender _emailSender = emailSender ?? throw new ArgumentNullException(nameof(emailSender));
     private readonly ITicketPdfGenerator _ticketPdfGenerator = ticketPdfGenerator ?? throw new ArgumentNullException(nameof(ticketPdfGenerator));
     private readonly ITicketPricingService _pricingService = pricingService ?? throw new ArgumentNullException(nameof(pricingService));
+    private readonly IStripePaymentService _stripePaymentService = stripePaymentService ?? throw new ArgumentNullException(nameof(stripePaymentService));
     private readonly ILogger<ReservationService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public async Task<AvailableSeatsResponse?> GetAvailableSeatsAsync(Guid screeningId)
@@ -219,6 +222,79 @@ public partial class ReservationService(
 
         await _repository.UpdateReservationStatusAsync(reservationId, ReservationStatus.Confirmed);
         return (true, null);
+    }
+
+    public async Task<(bool Success, string? ErrorMessage, CheckoutSessionResponse? Response)> CreateCheckoutSessionAsync(Guid reservationId)
+    {
+        var reservation = await _repository.GetReservationByIdAsync(reservationId);
+        if (reservation == null) return (false, "Reservation not found", null);
+
+        if (reservation.Status != ReservationStatus.Locked)
+            return (false, "Only locked reservations can initiate payment", null);
+
+        if (reservation.ExpiresAt <= DateTime.UtcNow)
+            return (false, "Reservation has expired", null);
+
+        var newExpiresAt = DateTime.UtcNow.AddMinutes(_options.CheckoutHoldExtensionMinutes);
+        var (sessionId, url) = await _stripePaymentService.CreateCheckoutSessionAsync(
+            reservationId, reservation.TotalPrice, reservation.SeatLocks.Count, newExpiresAt);
+
+        // Extends the seat/reservation hold to cover the Stripe-hosted checkout page so the
+        // 1-minute cleanup sweep can't reclaim the seats out from under an in-progress payment.
+        await _repository.ExtendReservationHoldAsync(reservationId, newExpiresAt, sessionId);
+
+        return (true, null, new CheckoutSessionResponse(sessionId, url));
+    }
+
+    // Idempotent: Stripe redelivers webhook events, so this must be safe to call more than
+    // once for the same event without double-confirming or double-refunding.
+    public async Task<(bool Success, string? ErrorMessage)> ConfirmPaymentFromWebhookAsync(string rawJson, string stripeSignatureHeader)
+    {
+        StripeWebhookEvent stripeEvent;
+        try
+        {
+            stripeEvent = _stripePaymentService.ConstructEvent(rawJson, stripeSignatureHeader);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Rejected Stripe webhook with an invalid signature");
+            return (false, "Invalid signature");
+        }
+
+        if (stripeEvent.Type != "checkout.session.completed" || stripeEvent.ReservationId is not { } reservationId)
+        {
+            return (true, null);
+        }
+
+        var reservation = await _repository.GetReservationByIdAsync(reservationId);
+        if (reservation == null)
+        {
+            _logger.LogWarning("Stripe webhook referenced unknown reservation {ReservationId}", reservationId);
+            return (true, null);
+        }
+
+        switch (reservation.Status)
+        {
+            case ReservationStatus.Confirmed:
+                // Already handled by an earlier delivery of this (or an equivalent) event.
+                return (true, null);
+
+            case ReservationStatus.Locked:
+                await _repository.UpdateReservationStatusAsync(reservationId, ReservationStatus.Confirmed);
+                return (true, null);
+
+            default:
+                // The hold expired or was cancelled before Stripe confirmed payment - the seats
+                // may already belong to someone else, so don't force-confirm. Refund instead.
+                _logger.LogError(
+                    "Stripe payment for reservation {ReservationId} completed while it was {Status}; refunding payment intent {PaymentIntentId}",
+                    reservationId, reservation.Status, stripeEvent.PaymentIntentId);
+                if (stripeEvent.PaymentIntentId != null)
+                {
+                    await _stripePaymentService.RefundAsync(stripeEvent.PaymentIntentId);
+                }
+                return (true, null);
+        }
     }
 
     public async Task<(bool Success, string? ErrorMessage, IEnumerable<TicketResponse>? Tickets)> GenerateTicketsAsync(Guid reservationId)

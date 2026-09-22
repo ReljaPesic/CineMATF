@@ -103,9 +103,18 @@ export class ReservationDetailComponent implements OnInit {
       });
   }
 
-  pay(): void {
+  checkout(): void {
     if (!this.reservation || this.working) return;
-    this.run(this.reservationService.pay(this.reservation.id), 'Could not complete the payment.');
+    this.working = true;
+    this.error = null;
+    this.reservationService.createCheckoutSession(this.reservation.id).subscribe({
+      // Full browser navigation to Stripe's hosted Checkout page.
+      next: (session) => (window.location.href = session.url),
+      error: (err: HttpErrorResponse) => {
+        this.working = false;
+        this.error = err.error?.message ?? 'Could not start payment.';
+      },
+    });
   }
 
   cancel(): void {

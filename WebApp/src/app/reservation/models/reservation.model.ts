@@ -45,6 +45,11 @@ export interface CreateReservationRequest {
   userId: string;
 }
 
+export interface CheckoutSession {
+  sessionId: string;
+  url: string;
+}
+
 export const SEAT_PRICE: Record<string, number> = {
   Standard: 10,
   VIP: 15,

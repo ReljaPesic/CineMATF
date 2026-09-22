@@ -11,6 +11,8 @@ public class Reservation
     public decimal TotalPrice { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime ExpiresAt { get; set; }
+    public string? StripeSessionId { get; set; }
+    public string? StripePaymentIntentId { get; set; }
 
     public ICollection<Ticket> Tickets { get; set; } = [];
     public ICollection<SeatLock> SeatLocks { get; set; } = [];

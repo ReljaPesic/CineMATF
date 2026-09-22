@@ -1,0 +1,26 @@
+<section class="payment-result">
+  @if (state === 'cancelled') {
+    <h1>Payment cancelled</h1>
+    <p class="status">Your seats are still held until the timer expires — you can retry payment from the reservation page.</p>
+    <button type="button" class="btn btn--primary" (click)="goToReservation()">Back to reservation</button>
+  } @else if (state === 'polling') {
+    <h1>Confirming your payment…</h1>
+    <p class="status">This can take a few seconds.</p>
+  } @else if (state === 'confirmed') {
+    <h1>Payment confirmed</h1>
+    <p class="status">Your tickets are ready.</p>
+    <button type="button" class="btn btn--primary" (click)="goToReservation()">View reservation</button>
+  } @else if (state === 'timed-out') {
+    <h1>Still processing…</h1>
+    <p class="status">Stripe hasn't confirmed the payment yet. This is unusual — try refreshing.</p>
+    <button type="button" class="btn btn--primary" (click)="retryPoll()">Refresh</button>
+  } @else if (state === 'lapsed') {
+    <h1>Reservation no longer available</h1>
+    <p class="status">The seat hold expired before payment could be confirmed. If you were charged, it has been refunded automatically.</p>
+    <button type="button" class="btn btn--primary" (click)="bookAgain()">Book again</button>
+  } @else {
+    <h1>Something went wrong</h1>
+    <p class="status status--error">{{ error }}</p>
+    <button type="button" class="btn btn--primary" (click)="goToReservation()">Back to reservation</button>
+  }
+</section>

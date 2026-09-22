@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AvailableSeats,
+  CheckoutSession,
   CreateReservationRequest,
   Reservation,
   Ticket,
@@ -39,9 +40,14 @@ export class ReservationService {
     return this.http.post<Reservation>(this.baseUrl, request);
   }
 
-  /** POST /reservations/{id}/pay -> Locked -> Confirmed */
+  /** POST /reservations/{id}/pay -> Locked -> Confirmed (dev/test-only bypass; the UI pays via Stripe Checkout instead, see createCheckoutSession) */
   pay(id: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/${id}/pay`, null);
+  }
+
+  /** POST /reservations/{id}/checkout-session -> creates a Stripe Checkout Session; redirect the browser to the returned url */
+  createCheckoutSession(id: string): Observable<CheckoutSession> {
+    return this.http.post<CheckoutSession>(`${this.baseUrl}/${id}/checkout-session`, null);
   }
 
   /** POST /reservations/{id}/cancel -> Locked -> Cancelled, releases the seats */

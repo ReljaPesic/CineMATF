@@ -19,6 +19,7 @@ public interface IReservationRepository
     Task<Entities.Ticket?> GetTicketByIdAsync(Guid id);
     Task<IEnumerable<Entities.Ticket>> GetTicketsByReservationAsync(Guid reservationId);
     Task<bool> UpdateReservationStatusAsync(Guid id, ReservationStatus status);
+    Task ExtendReservationHoldAsync(Guid reservationId, DateTime newExpiresAt, string stripeSessionId);
     Task<IEnumerable<Entities.Reservation>> GetExpiredReservationsAsync();
     Task<bool> DeleteSeatLockAsync(Guid seatLockId);
     Task DeleteSeatLocksAsync(IEnumerable<Guid> seatLockIds);

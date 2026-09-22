@@ -8,12 +8,14 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Reservation.API.Data;
 using Reservation.API.ExternalServices;
+using Reservation.API.Services.Payments;
 
 namespace Reservation.API.Tests.Integration;
 
 public class ReservationApiFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbName = $"TestDb_{Guid.NewGuid():N}";
+    public readonly FakeStripePaymentService StripePaymentService = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -26,6 +28,7 @@ public class ReservationApiFactory : WebApplicationFactory<Program>
                 d.ServiceType == typeof(IMovieApiClient) ||
                 d.ServiceType == typeof(IScreeningApiClient) ||
                 d.ServiceType == typeof(IIdentityApiClient) ||
+                d.ServiceType == typeof(IStripePaymentService) ||
                 d.ServiceType == typeof(IHostedService)).ToList())
             {
                 services.Remove(descriptor);
@@ -57,6 +60,7 @@ public class ReservationApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IMovieApiClient, FakeMovieApiClient>();
             services.AddSingleton<IScreeningApiClient, FakeScreeningApiClient>();
             services.AddSingleton<IIdentityApiClient, FakeIdentityApiClient>();
+            services.AddSingleton<IStripePaymentService>(StripePaymentService);
         });
     }
 }

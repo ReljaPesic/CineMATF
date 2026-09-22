@@ -94,6 +94,11 @@ services:
       - EmailSettings__SenderEmail=${EMAIL_SENDER}
       - EmailSettings__SenderPassword=${EMAIL_APP_PASSWORD}
       - EmailSettings__SenderName=CineMATF
+      - StripeSettings__SecretKey=${STRIPE_SECRET_KEY}
+      - StripeSettings__WebhookSecret=${STRIPE_WEBHOOK_SECRET}
+      - StripeSettings__Currency=eur
+      - StripeSettings__SuccessUrlBase=http://localhost:4200/reservations/payment-result
+      - StripeSettings__CancelUrlBase=http://localhost:4200/reservations/payment-result
     ports:
       - "8002:8080"
     depends_on:

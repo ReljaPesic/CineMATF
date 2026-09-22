@@ -112,6 +112,25 @@ public class ReservationRepository(ReservationDbContext context) : IReservationR
         return true;
     }
 
+    // A single SaveChangesAsync call across the reservation and its seat locks is already
+    // atomic on a relational provider, so no explicit transaction is needed here.
+    public async Task ExtendReservationHoldAsync(Guid reservationId, DateTime newExpiresAt, string stripeSessionId)
+    {
+        var reservation = await _context.Reservations
+            .Include(r => r.SeatLocks)
+            .FirstOrDefaultAsync(r => r.Id == reservationId);
+        if (reservation == null) return;
+
+        reservation.ExpiresAt = newExpiresAt;
+        reservation.StripeSessionId = stripeSessionId;
+        foreach (var seatLock in reservation.SeatLocks)
+        {
+            seatLock.ExpiresAt = newExpiresAt;
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<IEnumerable<Entities.Reservation>> GetExpiredReservationsAsync()
     {
         return await _context.Reservations

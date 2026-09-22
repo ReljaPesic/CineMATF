@@ -219,12 +219,13 @@ export class ReservationFormComponent implements OnInit {
       .pipe(
         switchMap((reservation) => {
           reservationId = reservation.id;
-          return this.reservationService.pay(reservation.id);
+          return this.reservationService.createCheckoutSession(reservation.id);
         }),
-        switchMap(() => this.reservationService.generateTickets(reservationId!)),
       )
       .subscribe({
-        next: () => this.router.navigate(['/reservations', reservationId]),
+        // Full browser navigation to Stripe's hosted Checkout page - payment confirmation
+        // (and ticket generation) happens on the payment-result page once Stripe redirects back.
+        next: (session) => (window.location.href = session.url),
         error: (err: HttpErrorResponse) => {
           this.submitting = false;
           console.error('Booking failed', err);

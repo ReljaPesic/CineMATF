@@ -94,7 +94,7 @@
 
     <div class="reservation-detail__actions">
       @if (reservation.status === Status.Locked) {
-        <button type="button" class="btn btn--primary" (click)="pay()" [disabled]="working">
+        <button type="button" class="btn btn--primary" (click)="checkout()" [disabled]="working">
           {{ working ? 'Working…' : 'Pay & confirm' }}
         </button>
         <button type="button" class="btn btn--danger" (click)="cancel()" [disabled]="working">

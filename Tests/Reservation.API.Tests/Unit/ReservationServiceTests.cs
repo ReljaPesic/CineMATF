@@ -11,6 +11,7 @@ public class ReservationServiceTests
     private readonly Mock<IEmailSender> _emailSenderMock;
     private readonly Mock<ITicketPdfGenerator> _ticketPdfGeneratorMock;
     private readonly Mock<ITicketPricingService> _pricingServiceMock;
+    private readonly Mock<IStripePaymentService> _stripePaymentServiceMock;
     private readonly IMapper _mapper;
     private readonly ReservationService _service;
 
@@ -25,13 +26,14 @@ public class ReservationServiceTests
         _emailSenderMock = new Mock<IEmailSender>();
         _ticketPdfGeneratorMock = new Mock<ITicketPdfGenerator>();
         _pricingServiceMock = new Mock<ITicketPricingService>();
+        _stripePaymentServiceMock = new Mock<IStripePaymentService>();
         _screeningApiClientMock.Setup(c => c.GetScreeningAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ScreeningDetails(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow.AddDays(1), "TwoD"));
 
         var config = new MapperConfiguration(cfg => cfg.AddProfile<Mapping.ReservationMappingProfile>());
         _mapper = config.CreateMapper();
 
-        var options = Options.Create(new ReservationOptions { LockDurationMinutes = 10 });
+        var options = Options.Create(new ReservationOptions { LockDurationMinutes = 10, CheckoutHoldExtensionMinutes = 30 });
         _service = new ReservationService(
             _repositoryMock.Object,
             _mapper,
@@ -44,6 +46,7 @@ public class ReservationServiceTests
             _emailSenderMock.Object,
             _ticketPdfGeneratorMock.Object,
             _pricingServiceMock.Object,
+            _stripePaymentServiceMock.Object,
             Mock.Of<ILogger<ReservationService>>());
     }
 
@@ -388,6 +391,175 @@ public class ReservationServiceTests
         success.Should().BeFalse();
         error.Should().Be("Reservation has expired");
         _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(It.IsAny<Guid>(), It.IsAny<ReservationStatus>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateCheckoutSessionAsync_WithNonExistingReservation_ReturnsFailure()
+    {
+        var id = Guid.NewGuid();
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync((Entities.Reservation?)null);
+
+        var (success, error, response) = await _service.CreateCheckoutSessionAsync(id);
+
+        success.Should().BeFalse();
+        error.Should().Be("Reservation not found");
+        response.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateCheckoutSessionAsync_WithNonLockedReservation_ReturnsFailure()
+    {
+        var id = Guid.NewGuid();
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Confirmed };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+
+        var (success, error, response) = await _service.CreateCheckoutSessionAsync(id);
+
+        success.Should().BeFalse();
+        error.Should().Be("Only locked reservations can initiate payment");
+        response.Should().BeNull();
+        _stripePaymentServiceMock.Verify(s => s.CreateCheckoutSessionAsync(
+            It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateCheckoutSessionAsync_WithExpiredReservation_ReturnsFailure()
+    {
+        var id = Guid.NewGuid();
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Locked, ExpiresAt = DateTime.UtcNow.AddMinutes(-1) };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+
+        var (success, error, response) = await _service.CreateCheckoutSessionAsync(id);
+
+        success.Should().BeFalse();
+        error.Should().Be("Reservation has expired");
+        response.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateCheckoutSessionAsync_WithLockedReservation_ExtendsHoldAndReturnsSession()
+    {
+        var id = Guid.NewGuid();
+        var reservation = new Entities.Reservation
+        {
+            Id = id,
+            Status = ReservationStatus.Locked,
+            TotalPrice = 25m,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            SeatLocks = [new Entities.SeatLock { Id = Guid.NewGuid() }]
+        };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+        _stripePaymentServiceMock
+            .Setup(s => s.CreateCheckoutSessionAsync(id, 25m, 1, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("cs_test_123", "https://checkout.stripe.com/cs_test_123"));
+
+        var (success, error, response) = await _service.CreateCheckoutSessionAsync(id);
+
+        success.Should().BeTrue();
+        error.Should().BeNull();
+        response.Should().NotBeNull();
+        response!.SessionId.Should().Be("cs_test_123");
+        response.Url.Should().Be("https://checkout.stripe.com/cs_test_123");
+        _repositoryMock.Verify(r => r.ExtendReservationHoldAsync(
+            id, It.Is<DateTime>(d => d > reservation.ExpiresAt), "cs_test_123"), Times.Once);
+    }
+
+    [Fact]
+    public async Task ConfirmPaymentFromWebhookAsync_WithInvalidSignature_ReturnsFailure()
+    {
+        _stripePaymentServiceMock
+            .Setup(s => s.ConstructEvent(It.IsAny<string>(), It.IsAny<string>()))
+            .Throws(new InvalidOperationException("bad signature"));
+
+        var (success, error) = await _service.ConfirmPaymentFromWebhookAsync("{}", "bad-signature");
+
+        success.Should().BeFalse();
+        error.Should().Be("Invalid signature");
+        _repositoryMock.Verify(r => r.GetReservationByIdAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfirmPaymentFromWebhookAsync_ForLockedReservation_ConfirmsIt()
+    {
+        var id = Guid.NewGuid();
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Locked };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+        _stripePaymentServiceMock
+            .Setup(s => s.ConstructEvent(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(new StripeWebhookEvent("checkout.session.completed", id, "cs_test_123", "pi_test_123"));
+
+        var (success, error) = await _service.ConfirmPaymentFromWebhookAsync("{}", "sig");
+
+        success.Should().BeTrue();
+        error.Should().BeNull();
+        _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(id, ReservationStatus.Confirmed), Times.Once);
+        _stripePaymentServiceMock.Verify(s => s.RefundAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfirmPaymentFromWebhookAsync_ForAlreadyConfirmedReservation_IsIdempotent()
+    {
+        var id = Guid.NewGuid();
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Confirmed };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+        _stripePaymentServiceMock
+            .Setup(s => s.ConstructEvent(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(new StripeWebhookEvent("checkout.session.completed", id, "cs_test_123", "pi_test_123"));
+
+        var (success, error) = await _service.ConfirmPaymentFromWebhookAsync("{}", "sig");
+
+        success.Should().BeTrue();
+        error.Should().BeNull();
+        _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(It.IsAny<Guid>(), It.IsAny<ReservationStatus>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfirmPaymentFromWebhookAsync_ForCancelledReservation_RefundsWithoutConfirming()
+    {
+        var id = Guid.NewGuid();
+        var reservation = new Entities.Reservation { Id = id, Status = ReservationStatus.Cancelled };
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync(reservation);
+        _stripePaymentServiceMock
+            .Setup(s => s.ConstructEvent(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(new StripeWebhookEvent("checkout.session.completed", id, "cs_test_123", "pi_test_123"));
+
+        var (success, error) = await _service.ConfirmPaymentFromWebhookAsync("{}", "sig");
+
+        success.Should().BeTrue();
+        error.Should().BeNull();
+        _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(It.IsAny<Guid>(), It.IsAny<ReservationStatus>()), Times.Never);
+        _stripePaymentServiceMock.Verify(s => s.RefundAsync("pi_test_123", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ConfirmPaymentFromWebhookAsync_ForUnknownReservation_DoesNothingButSucceeds()
+    {
+        var id = Guid.NewGuid();
+        _repositoryMock.Setup(r => r.GetReservationByIdAsync(id)).ReturnsAsync((Entities.Reservation?)null);
+        _stripePaymentServiceMock
+            .Setup(s => s.ConstructEvent(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(new StripeWebhookEvent("checkout.session.completed", id, "cs_test_123", "pi_test_123"));
+
+        var (success, error) = await _service.ConfirmPaymentFromWebhookAsync("{}", "sig");
+
+        success.Should().BeTrue();
+        error.Should().BeNull();
+        _repositoryMock.Verify(r => r.UpdateReservationStatusAsync(It.IsAny<Guid>(), It.IsAny<ReservationStatus>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfirmPaymentFromWebhookAsync_ForUnrelatedEventType_IsIgnored()
+    {
+        var id = Guid.NewGuid();
+        _stripePaymentServiceMock
+            .Setup(s => s.ConstructEvent(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(new StripeWebhookEvent("payment_intent.created", id, "cs_test_123", "pi_test_123"));
+
+        var (success, error) = await _service.ConfirmPaymentFromWebhookAsync("{}", "sig");
+
+        success.Should().BeTrue();
+        error.Should().BeNull();
+        _repositoryMock.Verify(r => r.GetReservationByIdAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]

@@ -15,5 +15,6 @@ global using Reservation.API.Settings;
 global using Reservation.API.Repositories;
 global using Reservation.API.Services;
 global using Reservation.API.Services.Email;
+global using Reservation.API.Services.Payments;
 global using Reservation.API.Services.Pricing;
 global using Reservation.API.Services.Tickets;

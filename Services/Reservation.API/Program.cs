@@ -5,16 +5,19 @@ using Reservation.API.Settings;
 using Reservation.API.Repositories;
 using Reservation.API.Services;
 using Reservation.API.Services.Email;
+using Reservation.API.Services.Payments;
 using Reservation.API.Services.Pricing;
 using Reservation.API.Services.Tickets;
 using QuestPDF.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
 using System.Text;
 using Cinema.API.Grpc;
 using Movie.API.Grpc;
 using Screening.API.Grpc;
+using Stripe;
 
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 QuestPDF.Settings.License = LicenseType.Community;
@@ -35,6 +38,7 @@ builder.Services.AddCors(options =>
 });
 builder.Services.Configure<ReservationOptions>(builder.Configuration.GetSection("ReservationOptions"));
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("StripeSettings"));
 
 // JWT bearer
 var jwt = builder.Configuration.GetSection("JwtSettings");
@@ -87,6 +91,9 @@ builder.Services.AddScoped<IScreeningApiClient, ScreeningApiClient>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddSingleton<ITicketPricingService, TicketPricingService>();
+builder.Services.AddSingleton(sp =>
+    new StripeClient(sp.GetRequiredService<IOptions<StripeSettings>>().Value.SecretKey));
+builder.Services.AddSingleton<IStripePaymentService, StripePaymentService>();
 builder.Services.AddSingleton<IReservationFactory, ReservationFactory>();
 builder.Services.AddAutoMapper(typeof(ReservationMappingProfile));
 builder.Services.AddHostedService<ReservationCleanupService>();

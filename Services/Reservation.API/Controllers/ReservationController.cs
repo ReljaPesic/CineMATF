@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Reservation.API.Authorization;
 using Reservation.API.DTOs.Requests;
 using Reservation.API.DTOs.Responses;
@@ -10,7 +11,7 @@ namespace Reservation.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/v1/reservations")]
-public class ReservationController(IReservationService service) : ControllerBase
+public class ReservationController(IReservationService service, IHostEnvironment environment) : ControllerBase
 {
     // Admins see every reservation; a regular user only sees their own.
     [HttpGet]
@@ -66,7 +67,8 @@ public class ReservationController(IReservationService service) : ControllerBase
         return CreatedAtAction(nameof(GetReservationById), new { id = result.Response!.Id }, result.Response);
     }
 
-    //temporary this is the payment service
+    // Dev/Testing-only bypass for the real Stripe Checkout flow below (see CreateCheckoutSession).
+    // Kept because existing tests use it as setup plumbing to reach a Confirmed reservation.
     [HttpPost("{id:guid}/pay")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -74,6 +76,8 @@ public class ReservationController(IReservationService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Pay(Guid id)
     {
+        if (!environment.IsDevelopment() && !environment.IsEnvironment("Testing")) return NotFound();
+
         var reservation = await service.GetReservationByIdAsync(id);
         if (reservation == null) return NotFound(new { message = "Reservation not found" });
         if (!User.CanAccessUser(reservation.UserId)) return Forbid();
@@ -85,6 +89,26 @@ public class ReservationController(IReservationService service) : ControllerBase
                 : BadRequest(new { message = ErrorMessage });
 
         return Ok();
+    }
+
+    [HttpPost("{id:guid}/checkout-session")]
+    [ProducesResponseType(typeof(CheckoutSessionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreateCheckoutSession(Guid id)
+    {
+        var reservation = await service.GetReservationByIdAsync(id);
+        if (reservation == null) return NotFound(new { message = "Reservation not found" });
+        if (!User.CanAccessUser(reservation.UserId)) return Forbid();
+
+        var (Success, ErrorMessage, Response) = await service.CreateCheckoutSessionAsync(id);
+        if (!Success)
+            return ErrorMessage == "Reservation not found"
+                ? NotFound(new { message = ErrorMessage })
+                : BadRequest(new { message = ErrorMessage });
+
+        return Ok(Response);
     }
 
     [HttpPost("{id:guid}/cancel")]

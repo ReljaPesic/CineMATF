@@ -6,10 +6,16 @@ import { ReservationRoutingModule } from './reservation-routing.module';
 import { ReservationListComponent } from './components/reservation-list/reservation-list.component';
 import { ReservationDetailComponent } from './components/reservation-detail/reservation-detail.component';
 import { ReservationFormComponent } from './components/reservation-form/reservation-form.component';
+import { PaymentResultComponent } from './components/payment-result/payment-result.component';
 import { MoviePosterComponent } from '../movie/components/movie-poster/movie-poster.component';
 
 @NgModule({
-  declarations: [ReservationListComponent, ReservationDetailComponent, ReservationFormComponent],
+  declarations: [
+    ReservationListComponent,
+    ReservationDetailComponent,
+    ReservationFormComponent,
+    PaymentResultComponent,
+  ],
   imports: [
     CommonModule,
     FormsModule,
