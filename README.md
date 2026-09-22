@@ -10,6 +10,8 @@ This is the seminar/term project for the Software Development 2 (RS2) course.
 ![Seat selection](Pictures/Screenshot%202026-09-05%20at%2013.50.55.png)
 ![Reservation details](Pictures/Screenshot%202026-09-05%20at%2013.51.14.png)
 ![E-ticket PDF with QR code](Pictures/Screenshot%202026-09-05%20at%2013.51.25.png)
+![Stripe Checkout](Pictures/Screenshot%202026-09-22%20at%2022.44.46.png)
+![Payment confirmation](Pictures/Screenshot%202026-09-22%20at%2022.45.46.png)
 
 ## Architecture
 
@@ -38,6 +40,14 @@ Cross-cutting concerns:
   client, and calls Cinema.API, Movie.API and Screening.API over **gRPC** (via
   `Services/Cinema.API/Protos/cinema.proto`, `Services/Movie.API/Protos/movie.proto` and
   `Services/Screening.API/Protos/screening.proto`) to resolve seat, movie and screening details.
+- **Payments** — `Reservation.API` takes payment via **Stripe Checkout** (card only). `POST
+  /api/v1/reservations/{id}/checkout-session` extends the seat-lock hold and creates a hosted
+  Stripe Checkout session; the browser redirects there to pay. Confirmation is asynchronous: a
+  `POST /api/v1/payments/webhook` endpoint handles Stripe's `checkout.session.completed` event and
+  idempotently promotes the reservation from `Locked` to `Confirmed` — or refunds the payment if
+  the hold had already expired by the time it arrives. The old `POST
+  /api/v1/reservations/{id}/pay` endpoint still exists but is now restricted to
+  `Development`/`Testing` environments for test setup only.
 - **API docs** — every service exposes Swagger/OpenAPI (`/swagger`) in development.
 
 ## Tech stack
