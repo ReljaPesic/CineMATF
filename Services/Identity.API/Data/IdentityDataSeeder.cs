@@ -13,7 +13,8 @@ public static class IdentityDataSeeder
 
     public static async Task SeedAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
     {
-        await EnsureRoleAsync(roleManager, Roles.Admin);
+        await EnsureRoleAsync(roleManager, Roles.CinemaAdmin);
+        await EnsureRoleAsync(roleManager, Roles.SuperAdmin);
         await EnsureRoleAsync(roleManager, Roles.User);
 
         // Owner of reservation 33333333-...-333333333333 (Confirmed) in Reservation.API
@@ -38,7 +39,7 @@ public static class IdentityDataSeeder
             cardNumber: "5500000000000004",
             role: Roles.User);
 
-        // Admin account for exercising the Admin-only endpoints
+        // SuperAdmin account for exercising the SuperAdmin-only endpoints
         await EnsureUserAsync(
             userManager,
             id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
@@ -47,7 +48,22 @@ public static class IdentityDataSeeder
             firstName: "Admin",
             lastName: "CineMATF",
             cardNumber: "340000000000009",
-            role: Roles.Admin);
+            role: Roles.SuperAdmin);
+
+        await EnsureUserAsync(
+            userManager,
+            id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+            userName: "cinemaadmin",
+            email: "cinemaadmin@cinematf.local",
+            firstName: "Cinema",
+            lastName: "Admin",
+            cardNumber: "370000000000002",
+            role: Roles.CinemaAdmin,
+            cinemaIds:
+            [
+                Guid.Parse("cccccccc-cccc-cccc-cccc-000000000001"),
+                Guid.Parse("cccccccc-cccc-cccc-cccc-000000000002")
+            ]);
     }
 
     private static async Task EnsureRoleAsync(RoleManager<IdentityRole> roleManager, string name)
@@ -58,7 +74,7 @@ public static class IdentityDataSeeder
         }
     }
 
-    private static async Task EnsureUserAsync(UserManager<User> userManager, string id, string userName, string email, string firstName, string lastName, string cardNumber, string role)
+    private static async Task EnsureUserAsync(UserManager<User> userManager, string id, string userName, string email, string firstName, string lastName, string cardNumber, string role, List<Guid>? cinemaIds = null)
     {
         if (await userManager.FindByIdAsync(id) is not null)
         {
@@ -73,7 +89,8 @@ public static class IdentityDataSeeder
             EmailConfirmed = true,
             FirstName = firstName,
             LastName = lastName,
-            CardNumber = cardNumber
+            CardNumber = cardNumber,
+            CinemaIds = cinemaIds ?? []
         };
 
         var result = await userManager.CreateAsync(user, DefaultPassword);

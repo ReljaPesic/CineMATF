@@ -31,4 +31,6 @@ public record RegisterRequest
     // copies this across by name with no extra configuration.
     [Phone(ErrorMessage = "PhoneNumber is not a valid phone number")]
     public string? PhoneNumber { get; set; }
+    
+    public List<Guid> CinemaIds { get; set; } = new List<Guid>();
 }

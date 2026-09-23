@@ -34,6 +34,7 @@ export interface Movie {
   genres: Genre[];
   coverImage?: string | null;
   imdbUrl?: string | null;
+  youTubeLink?: string | null;
 }
 
 export interface OmdbMovieDetails {

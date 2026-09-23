@@ -8,4 +8,5 @@ public class UserDetails
     public string Email { get; set; }
     public string CardNumber { get; set; }
     public string? PhoneNumber { get; set; }
+    public List<Guid> CinemaIds { get; set; } = new List<Guid>();
 }

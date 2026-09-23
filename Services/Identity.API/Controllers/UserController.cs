@@ -29,8 +29,8 @@ public class UserController : ControllerBase
     }
     
     //   GET /api/v1/User
-    // Admin-only: list every user
-    [Authorize(Roles = Roles.Admin)]
+    // SuperAdmin-only: list every user (not cinema-scoped)
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<UserDetails>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<UserDetails>>> GetAllUsers()
@@ -40,16 +40,16 @@ public class UserController : ControllerBase
     }
 
     //   GET /api/v1/User/{username}
-    // An Admin can view anyone; a plain User can view only their own account
-    // (same rule as PUT below).
-    [Authorize(Roles = Roles.Admin + "," + Roles.User)]
+    // A SuperAdmin can view anyone; everyone else (including CinemaAdmin) can
+    // view only their own account (same rule as PUT below).
+    [Authorize(Roles = Roles.SuperAdmin + "," + Roles.CinemaAdmin + "," + Roles.User)]
     [HttpGet("{username}")]
     [ProducesResponseType(typeof(UserDetails), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserDetails>> GetUser(string username)
     {
-        if (!User.IsInRole(Roles.Admin) &&
+        if (!User.IsInRole(Roles.SuperAdmin) &&
             !string.Equals(User.Identity?.Name, username, StringComparison.OrdinalIgnoreCase))
         {
             return Forbid();
@@ -90,9 +90,9 @@ public class UserController : ControllerBase
 
     //   PUT /api/v1/User/{username}
     // Update a user's profile fields.
-    // An Admin can edit anyone 
-    // User can only edit their own account 
-    [Authorize(Roles = Roles.Admin + "," + Roles.User)]
+    // A SuperAdmin can edit anyone
+    // Everyone else (including CinemaAdmin) can only edit their own account
+    [Authorize(Roles = Roles.SuperAdmin + "," + Roles.CinemaAdmin + "," + Roles.User)]
     [HttpPut("{username}")]
     [ProducesResponseType(typeof(UserDetails), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -100,7 +100,7 @@ public class UserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<UserDetails>> UpdateUser(string username, [FromBody] UpdateUserRequest request)
     {
-        if (!User.IsInRole(Roles.Admin) &&
+        if (!User.IsInRole(Roles.SuperAdmin) &&
             !string.Equals(User.Identity?.Name, username, StringComparison.OrdinalIgnoreCase))
         {
             return Forbid();
@@ -133,8 +133,8 @@ public class UserController : ControllerBase
     }
 
     //   DELETE /api/v1/User
-    // Admin-only: permanently delete a user.
-    [Authorize(Roles = Roles.Admin)]
+    // SuperAdmin-only: permanently delete a user.
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpDelete("{username}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

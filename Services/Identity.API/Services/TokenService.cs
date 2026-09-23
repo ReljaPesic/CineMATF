@@ -28,7 +28,9 @@ public class TokenService(IOptions<JwtSettings> jwtOptions) : ITokenService
             new Claim(ClaimTypes.Email, user.Email  ?? string.Empty),
             new Claim("cardNumber", user.CardNumber ?? string.Empty),
         };
-        
+
+        claims.AddRange(user.CinemaIds.Select(cinemaId => new Claim("cinemaId", cinemaId.ToString())));
+
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.SecretKey));

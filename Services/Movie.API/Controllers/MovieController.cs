@@ -50,7 +50,7 @@ public class MovieController(IMovieService service) : ControllerBase
         return Ok(movies);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpPost]
     [ProducesResponseType(typeof(MovieResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<MovieResponse>> CreateMovie([FromBody] MovieRequest request)
@@ -59,7 +59,7 @@ public class MovieController(IMovieService service) : ControllerBase
         return CreatedAtAction(nameof(GetMovieById), new { id = created.Id }, created);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(MovieResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -70,7 +70,7 @@ public class MovieController(IMovieService service) : ControllerBase
         return Ok(updated);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

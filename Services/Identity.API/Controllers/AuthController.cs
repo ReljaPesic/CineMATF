@@ -44,15 +44,32 @@ public class AuthController : RegistrationControllerBase
         return await RegisterNewUserWithRoles(request, new[] { Roles.User });
     }
     
-    //   POST /api/v1/Auth/RegisterAdmin
-    // Creates an administrator account (role "Admin").
-    [Authorize(Roles = Roles.Admin)]
+    //   POST /api/v1/Auth/RegisterCinemaAdmin
+    // Creates an administrator account scoped to one or more cinemas (role "CinemaAdmin").
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpPost("[action]")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequest request)
+    public async Task<IActionResult> RegisterCinemaAdmin([FromBody] RegisterRequest request)
     {
-        return await RegisterNewUserWithRoles(request, new[] { Roles.Admin });
+        if (request.CinemaIds.Count == 0)
+        {
+            ModelState.AddModelError(nameof(request.CinemaIds), "At least one CinemaId is required");
+            return BadRequest(ModelState);
+        }
+
+        return await RegisterNewUserWithRoles(request, new[] { Roles.CinemaAdmin });
+    }
+
+    //   POST /api/v1/Auth/RegisterSuperAdmin
+    // Creates a super admi.
+    [Authorize(Roles = Roles.SuperAdmin)]
+    [HttpPost("[action]")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RegisterSuperAdmin([FromBody] RegisterRequest request)
+    {
+        return await RegisterNewUserWithRoles(request, new[] { Roles.SuperAdmin });
     }
     
     //   POST /api/v1/Auth/Login
