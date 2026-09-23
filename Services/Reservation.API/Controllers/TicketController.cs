@@ -13,14 +13,18 @@ public class TicketController(IReservationService service) : ControllerBase
 {
     private readonly IReservationService _service = service ?? throw new ArgumentNullException(nameof(service));
 
-    // Admin-only: every ticket across every user's reservations.
-    [Authorize(Roles = Roles.Admin)]
+    // SuperAdmin: every ticket across every user's reservations. CinemaAdmin: tickets for their cinema.
+    [Authorize(Roles = Roles.SuperAdmin + "," + Roles.CinemaAdmin)]
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<TicketResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<TicketResponse>>> GetAllTickets()
     {
-        var tickets = await _service.GetAllTicketsAsync();
-        return Ok(tickets);
+        if (User.IsSuperAdmin())
+        {
+            return Ok(await _service.GetAllTicketsAsync());
+        }
+
+        return Ok(await _service.GetTicketsByCinemaIdsAsync(User.GetCinemaIds()));
     }
 
     [HttpGet("{id:guid}")]
@@ -46,7 +50,7 @@ public class TicketController(IReservationService service) : ControllerBase
     {
         var reservation = await _service.GetReservationByIdAsync(reservationId);
         if (reservation == null) return NotFound();
-        if (!User.CanAccessUser(reservation.UserId)) return Forbid();
+        if (!await CanAccessReservationAsync(reservation.UserId, reservation.ScreeningId)) return Forbid();
 
         var tickets = await _service.GetReservationTicketsAsync(reservationId);
         return Ok(tickets);
@@ -61,7 +65,7 @@ public class TicketController(IReservationService service) : ControllerBase
     {
         var reservation = await _service.GetReservationByIdAsync(reservationId);
         if (reservation == null) return NotFound(new { message = "Reservation not found" });
-        if (!User.CanAccessUser(reservation.UserId)) return Forbid();
+        if (!await CanAccessReservationAsync(reservation.UserId, reservation.ScreeningId)) return Forbid();
 
         var (success, errorMessage, tickets) = await _service.GenerateTicketsAsync(reservationId);
         if (!success)
@@ -92,11 +96,20 @@ public class TicketController(IReservationService service) : ControllerBase
         return File(content!, "application/pdf", fileName);
     }
 
-    // Resolves who owns a reservation and checks it against the caller (admin or the owner themselves).
+    // Resolves who owns a reservation and checks it against the caller: SuperAdmin, the owner
+    // themselves, or a CinemaAdmin whose cinema the reservation's screening belongs to.
     private async Task<bool> CanAccessReservationAsync(Guid reservationId)
     {
         var reservation = await _service.GetReservationByIdAsync(reservationId);
-        return reservation != null && User.CanAccessUser(reservation.UserId);
+        return reservation != null && await CanAccessReservationAsync(reservation.UserId, reservation.ScreeningId);
     }
 
+    private async Task<bool> CanAccessReservationAsync(Guid resourceUserId, Guid screeningId)
+    {
+        if (User.CanAccessUser(resourceUserId)) return true;
+        if (!User.IsCinemaAdmin()) return false;
+
+        var screeningCinemaId = await _service.GetScreeningCinemaIdAsync(screeningId);
+        return screeningCinemaId is { } cinemaId && User.GetCinemaIds().Contains(cinemaId);
+    }
 }

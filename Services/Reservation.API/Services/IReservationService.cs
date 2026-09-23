@@ -20,4 +20,8 @@ public interface IReservationService
     Task<(bool Success, string? ErrorMessage, IEnumerable<TicketResponse>? Tickets)> GenerateTicketsAsync(Guid reservationId);
     Task<(bool Success, string? ErrorMessage)> CancelReservationAsync(Guid id);
     Task ExpireReservationAsync(Guid id);
+    
+    Task<IEnumerable<ReservationResponse>> GetReservationsByCinemaIdsAsync(IReadOnlySet<Guid> cinemaIds);
+    Task<IEnumerable<TicketResponse>> GetTicketsByCinemaIdsAsync(IReadOnlySet<Guid> cinemaIds);
+    Task<Guid?> GetScreeningCinemaIdAsync(Guid screeningId);
 }

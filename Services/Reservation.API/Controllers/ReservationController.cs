@@ -13,14 +13,19 @@ namespace Reservation.API.Controllers;
 [Route("api/v1/reservations")]
 public class ReservationController(IReservationService service, IHostEnvironment environment) : ControllerBase
 {
-    // Admins see every reservation; a regular user only sees their own.
+    // SuperAdmin sees every reservation, CinemaAdmin sees their cinema's, a regular user only their own.
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ReservationResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ReservationResponse>>> GetAllReservations()
     {
-        if (User.IsAdmin())
+        if (User.IsSuperAdmin())
         {
             return Ok(await service.GetAllReservationsAsync());
+        }
+
+        if (User.IsCinemaAdmin())
+        {
+            return Ok(await service.GetReservationsByCinemaIdsAsync(User.GetCinemaIds()));
         }
 
         var userId = User.GetUserId();
@@ -37,7 +42,7 @@ public class ReservationController(IReservationService service, IHostEnvironment
     {
         var reservation = await service.GetReservationByIdAsync(id);
         if (reservation == null) return NotFound();
-        if (!User.CanAccessUser(reservation.UserId)) return Forbid();
+        if (!await CanAccessReservationAsync(reservation)) return Forbid();
         return Ok(reservation);
     }
 
@@ -80,7 +85,7 @@ public class ReservationController(IReservationService service, IHostEnvironment
 
         var reservation = await service.GetReservationByIdAsync(id);
         if (reservation == null) return NotFound(new { message = "Reservation not found" });
-        if (!User.CanAccessUser(reservation.UserId)) return Forbid();
+        if (!await CanAccessReservationAsync(reservation)) return Forbid();
 
         var (Success, ErrorMessage) = await service.PayAsync(id);
         if (!Success)
@@ -120,7 +125,7 @@ public class ReservationController(IReservationService service, IHostEnvironment
     {
         var reservation = await service.GetReservationByIdAsync(id);
         if (reservation == null) return NotFound(new { message = "Reservation not found" });
-        if (!User.CanAccessUser(reservation.UserId)) return Forbid();
+        if (!await CanAccessReservationAsync(reservation)) return Forbid();
 
         var (Success, ErrorMessage) = await service.CancelReservationAsync(id);
         if (!Success)
@@ -131,4 +136,13 @@ public class ReservationController(IReservationService service, IHostEnvironment
         return Ok();
     }
 
+    // Resolves cinema-scoped access for a CinemaAdmin on top of the plain self-or-SuperAdmin rule.
+    private async Task<bool> CanAccessReservationAsync(ReservationResponse reservation)
+    {
+        if (User.CanAccessUser(reservation.UserId)) return true;
+        if (!User.IsCinemaAdmin()) return false;
+
+        var screeningCinemaId = await service.GetScreeningCinemaIdAsync(reservation.ScreeningId);
+        return screeningCinemaId is { } cinemaId && User.GetCinemaIds().Contains(cinemaId);
+    }
 }

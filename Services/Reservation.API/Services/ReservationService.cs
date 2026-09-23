@@ -191,12 +191,15 @@ public partial class ReservationService(
         return _mapper.Map<IEnumerable<ReservationResponse>>(reservations);
     }
 
+   
+
     public async Task<IEnumerable<TicketResponse>> GetAllTicketsAsync()
     {
         var tickets = await _repository.GetAllTicketsAsync();
         return _mapper.Map<IEnumerable<TicketResponse>>(tickets);
     }
 
+   
     public async Task<TicketResponse?> GetTicketByIdAsync(Guid id)
     {
         var ticket = await _repository.GetTicketByIdAsync(id);
@@ -465,4 +468,62 @@ public partial class ReservationService(
 
     [GeneratedRegex("[^a-zA-Z0-9-]")]
     private static partial Regex InvalidFileNameCharsRegex();
+    
+    // A CinemaAdmin only sees reservations for screenings in the cinema(s) they manage.
+    // Reservations don't store CinemaId locally, so it's resolved per distinct screening via Screening.API.
+    public async Task<IEnumerable<ReservationResponse>> GetReservationsByCinemaIdsAsync(IReadOnlySet<Guid> cinemaIds)
+    {
+        var reservations = await _repository.GetAllReservationsAsync();
+        var screeningCinemaIds = new Dictionary<Guid, Guid?>();
+        var matches = new List<Entities.Reservation>();
+
+        foreach (var reservation in reservations)
+        {
+            if (!screeningCinemaIds.TryGetValue(reservation.ScreeningId, out var screeningCinemaId))
+            {
+                screeningCinemaId = await GetScreeningCinemaIdAsync(reservation.ScreeningId);
+                screeningCinemaIds[reservation.ScreeningId] = screeningCinemaId;
+            }
+
+            if (screeningCinemaId is { } id && cinemaIds.Contains(id))
+            {
+                matches.Add(reservation);
+            }
+        }
+
+        return _mapper.Map<IEnumerable<ReservationResponse>>(matches);
+    }
+    
+    public async Task<IEnumerable<TicketResponse>> GetTicketsByCinemaIdsAsync(IReadOnlySet<Guid> cinemaIds)
+    {
+        var tickets = await _repository.GetAllTicketsAsync();
+        var screeningCinemaIds = new Dictionary<Guid, Guid?>();
+        var matches = new List<Entities.Ticket>();
+
+        foreach (var ticket in tickets)
+        {
+            var screeningId = ticket.Reservation?.ScreeningId;
+            if (screeningId == null) continue;
+
+            if (!screeningCinemaIds.TryGetValue(screeningId.Value, out var screeningCinemaId))
+            {
+                screeningCinemaId = await GetScreeningCinemaIdAsync(screeningId.Value);
+                screeningCinemaIds[screeningId.Value] = screeningCinemaId;
+            }
+
+            if (screeningCinemaId is { } id && cinemaIds.Contains(id))
+            {
+                matches.Add(ticket);
+            }
+        }
+
+        return _mapper.Map<IEnumerable<TicketResponse>>(matches);
+    }
+
+    public async Task<Guid?> GetScreeningCinemaIdAsync(Guid screeningId)
+    {
+        var screening = await _screeningApiClient.GetScreeningAsync(screeningId);
+        return screening?.CinemaId;
+    }
+
 }
