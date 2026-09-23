@@ -45,7 +45,8 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return Ok(cinema);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    // Creating a new cinema isn't scoped to an existing one, so only SuperAdmin can do it.
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpPost]
     [ProducesResponseType(typeof(CinemaResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<CinemaResponse>> CreateCinema([FromBody] CinemaRequest request)
@@ -54,18 +55,22 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return CreatedAtAction(nameof(GetCinemaById), new { id = cinema.Id }, cinema);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.SuperAdmin + "," + Roles.CinemaAdmin)]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(CinemaResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CinemaResponse>> UpdateCinema(Guid id, [FromBody] CinemaRequest request)
     {
+        if (!User.CanManageCinema(id)) return Forbid();
+
         var cinema = await service.UpdateCinemaAsync(id, request);
         if (cinema == null) return NotFound();
         return Ok(cinema);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    // Deleting a whole cinema is only SuperAdmin's call.
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -84,21 +89,27 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return Ok(halls);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.SuperAdmin + "," + Roles.CinemaAdmin)]
     [HttpPost("{cinemaId:guid}/halls")]
     [ProducesResponseType(typeof(CreateHallsResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<CreateHallsResponse>> CreateHalls(Guid cinemaId, [FromBody] CreateHallsRequest request)
     {
+        if (!User.CanManageCinema(cinemaId)) return Forbid();
+
         var result = await service.CreateHallsAsync(cinemaId, request.Halls);
         return CreatedAtAction(nameof(GetHalls), new { cinemaId }, result);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.SuperAdmin + "," + Roles.CinemaAdmin)]
     [HttpDelete("{cinemaId:guid}/halls/{hallId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteHall(Guid cinemaId, Guid hallId)
     {
+        if (!User.CanManageCinema(cinemaId)) return Forbid();
+
         var deleted = await service.DeleteHallAsync(cinemaId, hallId);
         if (!deleted) return NotFound();
         return NoContent();
@@ -112,21 +123,27 @@ public class CinemaController(ICinemaService service) : ControllerBase
         return Ok(seats);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.SuperAdmin + "," + Roles.CinemaAdmin)]
     [HttpPatch("{cinemaId:guid}/halls/{hallId:guid}/seats/{seatId:guid}")]
     [ProducesResponseType(typeof(SeatResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SeatResponse>> UpdateSeatType(Guid cinemaId, Guid hallId, Guid seatId, [FromBody] UpdateSeatTypeRequest request)
     {
+        if (!User.CanManageCinema(cinemaId)) return Forbid();
+
         var seat = await service.UpdateSeatTypeAsync(cinemaId, hallId, seatId, request);
         return Ok(seat);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = Roles.SuperAdmin + "," + Roles.CinemaAdmin)]
     [HttpPost("{cinemaId:guid}/halls/{hallId:guid}/seats")]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateSeats(Guid cinemaId, Guid hallId)
     {
+        if (!User.CanManageCinema(cinemaId)) return Forbid();
+
         await service.CreateSeatsAsync(cinemaId, hallId);
         return CreatedAtAction(nameof(GetSeats), new { cinemaId, hallId }, new { message = "Seats created successfully" });
     }
