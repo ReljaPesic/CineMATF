@@ -38,10 +38,12 @@
         </header>
 
         <p class="movie-detail__meta">
-          {{ movie.durationMinutes }} min
-          · {{ movie.rating | number: '1.1-1' }} / 10
-          · released {{ movie.releaseDate | date: 'longDate' }}
-        </p>
+          <ul>
+            <li>{{ movie.durationMinutes }} min</li>
+            <li>{{ movie.rating | number: '1.1-1' }} / 10</li>
+            <li>released {{ movie.releaseDate | date: 'longDate' }}</li>
+            <li> <a [href]="movie.imdbUrl">IMDb</a> </li>
+          </ul>
 
         <div class="chips">
           @for (genre of movie.genres; track genre) {

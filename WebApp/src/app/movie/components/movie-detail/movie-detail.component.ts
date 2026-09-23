@@ -1,11 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { switchMap } from 'rxjs';
+import { of, switchMap } from 'rxjs';
 
-import { Movie } from '../../models/movie.model';
+import { Movie, OmdbMovieDetails } from '../../models/movie.model';
 import { MovieService } from '../../services/movie.service';
 import { AuthService } from '../../../auth/services/auth.service';
+import { OmdbService } from '../../services/omdb.service';
 
 
 @Component({
@@ -18,11 +19,14 @@ export class MovieDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly movieService = inject(MovieService);
+  private readonly omdbService = inject(OmdbService)
   readonly auth = inject(AuthService);
   readonly isAdmin = this.auth.isAdmin;
   readonly isLoggedIn = this.auth.isLoggedIn;
 
+
   movie: Movie | null = null;
+  omdbDetails: OmdbMovieDetails | null = null;
   loading = true;
   notFound = false;
   error: string | null = null;
@@ -41,11 +45,25 @@ export class MovieDetailComponent implements OnInit {
           const id = params.get('id')!;
           return this.movieService.getMovie(id);
         }),
+        switchMap((movie) => {
+          this.movie = movie;
+          if (!movie?.title) {
+          return of(null);
+        }
+        return this.omdbService.getMovieByTitle(movie.title);
+        })
       )
       .subscribe({
-        next: (movie) => {
-          this.movie = movie;
+        next: (omdbMovie) => {
           this.loading = false;
+          
+          if (omdbMovie) {
+            this.omdbDetails = omdbMovie;
+            if(this.movie){
+              this.movie.imdbUrl = this.createImdbUrl(omdbMovie.imdbID)
+              this.movie.coverImage = this.movie.coverImage ?? this.omdbDetails.Poster;
+            }
+          }
         },
         error: (err: HttpErrorResponse) => {
           this.loading = false;
@@ -57,6 +75,10 @@ export class MovieDetailComponent implements OnInit {
           }
         },
       });
+  }
+
+  createImdbUrl(imdbId: string): string{
+    return `https://www.imdb.com/title/${encodeURIComponent(imdbId)}`; 
   }
 
   /** DELETE /movie/{id}, then go back to the list. */
