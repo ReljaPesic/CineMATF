@@ -14,6 +14,7 @@ export class MovieService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.api.movies}/movie`;
 
+
   /** GET /movie?page=&pageSize=  -> paged list */
   getMovies(page = 1, pageSize = 10): Observable<PagedResponse<Movie>> {
     const params = new HttpParams()
