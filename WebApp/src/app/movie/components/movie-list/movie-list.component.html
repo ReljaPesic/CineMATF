@@ -1,7 +1,7 @@
 <section class="movie-list">
   <header class="movie-list__header">
     <h1>Movies</h1>
-    @if (isAdmin()) {
+    @if (isSuperAdmin()) {
       <a class="btn btn--primary" routerLink="new">+ New movie</a>
     }
   </header>
@@ -48,7 +48,7 @@
           <th>Duration</th>
           <th>Rating</th>
           <th>Released</th>
-          @if (isAdmin()) {
+          @if (isSuperAdmin()) {
             <th><span class="sr-only">Actions</span></th>
           }
         </tr>
@@ -67,7 +67,7 @@
             <td data-label="Duration">{{ movie.durationMinutes }} min</td>
             <td data-label="Rating">{{ movie.rating | number: '1.1-1' }}</td>
             <td data-label="Released">{{ movie.releaseDate | date: 'mediumDate' }}</td>
-            @if (isAdmin()) {
+            @if (isSuperAdmin()) {
               <td data-label="Actions">
                 <span class="actions-cell">
                   <a [routerLink]="[movie.id, 'edit']">Edit</a>

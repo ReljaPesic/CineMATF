@@ -19,7 +19,7 @@
         <header class="movie-detail__header">
           <h1>{{ movie.title }}</h1>
           <span class="movie-detail__actions">
-            @if (isLoggedIn() && !isAdmin()) {
+            @if (isLoggedIn() && !isStaff()) {
               <a
                 class="btn btn--primary"
                 [routerLink]="['/reservations/new']"
@@ -28,7 +28,7 @@
                 Book seats
               </a>
             }
-            @if (isAdmin()) {
+            @if (isSuperAdmin()) {
               <a class="btn" [routerLink]="['edit']">Edit</a>
               <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
                 {{ deleting ? 'Deleting…' : 'Delete' }}
@@ -43,10 +43,6 @@
             <li>{{ movie.rating | number: '1.1-1' }} / 10</li>
             <li>released {{ movie.releaseDate | date: 'longDate' }}</li>
             <li> <a [href]="movie.imdbUrl">IMDb</a> </li>
-            @if(movie.imdbUrl){
-              <iframe width="560" height="315" [src]=movie.youTubeLink frameborder="0" allowfullscreen></iframe>
-
-            }
           </ul>
 
         <div class="chips">

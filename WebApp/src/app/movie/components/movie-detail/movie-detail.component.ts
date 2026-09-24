@@ -21,7 +21,8 @@ export class MovieDetailComponent implements OnInit {
   private readonly movieService = inject(MovieService);
   private readonly omdbService = inject(OmdbService)
   readonly auth = inject(AuthService);
-  readonly isAdmin = this.auth.isAdmin;
+  readonly isSuperAdmin = this.auth.isSuperAdmin;
+  readonly isStaff = this.auth.isStaff;
   readonly isLoggedIn = this.auth.isLoggedIn;
 
 

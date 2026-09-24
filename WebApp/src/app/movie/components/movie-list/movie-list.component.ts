@@ -16,7 +16,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 export class MovieListComponent implements OnInit {
 
   private readonly movieService = inject(MovieService);
-  readonly isAdmin = inject(AuthService).isAdmin;
+  readonly isSuperAdmin = inject(AuthService).isSuperAdmin;
 
   movies: Movie[] = [];
 
