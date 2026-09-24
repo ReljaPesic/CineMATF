@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <Protobuf Include="Protos\screening.proto" GrpcServices="Server" />
+    <Protobuf Include="..\Movie.API\Protos\movie.proto" GrpcServices="Client" Link="Protos\movie.proto" />
   </ItemGroup>
 
 </Project>

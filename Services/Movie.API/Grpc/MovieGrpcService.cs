@@ -21,7 +21,8 @@ public class MovieGrpcService(IMovieService service) : MovieGrpc.MovieGrpcBase
         return new MovieReply
         {
             Id = movie.Id.ToString(),
-            Title = movie.Title
+            Title = movie.Title,
+            DurationMinutes = movie.DurationMinutes
         };
     }
 }

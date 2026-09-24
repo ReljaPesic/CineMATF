@@ -8,25 +8,53 @@ public class ScreeningRepository(IScreeningContext context) : IScreeningReposito
 {
     private readonly IScreeningContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
-    public async Task<IEnumerable<Entities.Screening>> GetScreeningsAsync(Guid? movieId, DateOnly? date, Guid? cinemaId)
+    public async Task<IEnumerable<Entities.Screening>> GetScreeningsAsync(Guid? movieId, DateOnly? date, Guid? cinemaId, IReadOnlyCollection<Guid>? restrictToCinemaIds)
     {
-        const string sql = """
-            SELECT id AS "Id", movieid AS "MovieId", hallid AS "HallId", cinemaid AS "CinemaId",
-                   starttime AS "StartTime", format AS "Format"
-            FROM screenings
-            WHERE (@MovieId::uuid IS NULL OR movieid = @MovieId::uuid)
-              AND (@CinemaId::uuid IS NULL OR cinemaid = @CinemaId::uuid)
-              AND (@Date::date IS NULL OR starttime::date = @Date::date)
-            ORDER BY starttime
-            """;
+        // restrictToCinemaIds enforces a CinemaAdmin's cinema scope and is separate from the
+        // caller-chosen cinemaId filter above - the two SQL variants avoid binding a null array
+        // parameter (Npgsql can't infer its element type from a null value alone).
+        var sql = restrictToCinemaIds != null
+            ? """
+              SELECT id AS "Id", movieid AS "MovieId", hallid AS "HallId", cinemaid AS "CinemaId",
+                     starttime AS "StartTime", format AS "Format"
+              FROM screenings
+              WHERE (@MovieId::uuid IS NULL OR movieid = @MovieId::uuid)
+                AND (@CinemaId::uuid IS NULL OR cinemaid = @CinemaId::uuid)
+                AND (@Date::date IS NULL OR starttime::date = @Date::date)
+                AND cinemaid = ANY(@RestrictToCinemaIds)
+              ORDER BY starttime
+              """
+            : """
+              SELECT id AS "Id", movieid AS "MovieId", hallid AS "HallId", cinemaid AS "CinemaId",
+                     starttime AS "StartTime", format AS "Format"
+              FROM screenings
+              WHERE (@MovieId::uuid IS NULL OR movieid = @MovieId::uuid)
+                AND (@CinemaId::uuid IS NULL OR cinemaid = @CinemaId::uuid)
+                AND (@Date::date IS NULL OR starttime::date = @Date::date)
+              ORDER BY starttime
+              """;
 
         using var connection = _context.GetConnection();
         return await connection.QueryAsync<Entities.Screening>(sql, new
         {
             MovieId = movieId,
             CinemaId = cinemaId,
-            Date = date.HasValue ? date.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null
+            Date = date.HasValue ? date.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null,
+            RestrictToCinemaIds = restrictToCinemaIds?.ToArray() ?? []
         });
+    }
+
+    public async Task<IEnumerable<Entities.Screening>> GetScreeningsByHallAsync(Guid hallId)
+    {
+        const string sql = """
+            SELECT id AS "Id", movieid AS "MovieId", hallid AS "HallId", cinemaid AS "CinemaId",
+                   starttime AS "StartTime", format AS "Format"
+            FROM screenings
+            WHERE hallid = @HallId
+            """;
+
+        using var connection = _context.GetConnection();
+        return await connection.QueryAsync<Entities.Screening>(sql, new { HallId = hallId });
     }
 
     public async Task<Entities.Screening?> GetScreeningByIdAsync(Guid id)
