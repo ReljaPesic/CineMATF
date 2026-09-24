@@ -24,8 +24,12 @@ export class ScreeningDetailComponent implements OnInit {
   private readonly movieService = inject(MovieService);
   private readonly cinemaService = inject(CinemaService);
   private readonly auth = inject(AuthService);
-  readonly isAdmin = this.auth.isAdmin;
+  readonly isStaff = this.auth.isStaff;
   readonly isLoggedIn = this.auth.isLoggedIn;
+
+  get canManage(): boolean {
+    return !!this.screening && this.auth.canManageCinema(this.screening.cinemaId);
+  }
 
   readonly formatLabels = SCREENING_FORMAT_LABELS;
 

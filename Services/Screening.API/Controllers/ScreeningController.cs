@@ -10,6 +10,9 @@ namespace Screening.API.Controllers;
 [Route("api/v1/[controller]")]
 public class ScreeningController(IScreeningService service) : ControllerBase
 {
+    // Public browsing endpoint (no [Authorize]) - but a CinemaAdmin's own screenings are
+    // the only ones they should see, so the list is restricted to their cinema(s) when the
+    // caller happens to be authenticated as one. Everyone else sees the full public catalog.
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ScreeningResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ScreeningResponse>>> GetScreenings(
@@ -17,7 +20,8 @@ public class ScreeningController(IScreeningService service) : ControllerBase
         [FromQuery] DateOnly? date,
         [FromQuery] Guid? cinemaId)
     {
-        var screenings = await service.GetScreeningsAsync(movieId, date, cinemaId);
+        var restrictToCinemaIds = User.IsCinemaAdmin() ? User.GetCinemaIds() : null;
+        var screenings = await service.GetScreeningsAsync(movieId, date, cinemaId, restrictToCinemaIds);
         return Ok(screenings);
     }
 
@@ -40,13 +44,16 @@ public class ScreeningController(IScreeningService service) : ControllerBase
     {
         if (!User.CanManageCinema(request.CinemaId)) return Forbid();
 
-        var screening = await service.CreateScreeningAsync(request);
-        return CreatedAtAction(nameof(GetScreeningById), new { id = screening.Id }, screening);
+        var (success, errorMessage, screening) = await service.CreateScreeningAsync(request);
+        if (!success) return BadRequest(new { message = errorMessage });
+
+        return CreatedAtAction(nameof(GetScreeningById), new { id = screening!.Id }, screening);
     }
 
     [Authorize(Roles = Roles.SuperAdmin + "," + Roles.CinemaAdmin)]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ScreeningResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ScreeningResponse>> UpdateScreening(Guid id, [FromBody] ScreeningRequest request)
@@ -56,8 +63,12 @@ public class ScreeningController(IScreeningService service) : ControllerBase
         // A CinemaAdmin may only touch screenings in their own cinema, and can't move one out of it.
         if (!User.CanManageCinema(existing.CinemaId) || !User.CanManageCinema(request.CinemaId)) return Forbid();
 
-        var screening = await service.UpdateScreeningAsync(id, request);
-        if (screening == null) return NotFound();
+        var (success, errorMessage, screening) = await service.UpdateScreeningAsync(id, request);
+        if (!success)
+            return errorMessage == "Screening not found"
+                ? NotFound()
+                : BadRequest(new { message = errorMessage });
+
         return Ok(screening);
     }
 

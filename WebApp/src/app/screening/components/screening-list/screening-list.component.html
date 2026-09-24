@@ -1,7 +1,7 @@
 <section class="screening-list">
   <header class="screening-list__header">
     <h1>Screenings</h1>
-    @if (isAdmin()) {
+    @if (isStaff()) {
       <a class="btn btn--primary" routerLink="new">+ New screening</a>
     }
   </header>
@@ -58,7 +58,7 @@
           <th>Cinema</th>
           <th>Starts</th>
           <th>Format</th>
-          @if (isAdmin()) {
+          @if (isStaff()) {
             <th><span class="sr-only">Actions</span></th>
           }
         </tr>
@@ -70,21 +70,23 @@
               <a [routerLink]="[screening.id]">{{ getMovieTitle(screening.movieId) }}</a>
             </td>
             <td data-label="Cinema">{{ getCinemaName(screening.cinemaId) }}</td>
-            <td data-label="Starts">{{ screening.startTime | date: 'medium' }}</td>
+            <td data-label="Starts">{{ screening.startTime | date: 'dd.MMM yyyy - HH:mm' }}</td>
             <td data-label="Format">{{ formatLabels[screening.format] }}</td>
-            @if (isAdmin()) {
+            @if (isStaff()) {
               <td data-label="Actions">
-                <span class="actions-cell">
-                  <a [routerLink]="[screening.id, 'edit']">Edit</a>
-                  <button
-                    type="button"
-                    class="link-btn link-btn--danger"
-                    (click)="delete(screening)"
-                    [disabled]="deletingId === screening.id"
-                  >
-                    {{ deletingId === screening.id ? 'Deleting…' : 'Delete' }}
-                  </button>
-                </span>
+                @if (canManageCinema(screening.cinemaId)) {
+                  <span class="actions-cell">
+                    <a [routerLink]="[screening.id, 'edit']">Edit</a>
+                    <button
+                      type="button"
+                      class="link-btn link-btn--danger"
+                      (click)="delete(screening)"
+                      [disabled]="deletingId === screening.id"
+                    >
+                      {{ deletingId === screening.id ? 'Deleting…' : 'Delete' }}
+                    </button>
+                  </span>
+                }
               </td>
             }
           </tr>

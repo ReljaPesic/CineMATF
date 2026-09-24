@@ -19,7 +19,9 @@ export class ScreeningListComponent implements OnInit {
   private readonly screeningService = inject(ScreeningService);
   private readonly movieService = inject(MovieService);
   private readonly cinemaService = inject(CinemaService);
-  readonly isAdmin = inject(AuthService).isAdmin;
+  private readonly auth = inject(AuthService);
+  readonly isStaff = this.auth.isStaff;
+  readonly canManageCinema = this.auth.canManageCinema.bind(this.auth);
 
   screenings: Screening[] = [];
   movies: Movie[] = [];

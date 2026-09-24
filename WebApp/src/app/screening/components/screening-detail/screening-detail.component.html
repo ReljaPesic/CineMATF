@@ -24,12 +24,12 @@
             }
           </h1>
           <p class="screening-detail__meta">
-            {{ screening.startTime | date: 'full' }}
+            {{ screening.startTime | date: 'dd.MM.yyyy, HH:mm' }}
           </p>
         </div>
       </div>
       <span class="screening-detail__actions">
-        @if (!isAdmin()) {
+        @if (!isStaff()) {
           @if (isPast) {
             <span class="status">This screening has already ended.</span>
           } @else if (isLoggedIn()) {
@@ -42,7 +42,7 @@
             </a>
           }
         }
-        @if (isAdmin()) {
+        @if (canManage) {
           <a class="btn" [routerLink]="['edit']">Edit</a>
           <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
             {{ deleting ? 'Deleting…' : 'Delete' }}
@@ -66,7 +66,7 @@
       </div>
       <div>
         <dt>Starts</dt>
-        <dd>{{ screening.startTime | date: 'medium' }}</dd>
+        <dd>{{ screening.startTime | date: 'dd.MM.yyyy HH:mm' }}</dd>
       </div>
     </dl>
   }
