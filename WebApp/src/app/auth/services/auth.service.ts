@@ -13,6 +13,7 @@ const NAMEID_CLAIM = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name
 const EMAIL_CLAIM = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
 const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 const CARD_CLAIM = 'cardNumber';
+const CINEMA_ID_CLAIM = 'cinemaId';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -24,7 +25,16 @@ export class AuthService {
 
   readonly user = this.currentUser.asReadonly();
   readonly isLoggedIn = computed(() => this.currentUser() !== null);
-  readonly isAdmin = computed(() => this.currentUser()?.roles.includes('Admin') ?? false);
+  readonly isSuperAdmin = computed(() => this.currentUser()?.roles.includes('SuperAdmin') ?? false);
+  readonly isCinemaAdmin = computed(() => this.currentUser()?.roles.includes('CinemaAdmin') ?? false);
+  readonly isStaff = computed(() => this.isSuperAdmin() || this.isCinemaAdmin());
+  readonly cinemaIds = computed(() => this.currentUser()?.cinemaIds ?? []);
+
+  // SuperAdmin manages every cinema; a CinemaAdmin only the ones they're scoped to
+  // (one admin can manage more than one cinema).
+  canManageCinema(cinemaId: string | null | undefined): boolean {
+    return this.isSuperAdmin() || (!!cinemaId && this.cinemaIds().includes(cinemaId));
+  }
 
   get token(): string | null {
     return this.storage.get(LocalStorageKeys.AccessToken);
@@ -94,12 +104,14 @@ export class AuthService {
       }
 
       const rawRoles = payload[ROLE_CLAIM] ?? [];
+      const rawCinemaIds = payload[CINEMA_ID_CLAIM] ?? [];
       return {
         id: payload.sub ?? payload[NAMEID_CLAIM] ?? '',
         username: payload[NAME_CLAIM] ?? payload.sub ?? '',
         email: payload.email ?? payload[EMAIL_CLAIM] ?? null,
         roles: Array.isArray(rawRoles) ? rawRoles : [rawRoles],
         cardNumber: payload[CARD_CLAIM] || null,
+        cinemaIds: Array.isArray(rawCinemaIds) ? rawCinemaIds : [rawCinemaIds],
       };
     } catch {
       return null;

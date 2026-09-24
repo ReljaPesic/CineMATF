@@ -5,6 +5,11 @@ obj/
 *.pdb
 *.exe
 
+# Frontend (irrelevant to the 5 .NET service builds, which all use context: .)
+WebApp/node_modules/
+WebApp/dist/
+WebApp/.angular/
+
 # IDE
 .vs/
 .vscode/

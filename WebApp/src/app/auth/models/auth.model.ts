@@ -29,9 +29,10 @@ export interface RefreshTokenRequest {
 
 // The bits of the signed-in user we keep around, decoded from the JWT.
 export interface CurrentUser {
-  id: string; 
+  id: string;
   username: string;
   email: string | null;
   roles: string[];
   cardNumber: string | null;
+  cinemaIds?: string[] | null;
 }

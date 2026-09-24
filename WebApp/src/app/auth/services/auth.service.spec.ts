@@ -61,7 +61,7 @@ describe('AuthService', () => {
     const service = makeService();
     expect(service.isLoggedIn()).toBeFalse();
     expect(service.user()).toBeNull();
-    expect(service.isAdmin()).toBeFalse();
+    expect(service.isSuperAdmin()).toBeFalse();
   });
 
 
@@ -101,23 +101,43 @@ describe('AuthService', () => {
   });
 
 
-  it('reports isAdmin when the token carries the Admin role', () => {
+  it('reports isSuperAdmin when the token carries the SuperAdmin role', () => {
     const service = makeService();
 
     service.login(LOGIN).subscribe();
     const req = httpMock.expectOne(`${baseUrl}/Login`);
-    req.flush(authResponse({ accessToken: jwtForUser({ roles: ['User', 'Admin'] }) }));
-    expect(service.isAdmin()).toBeTrue();
+    req.flush(authResponse({ accessToken: jwtForUser({ roles: ['User', 'SuperAdmin'] }) }));
+    expect(service.isSuperAdmin()).toBeTrue();
+    expect(service.isStaff()).toBeTrue();
   });
 
-  it("doesn't report isAdmin when the token carries User role", () => {
+  it("doesn't report isSuperAdmin when the token carries User role", () => {
     const service = makeService();
 
     service.login(LOGIN).subscribe();
     const req = httpMock.expectOne(`${baseUrl}/Login`);
 
     req.flush(authResponse({ accessToken: jwtForUser({ roles: ['User'] }) }));
-    expect(service.isAdmin()).toBeFalse();
+    expect(service.isSuperAdmin()).toBeFalse();
+    expect(service.isStaff()).toBeFalse();
+  })
+
+  it('reports isCinemaAdmin and cinemaIds when the token carries the CinemaAdmin role', () => {
+    const service = makeService();
+
+    service.login(LOGIN).subscribe();
+    const req = httpMock.expectOne(`${baseUrl}/Login`);
+    req.flush(
+      authResponse({
+        accessToken: jwtForUser({ roles: ['CinemaAdmin'], cinemaIds: ['cinema-1', 'cinema-2'] }),
+      }),
+    );
+    expect(service.isCinemaAdmin()).toBeTrue();
+    expect(service.isStaff()).toBeTrue();
+    expect(service.cinemaIds()).toEqual(['cinema-1', 'cinema-2']);
+    expect(service.canManageCinema('cinema-1')).toBeTrue();
+    expect(service.canManageCinema('cinema-2')).toBeTrue();
+    expect(service.canManageCinema('cinema-3')).toBeFalse();
   })
 
   it('logs out and clears storage and the current user', () => {
