@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 8080
@@ -9,13 +10,16 @@ RUN apt-get update \
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["Services/Reservation.API/Reservation.API.csproj", "Services/Reservation.API/"]
-RUN dotnet restore "Services/Reservation.API/Reservation.API.csproj"
+RUN --mount=type=cache,target=/root/.nuget/packages,sharing=locked \
+    dotnet restore "Services/Reservation.API/Reservation.API.csproj"
 COPY . .
 WORKDIR "/src/Services/Reservation.API"
-RUN dotnet build "Reservation.API.csproj" -c Release -o /app/build
+RUN --mount=type=cache,target=/root/.nuget/packages,sharing=locked \
+    dotnet build "Reservation.API.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Reservation.API.csproj" -c Release -o /app/publish
+RUN --mount=type=cache,target=/root/.nuget/packages,sharing=locked \
+    dotnet publish "Reservation.API.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
