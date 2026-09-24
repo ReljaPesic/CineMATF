@@ -12,7 +12,7 @@ import { staffGuard } from '../shared/guards/staff.guard';
 import { superAdminGuard } from '../shared/guards/super-admin.guard';
 
 const routes: Routes = [
-  { path: '', component: CinemaListComponent, canActivate: [superAdminGuard] },
+  { path: '', component: CinemaListComponent, canActivate: [staffGuard] },
   { path: 'new', component: CinemaFormComponent, canActivate: [superAdminGuard] },
   { path: 'admins', component: CinemaAdminListComponent, canActivate: [superAdminGuard] },
   { path: 'admins/new', component: RegisterCinemaAdminComponent, canActivate: [superAdminGuard] },

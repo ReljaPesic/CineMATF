@@ -42,9 +42,9 @@ public class CinemaServiceTests
             new() { Id = Guid.NewGuid(), Name = "CineMax", City = City.Beograd },
             new() { Id = Guid.NewGuid(), Name = "Cineplexx", City = City.NoviSad }
         };
-        _repositoryMock.Setup(r => r.GetCinemasAsync(1, 10)).ReturnsAsync((cinemas, 2));
+        _repositoryMock.Setup(r => r.GetCinemasAsync(1, 10, null)).ReturnsAsync((cinemas, 2));
 
-        var result = await _service.GetCinemasAsync(1, 10);
+        var result = await _service.GetCinemasAsync(1, 10, null);
 
         result.Should().NotBeNull();
         result.Data.Should().HaveCount(2);
@@ -54,9 +54,9 @@ public class CinemaServiceTests
     [Fact]
     public async Task GetCinemasAsync_WithEmptyList_ReturnsEmptyData()
     {
-        _repositoryMock.Setup(r => r.GetCinemasAsync(1, 10)).ReturnsAsync((new List<MovieTheatre>(), 0));
+        _repositoryMock.Setup(r => r.GetCinemasAsync(1, 10, null)).ReturnsAsync((new List<MovieTheatre>(), 0));
 
-        var result = await _service.GetCinemasAsync(1, 10);
+        var result = await _service.GetCinemasAsync(1, 10, null);
 
         result.Should().NotBeNull();
         result.Data.Should().BeEmpty();
@@ -70,9 +70,9 @@ public class CinemaServiceTests
         {
             new() { Id = Guid.NewGuid(), Name = "CineMax", City = City.Beograd }
         };
-        _repositoryMock.Setup(r => r.GetCinemasByCityAsync(City.Beograd)).ReturnsAsync(cinemas);
+        _repositoryMock.Setup(r => r.GetCinemasByCityAsync(City.Beograd, null)).ReturnsAsync(cinemas);
 
-        var result = await _service.GetCinemasByCityAsync(City.Beograd);
+        var result = await _service.GetCinemasByCityAsync(City.Beograd, null);
 
         result.Should().HaveCount(1);
         result.First().City.Should().Be(City.Beograd);
@@ -81,11 +81,24 @@ public class CinemaServiceTests
     [Fact]
     public async Task GetCinemasByCityAsync_WithNoCinemas_ReturnsEmpty()
     {
-        _repositoryMock.Setup(r => r.GetCinemasByCityAsync(City.Beograd)).ReturnsAsync(new List<MovieTheatre>());
+        _repositoryMock.Setup(r => r.GetCinemasByCityAsync(City.Beograd, null)).ReturnsAsync(new List<MovieTheatre>());
 
-        var result = await _service.GetCinemasByCityAsync(City.Beograd);
+        var result = await _service.GetCinemasByCityAsync(City.Beograd, null);
 
         result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCinemasAsync_PassesRestrictToCinemaIdsThrough()
+    {
+        var restrictToCinemaIds = new[] { Guid.NewGuid(), Guid.NewGuid() };
+        var cinemas = new List<MovieTheatre> { new() { Id = restrictToCinemaIds[0], Name = "CineMax", City = City.Beograd } };
+        _repositoryMock.Setup(r => r.GetCinemasAsync(1, 10, restrictToCinemaIds)).ReturnsAsync((cinemas, 1));
+
+        var result = await _service.GetCinemasAsync(1, 10, restrictToCinemaIds);
+
+        result.Data.Should().ContainSingle();
+        _repositoryMock.Verify(r => r.GetCinemasAsync(1, 10, restrictToCinemaIds), Times.Once);
     }
 
     [Fact]
