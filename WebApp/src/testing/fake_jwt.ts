@@ -21,6 +21,8 @@ export interface JwtUserOptions {
   email?: string;
   roles?: string[] | string;
   cardNumber?: string;
+  // Set only for CinemaAdmin accounts - the cinema(s) they manage.
+  cinemaIds?: string[] | string;
   // negative produces an already-expired token
   expiresInSeconds?: number;
 }
@@ -33,6 +35,7 @@ export function jwtForUser(options: JwtUserOptions = {}): string {
     email = 'alice@cinematf.local',
     roles = ['User'],
     cardNumber = '4111111111111111',
+    cinemaIds,
     expiresInSeconds = 3600,
   } = options;
 
@@ -42,6 +45,7 @@ export function jwtForUser(options: JwtUserOptions = {}): string {
     email,
     [ROLE_CLAIM]: roles,
     cardNumber,
+    ...(cinemaIds ? { cinemaId: cinemaIds } : {}),
     exp: Math.floor(Date.now() / 1000) + expiresInSeconds,
   });
 }
