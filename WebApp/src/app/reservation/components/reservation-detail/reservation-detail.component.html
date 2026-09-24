@@ -23,7 +23,7 @@
           </h1>
           <p class="reservation-detail__meta">
             @if (screening) {
-              {{ screening.startTime | date: 'full' }}
+              {{ screening.startTime | date: 'dd.MM.yyyy, HH:mm' }}
             } @else {
               Screening unavailable
             }
@@ -56,11 +56,11 @@
       </div>
       <div>
         <dt>Booked</dt>
-        <dd>{{ reservation.createdAt | date: 'medium' }}</dd>
+        <dd>{{ reservation.createdAt | date: 'dd.MM.yyyy, HH:mm' }}</dd>
       </div>
       <div>
         <dt>{{ reservation.status === Status.Locked ? 'Held until' : 'Expires' }}</dt>
-        <dd>{{ reservation.expiresAt | date: 'medium' }}</dd>
+        <dd>{{ reservation.expiresAt | date: 'dd.MM.yyyy, HH:mm' }}</dd>
       </div>
     </dl>
 

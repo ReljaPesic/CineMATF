@@ -1,8 +1,11 @@
 <section class="cinema-list">
   <header class="cinema-list__header">
     <h1>Cinemas</h1>
-    @if (isAdmin()) {
-      <a class="btn btn--primary" routerLink="new">+ New cinema</a>
+    @if (isSuperAdmin()) {
+      <span class="cinema-list__header-actions">
+        <a class="btn" routerLink="admins">Cinema admins</a>
+        <a class="btn btn--primary" routerLink="new">+ New cinema</a>
+      </span>
     }
   </header>
 
@@ -36,7 +39,7 @@
         <tr>
           <th>Name</th>
           <th>City</th>
-          @if (isAdmin()) {
+          @if (isStaff()) {
             <th><span class="sr-only">Actions</span></th>
           }
         </tr>
@@ -48,18 +51,22 @@
               <a [routerLink]="[cinema.id]">{{ cinema.name }}</a>
             </td>
             <td data-label="City">{{ cinema.city }}</td>
-            @if (isAdmin()) {
+            @if (isStaff()) {
               <td data-label="Actions">
                 <span class="actions-cell">
-                  <a [routerLink]="[cinema.id, 'edit']">Edit</a>
-                  <button
-                    type="button"
-                    class="link-btn link-btn--danger"
-                    (click)="delete(cinema)"
-                    [disabled]="deletingId === cinema.id"
-                  >
-                    {{ deletingId === cinema.id ? 'Deleting…' : 'Delete' }}
-                  </button>
+                  @if (canManageCinema(cinema.id)) {
+                    <a [routerLink]="[cinema.id, 'edit']">Edit</a>
+                  }
+                  @if (isSuperAdmin()) {
+                    <button
+                      type="button"
+                      class="link-btn link-btn--danger"
+                      (click)="delete(cinema)"
+                      [disabled]="deletingId === cinema.id"
+                    >
+                      {{ deletingId === cinema.id ? 'Deleting…' : 'Delete' }}
+                    </button>
+                  }
                 </span>
               </td>
             }

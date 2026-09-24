@@ -13,12 +13,16 @@
         <h1>{{ cinema.name }}</h1>
         <p class="cinema-detail__meta">{{ cinema.city }}</p>
       </div>
-      @if (isAdmin()) {
+      @if (canManage || isSuperAdmin()) {
         <span class="cinema-detail__actions">
-          <a class="btn" [routerLink]="['edit']">Edit</a>
-          <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
-            {{ deleting ? 'Deleting…' : 'Delete' }}
-          </button>
+          @if (canManage) {
+            <a class="btn" [routerLink]="['edit']">Edit</a>
+          }
+          @if (isSuperAdmin()) {
+            <button type="button" class="btn btn--danger" (click)="delete()" [disabled]="deleting">
+              {{ deleting ? 'Deleting…' : 'Delete' }}
+            </button>
+          }
         </span>
       }
     </header>
@@ -43,7 +47,7 @@
                 {{ hall.totalRows }} × {{ hall.seatsPerRow }} · {{ seatCount(hall) }} seats
               </span>
             </div>
-            @if (isAdmin()) {
+            @if (canManage) {
               <span class="hall-row__actions">
                 <a [routerLink]="['halls', hall.id, 'seats']">Edit</a>
                 <button
@@ -61,7 +65,7 @@
       </ul>
     }
 
-    @if (isAdmin()) {
+    @if (canManage) {
     <form class="hall-form" [formGroup]="hallForm" (ngSubmit)="addHall()">
       <h3>Add a hall</h3>
       <div class="hall-form__grid">

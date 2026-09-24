@@ -3,12 +3,17 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { UpdateUserRequest, UserDetails } from '../models/user.model';
+import { UpdateCinemaAssignmentRequest, UpdateUserRequest, UserDetails } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.api.identity}/User`;
+
+  /** GET /api/v1/User - SuperAdmin-only */
+  getAllUsers(): Observable<UserDetails[]> {
+    return this.http.get<UserDetails[]>(this.baseUrl);
+  }
 
   /** GET /api/v1/User/{username} */
   getUser(username: string): Observable<UserDetails> {
@@ -18,5 +23,10 @@ export class UserService {
   /** PUT /api/v1/User/{username} */
   updateUser(username: string, request: UpdateUserRequest): Observable<UserDetails> {
     return this.http.put<UserDetails>(`${this.baseUrl}/${username}`, request);
+  }
+
+  /** PUT /api/v1/User/{username}/cinemas - SuperAdmin-only */
+  updateCinemaAssignment(username: string, request: UpdateCinemaAssignmentRequest): Observable<UserDetails> {
+    return this.http.put<UserDetails>(`${this.baseUrl}/${username}/cinemas`, request);
   }
 }

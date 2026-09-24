@@ -13,7 +13,10 @@ import { AuthService } from '../../../auth/services/auth.service';
 })
 export class CinemaListComponent implements OnInit {
   private readonly cinemaService = inject(CinemaService);
-  readonly isAdmin = inject(AuthService).isAdmin;
+  private readonly auth = inject(AuthService);
+  readonly isSuperAdmin = this.auth.isSuperAdmin;
+  readonly isStaff = this.auth.isStaff;
+  readonly canManageCinema = this.auth.canManageCinema.bind(this.auth);
 
   cinemas: Cinema[] = [];
 

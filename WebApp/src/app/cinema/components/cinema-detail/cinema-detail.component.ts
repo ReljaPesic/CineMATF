@@ -18,7 +18,12 @@ export class CinemaDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cinemaService = inject(CinemaService);
-  readonly isAdmin = inject(AuthService).isAdmin;
+  private readonly auth = inject(AuthService);
+  readonly isSuperAdmin = this.auth.isSuperAdmin;
+
+  get canManage(): boolean {
+    return this.auth.canManageCinema(this.cinemaId);
+  }
 
   cinemaId!: string;
   cinema: Cinema | null = null;

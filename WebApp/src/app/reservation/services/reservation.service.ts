@@ -67,4 +67,9 @@ export class ReservationService {
       observe: 'response',
     });
   }
+
+  /** URL of GET /Ticket/{id}/download, without making the request. */
+  ticketDownloadUrl(ticketId: string): string {
+    return `${this.ticketUrl}/${ticketId}/download`;
+  }
 }

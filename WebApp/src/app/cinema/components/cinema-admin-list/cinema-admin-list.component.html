@@ -1,0 +1,39 @@
+<section class="cinema-admin-list">
+  <a class="back" routerLink="/cinemas">‹ Back to cinemas</a>
+
+  <header class="cinema-admin-list__header">
+    <h1>Cinema admins</h1>
+    <a class="btn btn--primary" routerLink="/cinemas/admins/new">+ New cinema admin</a>
+  </header>
+
+  @if (loading) {
+    <p class="status">Loading…</p>
+  } @else if (error) {
+    <p class="status status--error">{{ error }}</p>
+  } @else if (cinemaAdmins.length === 0) {
+    <p class="status">No cinema admins yet.</p>
+  } @else {
+    <table class="cinema-admin-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Name</th>
+          <th>Cinemas</th>
+          <th><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (admin of cinemaAdmins; track admin.id) {
+          <tr>
+            <td data-label="Username">{{ admin.userName }}</td>
+            <td data-label="Name">{{ admin.firstName }} {{ admin.lastName }}</td>
+            <td data-label="Cinemas">{{ cinemaNamesFor(admin) }}</td>
+            <td data-label="Actions">
+              <a [routerLink]="[admin.userName, 'edit']">Edit</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

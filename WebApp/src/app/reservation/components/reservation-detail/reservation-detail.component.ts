@@ -26,14 +26,14 @@ export class ReservationDetailComponent implements OnInit {
   private readonly screeningService = inject(ScreeningService);
   private readonly movieService = inject(MovieService);
   private readonly cinemaService = inject(CinemaService);
-  readonly isAdmin = inject(AuthService).isAdmin;
+  readonly isStaff = inject(AuthService).isStaff;
 
   readonly formatLabels = SCREENING_FORMAT_LABELS;
   readonly Status = ReservationStatus;
 
-  // Non-admins have no reservations list to go back to.
+  // Non-staff have no reservations list to go back to.
   get backLink(): string {
-    return this.isAdmin() ? '/reservations' : '/screenings';
+    return this.isStaff() ? '/reservations' : '/screenings';
   }
 
   reservation: Reservation | null = null;

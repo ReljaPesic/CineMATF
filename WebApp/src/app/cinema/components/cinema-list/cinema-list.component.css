@@ -18,6 +18,11 @@
   font-size: 1.5rem;
 }
 
+.cinema-list__header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
 .cinema-list__filters {
   display: flex;
   flex-wrap: wrap;
@@ -120,15 +125,22 @@
 .btn {
   display: inline-block;
   padding: 0.45rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  border: 1px solid transparent;
+  color: var(--text);
   font-size: 0.9rem;
   cursor: pointer;
   text-decoration: none;
 }
 
+.btn:hover {
+  background: var(--surface-hover);
+}
+
 .btn--primary {
   background: var(--primary);
+  border-color: var(--primary);
   color: var(--on-primary);
   font-weight: 600;
 }

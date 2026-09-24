@@ -5,14 +5,21 @@ import { CinemaListComponent } from './components/cinema-list/cinema-list.compon
 import { CinemaFormComponent } from './components/cinema-form/cinema-form.component';
 import { CinemaDetailComponent } from './components/cinema-detail/cinema-detail.component';
 import { HallSeatsComponent } from './components/hall-seats/hall-seats.component';
-import { adminGuard } from '../shared/guards/admin.guard';
+import { RegisterCinemaAdminComponent } from './components/register-cinema-admin/register-cinema-admin.component';
+import { CinemaAdminListComponent } from './components/cinema-admin-list/cinema-admin-list.component';
+import { CinemaAdminEditComponent } from './components/cinema-admin-edit/cinema-admin-edit.component';
+import { staffGuard } from '../shared/guards/staff.guard';
+import { superAdminGuard } from '../shared/guards/super-admin.guard';
 
 const routes: Routes = [
-  { path: '', component: CinemaListComponent },
-  { path: 'new', component: CinemaFormComponent, canActivate: [adminGuard] },
-  { path: ':id/edit', component: CinemaFormComponent, canActivate: [adminGuard] },
+  { path: '', component: CinemaListComponent, canActivate: [superAdminGuard] },
+  { path: 'new', component: CinemaFormComponent, canActivate: [superAdminGuard] },
+  { path: 'admins', component: CinemaAdminListComponent, canActivate: [superAdminGuard] },
+  { path: 'admins/new', component: RegisterCinemaAdminComponent, canActivate: [superAdminGuard] },
+  { path: 'admins/:username/edit', component: CinemaAdminEditComponent, canActivate: [superAdminGuard] },
+  { path: ':id/edit', component: CinemaFormComponent, canActivate: [staffGuard] },
   { path: ':id', component: CinemaDetailComponent },
-  { path: ':id/halls/:hallId/seats', component: HallSeatsComponent, canActivate: [adminGuard] }
+  { path: ':id/halls/:hallId/seats', component: HallSeatsComponent, canActivate: [staffGuard] }
 ]
 
 @NgModule({

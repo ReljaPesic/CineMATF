@@ -93,7 +93,6 @@ export class AuthService {
     this.storage.set(LocalStorageKeys.RefreshToken, res.refreshToken);
     if (user) {
       this.storage.set(LocalStorageKeys.Username, user.username);
-      this.storage.set(LocalStorageKeys.Role, user.roles);
     }
     this.currentUser.set(user);
   }

@@ -7,6 +7,9 @@ import { CinemaListComponent } from './components/cinema-list/cinema-list.compon
 import { CinemaFormComponent } from './components/cinema-form/cinema-form.component';
 import { CinemaDetailComponent } from './components/cinema-detail/cinema-detail.component';
 import { HallSeatsComponent } from './components/hall-seats/hall-seats.component';
+import { RegisterCinemaAdminComponent } from './components/register-cinema-admin/register-cinema-admin.component';
+import { CinemaAdminListComponent } from './components/cinema-admin-list/cinema-admin-list.component';
+import { CinemaAdminEditComponent } from './components/cinema-admin-edit/cinema-admin-edit.component';
 
 @NgModule({
   declarations: [
@@ -14,6 +17,9 @@ import { HallSeatsComponent } from './components/hall-seats/hall-seats.component
     CinemaFormComponent,
     CinemaDetailComponent,
     HallSeatsComponent,
+    RegisterCinemaAdminComponent,
+    CinemaAdminListComponent,
+    CinemaAdminEditComponent,
   ],
   imports: [
     CommonModule,
