@@ -10,9 +10,18 @@ namespace Reservation.API.Tests.Integration;
 // against an in-memory database without any other service running.
 internal class FakeScreeningApiClient : IScreeningApiClient
 {
-    public Task<ScreeningDetails?> GetScreeningAsync(Guid screeningId, CancellationToken cancellationToken = default) =>
-        Task.FromResult<ScreeningDetails?>(new ScreeningDetails(
-            screeningId, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow.AddDays(1), "2D"));
+    // Cache so repeated lookups of the same screening always resolve to the same cinema -
+    // needed for CinemaAdmin scoping checks to behave consistently within a test.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, Guid> _cinemaIds = new();
+
+    public void SetCinemaId(Guid screeningId, Guid cinemaId) => _cinemaIds[screeningId] = cinemaId;
+
+    public Task<ScreeningDetails?> GetScreeningAsync(Guid screeningId, CancellationToken cancellationToken = default)
+    {
+        var cinemaId = _cinemaIds.GetOrAdd(screeningId, _ => Guid.NewGuid());
+        return Task.FromResult<ScreeningDetails?>(new ScreeningDetails(
+            screeningId, Guid.NewGuid(), Guid.NewGuid(), cinemaId, DateTime.UtcNow.AddDays(1), "2D"));
+    }
 }
 
 internal class FakeCinemaApiClient : ICinemaApiClient

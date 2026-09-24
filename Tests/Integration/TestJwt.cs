@@ -14,7 +14,10 @@ internal static class TestJwt
     private const string Audience = "CineMATF.Services";
     private const string SecretKey = "MyVerySecretMessageThatOnlyIKnow";
 
-    public static string CreateFor(string role)
+    public static string CreateFor(string role, Guid? cinemaId = null) =>
+        CreateFor(role, cinemaId.HasValue ? [cinemaId.Value] : []);
+
+    public static string CreateFor(string role, IEnumerable<Guid> cinemaIds)
     {
         var claims = new List<Claim>
         {
@@ -22,6 +25,8 @@ internal static class TestJwt
             new(ClaimTypes.Name, $"test-{role.ToLowerInvariant()}"),
             new(ClaimTypes.Role, role),
         };
+
+        claims.AddRange(cinemaIds.Select(id => new Claim("cinemaId", id.ToString())));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

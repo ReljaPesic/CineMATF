@@ -8,9 +8,9 @@ public class TicketControllerTests(ReservationApiFactory factory)
 {
     // Pays for the seeded reservation and generates its tickets so ticket endpoints
     // have something to look up. Leaves the client authenticated as the owner.
-    private async Task<ReservationResponse> SeedConfirmedReservationWithTicketsAsync(Guid ownerId)
+    private async Task<ReservationResponse> SeedConfirmedReservationWithTicketsAsync(Guid ownerId, Guid? screeningId = null)
     {
-        var reservation = await SeedReservationAsync(ownerId);
+        var reservation = await SeedReservationAsync(ownerId, screeningId);
 
         AuthenticateAs(ownerId, TestJwt.UserRole);
         (await Client.PostAsync($"/api/v1/reservations/{reservation.Id}/pay", null)).EnsureSuccessStatusCode();
@@ -83,9 +83,46 @@ public class TicketControllerTests(ReservationApiFactory factory)
     [Fact]
     public async Task GetAllTickets_ReturnsOk_ForAdmin()
     {
-        AuthenticateAs(Guid.NewGuid(), TestJwt.AdminRole);
+        AuthenticateAs(Guid.NewGuid(), TestJwt.SuperAdminRole);
 
         var response = await Client.GetAsync("/api/v1/Ticket");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetAllTickets_OnlyReturnsOwnCinemasTickets_ForCinemaAdmin()
+    {
+        var ownCinemaId = Guid.NewGuid();
+        var ownScreeningId = Guid.NewGuid();
+        var otherScreeningId = Guid.NewGuid();
+        SetScreeningCinema(ownScreeningId, ownCinemaId);
+        SetScreeningCinema(otherScreeningId, Guid.NewGuid());
+
+        var ownReservation = await SeedConfirmedReservationWithTicketsAsync(Guid.NewGuid(), ownScreeningId);
+        var otherReservation = await SeedConfirmedReservationWithTicketsAsync(Guid.NewGuid(), otherScreeningId);
+
+        AuthenticateAs(Guid.NewGuid(), TestJwt.CinemaAdminRole, ownCinemaId);
+        var response = await Client.GetAsync("/api/v1/Ticket");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var tickets = (await response.Content.ReadFromJsonAsync<List<TicketResponse>>())!;
+        tickets.Select(t => t.ReservationId).Should().Contain(ownReservation.Id);
+        tickets.Select(t => t.ReservationId).Should().NotContain(otherReservation.Id);
+    }
+
+    [Fact]
+    public async Task GetTicket_ReturnsOk_WhenCallerIsCinemaAdminOfItsCinema()
+    {
+        var cinemaId = Guid.NewGuid();
+        var screeningId = Guid.NewGuid();
+        SetScreeningCinema(screeningId, cinemaId);
+        var reservation = await SeedConfirmedReservationWithTicketsAsync(Guid.NewGuid(), screeningId);
+        var ticket = (await (await Client.GetAsync($"/api/v1/Ticket/reservation/{reservation.Id}"))
+            .Content.ReadFromJsonAsync<List<TicketResponse>>())!.Single();
+
+        AuthenticateAs(Guid.NewGuid(), TestJwt.CinemaAdminRole, cinemaId);
+        var response = await Client.GetAsync($"/api/v1/Ticket/{ticket.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }

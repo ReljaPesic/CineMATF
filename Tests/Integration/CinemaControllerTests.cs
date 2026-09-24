@@ -14,8 +14,11 @@ public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<Cin
 {
     private readonly HttpClient _client = factory.CreateClient();
 
-    private void AuthenticateAs(string role) =>
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestJwt.CreateFor(role));
+    private void AuthenticateAs(string role, Guid? cinemaId = null) =>
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestJwt.CreateFor(role, cinemaId));
+
+    private void AuthenticateAs(string role, IEnumerable<Guid> cinemaIds) =>
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestJwt.CreateFor(role, cinemaIds));
 
     [Fact]
     public async Task GetCinemas_ReturnsEmptyList_WhenNoCinemas()
@@ -38,7 +41,7 @@ public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<Cin
     [Fact]
     public async Task CreateCinema_ReturnsCreated_WhenValidRequest()
     {
-        AuthenticateAs(Roles.Admin);
+        AuthenticateAs(Roles.SuperAdmin);
         var request = new { name = "CineMax", city = "Beograd" };
 
         var response = await _client.PostAsJsonAsync("/api/v1/cinema", request);
@@ -49,12 +52,24 @@ public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<Cin
     [Fact]
     public async Task CreateCinema_ReturnsBadRequest_WhenInvalidName()
     {
-        AuthenticateAs(Roles.Admin);
+        AuthenticateAs(Roles.SuperAdmin);
         var request = new { name = "", city = "Beograd" };
 
         var response = await _client.PostAsJsonAsync("/api/v1/cinema", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    // Creating a brand-new cinema isn't scoped to any existing one, so even a CinemaAdmin can't do it.
+    [Fact]
+    public async Task CreateCinema_ReturnsForbidden_WhenCallerIsCinemaAdmin()
+    {
+        AuthenticateAs(Roles.CinemaAdmin, Guid.NewGuid());
+        var request = new { name = "CineMax", city = "Beograd" };
+
+        var response = await _client.PostAsJsonAsync("/api/v1/cinema", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -81,7 +96,7 @@ public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<Cin
     [Fact]
     public async Task UpdateCinema_ReturnsNotFound_WhenNotExists()
     {
-        AuthenticateAs(Roles.Admin);
+        AuthenticateAs(Roles.SuperAdmin);
         var id = Guid.NewGuid();
         var request = new { name = "Updated Cinema", city = "Beograd" };
 
@@ -102,15 +117,71 @@ public class CinemaControllerTests(CinemaApiFactory factory) : IClassFixture<Cin
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    // A CinemaAdmin owning a different cinema than the target id may not update it.
+    [Fact]
+    public async Task UpdateCinema_ReturnsForbidden_WhenCinemaAdminDoesNotOwnCinema()
+    {
+        AuthenticateAs(Roles.CinemaAdmin, Guid.NewGuid());
+        var id = Guid.NewGuid();
+        var request = new { name = "Updated Cinema", city = "Beograd" };
+
+        var response = await _client.PutAsJsonAsync($"/api/v1/cinema/{id}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    // A CinemaAdmin owning the target cinema may update it (404 here since it isn't seeded).
+    [Fact]
+    public async Task UpdateCinema_ReturnsNotFound_WhenCinemaAdminOwnsCinema()
+    {
+        var id = Guid.NewGuid();
+        AuthenticateAs(Roles.CinemaAdmin, id);
+        var request = new { name = "Updated Cinema", city = "Beograd" };
+
+        var response = await _client.PutAsJsonAsync($"/api/v1/cinema/{id}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // One admin can manage more than one cinema - either cinema in their list should pass
+    // the ownership check (404 for both here since neither is seeded).
+    [Fact]
+    public async Task UpdateCinema_ReturnsNotFound_WhenCinemaAdminOwnsEitherOfTwoCinemas()
+    {
+        var firstCinemaId = Guid.NewGuid();
+        var secondCinemaId = Guid.NewGuid();
+        var request = new { name = "Updated Cinema", city = "Beograd" };
+
+        AuthenticateAs(Roles.CinemaAdmin, [firstCinemaId, secondCinemaId]);
+        var firstResponse = await _client.PutAsJsonAsync($"/api/v1/cinema/{firstCinemaId}", request);
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        AuthenticateAs(Roles.CinemaAdmin, [firstCinemaId, secondCinemaId]);
+        var secondResponse = await _client.PutAsJsonAsync($"/api/v1/cinema/{secondCinemaId}", request);
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
     [Fact]
     public async Task DeleteCinema_ReturnsNotFound_WhenNotExists()
     {
-        AuthenticateAs(Roles.Admin);
+        AuthenticateAs(Roles.SuperAdmin);
         var id = Guid.NewGuid();
 
         var response = await _client.DeleteAsync($"/api/v1/cinema/{id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // Deleting a whole cinema is SuperAdmin-only, even for the cinema a CinemaAdmin manages.
+    [Fact]
+    public async Task DeleteCinema_ReturnsForbidden_WhenCallerIsCinemaAdmin()
+    {
+        var id = Guid.NewGuid();
+        AuthenticateAs(Roles.CinemaAdmin, id);
+
+        var response = await _client.DeleteAsync($"/api/v1/cinema/{id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]
