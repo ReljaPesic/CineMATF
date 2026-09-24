@@ -45,6 +45,11 @@ export class AuthService {
     return this.http.post<void>(`${this.baseUrl}/RegisterUser`, request);
   }
 
+  // SuperAdmin-only: creates a CinemaAdmin account scoped to request.cinemaIds.
+  registerCinemaAdmin(request: RegisterRequest): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/RegisterCinemaAdmin`, request);
+  }
+
   login(request: LoginRequest): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${this.baseUrl}/Login`, request)
@@ -88,6 +93,7 @@ export class AuthService {
     this.storage.set(LocalStorageKeys.RefreshToken, res.refreshToken);
     if (user) {
       this.storage.set(LocalStorageKeys.Username, user.username);
+      this.storage.set(LocalStorageKeys.Role, user.roles);
     }
     this.currentUser.set(user);
   }

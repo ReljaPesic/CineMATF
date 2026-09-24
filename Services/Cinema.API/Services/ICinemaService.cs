@@ -6,8 +6,8 @@ namespace Cinema.API.Services;
 public interface ICinemaService
 {
     Task<CinemaResponse> CreateCinemaAsync(CinemaRequest request);
-    Task<PagedResponse<CinemaResponse>> GetCinemasAsync(int page, int pageSize);
-    Task<IEnumerable<CinemaResponse>> GetCinemasByCityAsync(City city);
+    Task<PagedResponse<CinemaResponse>> GetCinemasAsync(int page, int pageSize, IReadOnlyCollection<Guid>? restrictToCinemaIds);
+    Task<IEnumerable<CinemaResponse>> GetCinemasByCityAsync(City city, IReadOnlyCollection<Guid>? restrictToCinemaIds);
     Task<CinemaResponse?> GetCinemaByIdAsync(Guid id);
     Task<bool> DeleteCinemaAsync(Guid id);
     Task<CinemaResponse?> UpdateCinemaAsync(Guid id, CinemaRequest request);

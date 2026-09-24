@@ -11,12 +11,16 @@ namespace Cinema.API.Controllers;
 [Route("api/v1/[controller]")]
 public class CinemaController(ICinemaService service) : ControllerBase
 {
+    // Public browsing endpoint (no [Authorize]) - but a CinemaAdmin's own cinema(s) are the
+    // only ones they should see, so the list is restricted when the caller happens to be
+    // authenticated as one. Everyone else sees the full public catalog.
     [HttpGet]
     [ProducesResponseType(typeof(PagedResponse<CinemaResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResponse<CinemaResponse>>> GetCinemas([FromQuery] int page = 1,
                                                                            [FromQuery] int pageSize = 10)
     {
-        var response = await service.GetCinemasAsync(page, pageSize);
+        var restrictToCinemaIds = User.IsCinemaAdmin() ? User.GetCinemaIds() : null;
+        var response = await service.GetCinemasAsync(page, pageSize, restrictToCinemaIds);
         return Ok(response);
     }
 
@@ -31,7 +35,8 @@ public class CinemaController(ICinemaService service) : ControllerBase
             return BadRequest(new { message = $"Invalid city name. Valid values: {string.Join(", ", Enum.GetNames<City>())}" });
         }
 
-        var cinemas = await service.GetCinemasByCityAsync(city);
+        var restrictToCinemaIds = User.IsCinemaAdmin() ? User.GetCinemaIds() : null;
+        var cinemas = await service.GetCinemasByCityAsync(city, restrictToCinemaIds);
         return Ok(cinemas);
     }
 

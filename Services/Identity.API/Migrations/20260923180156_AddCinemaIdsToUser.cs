@@ -16,7 +16,8 @@ namespace Identity.API.Migrations
                 name: "CinemaIds",
                 table: "AspNetUsers",
                 type: "uuid[]",
-                nullable: false);
+                nullable: false,
+                defaultValueSql: "'{}'");
         }
 
         /// <inheritdoc />

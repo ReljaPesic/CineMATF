@@ -4,7 +4,7 @@ export interface LoginRequest {
   password: string;
 }
 
-// Body of POST /api/v1/Auth/RegisterUser.
+// Body of POST /api/v1/Auth/RegisterUser and .../RegisterCinemaAdmin.
 export interface RegisterRequest {
   firstName: string;
   lastName: string;
@@ -13,6 +13,8 @@ export interface RegisterRequest {
   password: string;
   cardNumber: string;
   phoneNumber: string | null;
+  // Required (non-empty) only for .../RegisterCinemaAdmin - the cinema(s) that admin manages.
+  cinemaIds?: string[];
 }
 
 // Response of POST /api/v1/Auth/Login and /api/v1/Auth/Refresh.

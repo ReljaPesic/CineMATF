@@ -36,7 +36,12 @@ public class UserController : ControllerBase
     public async Task<ActionResult<IEnumerable<UserDetails>>> GetAllUsers()
     {
         var users = await _userManager.Users.ToListAsync();
-        return Ok(_mapper.Map<IEnumerable<UserDetails>>(users));
+        var result = new List<UserDetails>();
+        foreach (var user in users)
+        {
+            result.Add(await ToUserDetailsAsync(user));
+        }
+        return Ok(result);
     }
 
     //   GET /api/v1/User/{username}
@@ -61,7 +66,7 @@ public class UserController : ControllerBase
             return NotFound();
         }
 
-        return Ok(_mapper.Map<UserDetails>(user));
+        return Ok(await ToUserDetailsAsync(user));
     }
 
     //   GET /api/v1/User/by-id/{id}
@@ -129,7 +134,35 @@ public class UserController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        return Ok(_mapper.Map<UserDetails>(user));
+        return Ok(await ToUserDetailsAsync(user));
+    }
+
+    //   PUT /api/v1/User/{username}/cinemas
+    // SuperAdmin-only: reassigns an existing CinemaAdmin's cinema(s). Use
+    // Auth/RegisterCinemaAdmin to create a new one instead.
+    [Authorize(Roles = Roles.SuperAdmin)]
+    [HttpPut("{username}/cinemas")]
+    [ProducesResponseType(typeof(UserDetails), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserDetails>> UpdateCinemaAssignment(string username, [FromBody] UpdateCinemaAssignmentRequest request)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.UserName == username);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        if (!await _userManager.IsInRoleAsync(user, Roles.CinemaAdmin))
+        {
+            ModelState.AddModelError(nameof(username), "User is not a CinemaAdmin");
+            return BadRequest(ModelState);
+        }
+
+        user.CinemaIds = request.CinemaIds;
+        await _userManager.UpdateAsync(user);
+
+        return Ok(await ToUserDetailsAsync(user));
     }
 
     //   DELETE /api/v1/User
@@ -159,5 +192,12 @@ public class UserController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    private async Task<UserDetails> ToUserDetailsAsync(User user)
+    {
+        var details = _mapper.Map<UserDetails>(user);
+        details.Roles = (await _userManager.GetRolesAsync(user)).ToList();
+        return details;
     }
 }

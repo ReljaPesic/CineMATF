@@ -6,6 +6,8 @@ public static class ClaimsPrincipalExtensions
 {
     public static bool IsSuperAdmin(this ClaimsPrincipal user) => user.IsInRole(Roles.SuperAdmin);
 
+    public static bool IsCinemaAdmin(this ClaimsPrincipal user) => user.IsInRole(Roles.CinemaAdmin);
+
     // Identity.API puts one "cinemaId" claim per cinema a CinemaAdmin manages.
     public static IReadOnlySet<Guid> GetCinemaIds(this ClaimsPrincipal user) =>
         user.FindAll("cinemaId")

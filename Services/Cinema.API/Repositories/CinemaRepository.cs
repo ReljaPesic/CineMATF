@@ -86,9 +86,14 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
         return await _context.MovieTheatres.AsNoTracking().Include(c => c.Halls).FirstOrDefaultAsync(c => c.Id == id);
     }
 
-    public async Task<(IEnumerable<MovieTheatre> Cinemas, int TotalCount)> GetCinemasAsync(int page, int pageSize)
+    public async Task<(IEnumerable<MovieTheatre> Cinemas, int TotalCount)> GetCinemasAsync(int page, int pageSize, IReadOnlyCollection<Guid>? restrictToCinemaIds)
     {
         var query = _context.MovieTheatres.AsNoTracking();
+        if (restrictToCinemaIds != null)
+        {
+            query = query.Where(c => restrictToCinemaIds.Contains(c.Id));
+        }
+
         var totalCount = await query.CountAsync();
         var items = await query
             .OrderBy(c => c.Name)
@@ -99,13 +104,15 @@ public class CinemaRepository(CinemaDbContext context) : ICinemaRepository
         return (items, totalCount);
     }
 
-    public async Task<IEnumerable<MovieTheatre>> GetCinemasByCityAsync(City city)
+    public async Task<IEnumerable<MovieTheatre>> GetCinemasByCityAsync(City city, IReadOnlyCollection<Guid>? restrictToCinemaIds)
     {
-        return await _context.MovieTheatres
-            .AsNoTracking()
-            .Where(c => c.City == city)
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+        var query = _context.MovieTheatres.AsNoTracking().Where(c => c.City == city);
+        if (restrictToCinemaIds != null)
+        {
+            query = query.Where(c => restrictToCinemaIds.Contains(c.Id));
+        }
+
+        return await query.OrderBy(c => c.Name).ToListAsync();
     }
 
     public async Task<IEnumerable<Hall>> GetHallsAsync(Guid cinemaId)

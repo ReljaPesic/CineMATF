@@ -13,9 +13,9 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
         return mapper.Map<CinemaResponse>(cinema);
     }
 
-    public async Task<PagedResponse<CinemaResponse>> GetCinemasAsync(int page, int pageSize)
+    public async Task<PagedResponse<CinemaResponse>> GetCinemasAsync(int page, int pageSize, IReadOnlyCollection<Guid>? restrictToCinemaIds)
     {
-        var (cinemas, totalCount) = await repository.GetCinemasAsync(page, pageSize);
+        var (cinemas, totalCount) = await repository.GetCinemasAsync(page, pageSize, restrictToCinemaIds);
         return new PagedResponse<CinemaResponse>(
             mapper.Map<IEnumerable<CinemaResponse>>(cinemas),
             page,
@@ -24,9 +24,9 @@ public class CinemaService(ICinemaRepository repository, IMapper mapper) : ICine
         );
     }
 
-    public async Task<IEnumerable<CinemaResponse>> GetCinemasByCityAsync(City city)
+    public async Task<IEnumerable<CinemaResponse>> GetCinemasByCityAsync(City city, IReadOnlyCollection<Guid>? restrictToCinemaIds)
     {
-        var cinemas = await repository.GetCinemasByCityAsync(city);
+        var cinemas = await repository.GetCinemasByCityAsync(city, restrictToCinemaIds);
         return mapper.Map<IEnumerable<CinemaResponse>>(cinemas);
     }
 
