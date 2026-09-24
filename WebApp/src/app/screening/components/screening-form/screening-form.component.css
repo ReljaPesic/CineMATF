@@ -52,6 +52,10 @@
   color: var(--text-muted);
 }
 
+.field__optional {
+  font-weight: 400;
+}
+
 .field input,
 .field select {
   width: 100%;
@@ -77,6 +81,12 @@
 .err {
   color: var(--danger);
   font-size: 0.78rem;
+}
+
+.hint {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin: 0;
 }
 
 .actions {

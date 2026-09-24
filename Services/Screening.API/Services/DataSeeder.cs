@@ -10,7 +10,7 @@ public class DataSeeder(IServiceProvider serviceProvider) : IHostedService
         using var scope = serviceProvider.CreateScope();
         var repository = scope.ServiceProvider.GetRequiredService<IScreeningRepository>();
 
-        var existing = await repository.GetScreeningsAsync(null, null, null);
+        var existing = await repository.GetScreeningsAsync(null, null, null, null);
         if (existing.Any()) return;
 
         // Start from tomorrow (not today) so every seeded screening is still bookable

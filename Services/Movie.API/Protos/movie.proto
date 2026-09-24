@@ -15,4 +15,5 @@ message GetMovieRequest {
 message MovieReply {
   string id = 1;
   string title = 2;
+  int32 duration_minutes = 3;
 }

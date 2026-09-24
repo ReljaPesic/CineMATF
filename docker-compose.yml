@@ -128,12 +128,15 @@ services:
     environment:
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=ScreeningDB;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Development
+      - MovieApi__BaseUrl=http://movieapi:8081
     ports:
       - "8003:8080"
       - "8004:8081"
     depends_on:
       postgres:
         condition: service_healthy
+      movieapi:
+        condition: service_started
     restart: unless-stopped
     networks:
       - cinema-network

@@ -6,6 +6,7 @@ global using Grpc.Core;
 global using Entities = Screening.API.Entities;
 global using Screening.API.Entities;
 global using Screening.API.DTOs;
+global using Screening.API.ExternalServices;
 global using Screening.API.Grpc;
 global using Screening.API.Repositories;
 global using Screening.API.Services;

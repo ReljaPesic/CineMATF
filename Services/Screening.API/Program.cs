@@ -3,7 +3,9 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
+using Movie.API.Grpc;
 using Screening.API.Data;
+using Screening.API.ExternalServices;
 using Screening.API.Grpc;
 using Screening.API.Mapping;
 using Screening.API.Repositories;
@@ -50,6 +52,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
+
+builder.Services.AddGrpcClient<MovieGrpc.MovieGrpcClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["MovieApi:BaseUrl"]
+        ?? throw new InvalidOperationException("MovieApi:BaseUrl is not configured"));
+});
+builder.Services.AddScoped<IMovieApiClient, MovieApiClient>();
 
 builder.Services.AddSingleton<IScreeningContext, ScreeningDbContext>();
 builder.Services.AddScoped<IScreeningRepository, ScreeningRepository>();

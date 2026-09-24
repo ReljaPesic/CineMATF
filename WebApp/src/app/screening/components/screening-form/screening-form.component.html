@@ -52,13 +52,37 @@
         }
       </div>
 
-      <div class="field">
-        <label for="startTime">Starts at</label>
-        <input id="startTime" type="datetime-local" formControlName="startTime" />
-        @if (form.controls.startTime.touched && form.controls.startTime.invalid) {
-          <small class="err">Start time is required.</small>
-        }
-      </div>
+      @if (isEdit) {
+        <div class="field">
+          <label for="startTime">Starts at</label>
+          <input id="startTime" type="datetime-local" formControlName="startTime" />
+          @if (form.controls.startTime.touched && !form.controls.startTime.value) {
+            <small class="err">Start time is required.</small>
+          }
+        </div>
+      } @else {
+        <div class="field">
+          <label for="startDate">Start date</label>
+          <input id="startDate" type="date" formControlName="startDate" />
+          @if (form.controls.startDate.touched && !form.controls.startDate.value) {
+            <small class="err">Start date is required.</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="endDate">End date <span class="field__optional">(optional)</span></label>
+          <input id="endDate" type="date" formControlName="endDate" />
+          <small class="hint">Leave blank for one screening. Set an end date to add the same showtime every day up to and including it.</small>
+        </div>
+
+        <div class="field">
+          <label for="time">Time</label>
+          <input id="time" type="time" formControlName="time" />
+          @if (form.controls.time.touched && !form.controls.time.value) {
+            <small class="err">Time is required.</small>
+          }
+        </div>
+      }
 
       <div class="field">
         <label for="format">Format</label>
@@ -70,9 +94,7 @@
       </div>
 
       <div class="actions field--wide">
-        <button type="submit" class="btn btn--primary" [disabled]="saving">
-          {{ saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create screening' }}
-        </button>
+        <button type="submit" class="btn btn--primary" [disabled]="saving"> Save </button>
         <button type="button" class="btn" (click)="cancel()">Cancel</button>
       </div>
     </form>
