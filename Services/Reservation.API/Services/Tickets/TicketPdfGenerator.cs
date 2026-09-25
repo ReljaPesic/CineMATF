@@ -1,3 +1,4 @@
+using System.Text.Json;
 using QRCoder;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -14,7 +15,7 @@ public class TicketPdfGenerator : ITicketPdfGenerator
         var cinemaName = cinema?.Name ?? "Unknown Cinema";
         var movieTitle = movie?.Title ?? "Unknown Movie";
         var subtitle = cinema == null ? cinemaName : $"{cinemaName} ({cinema.City})";
-        var qrImageBytes = GenerateQrCode(ticket.QrCode);
+        var qrImageBytes = GenerateQrCode(BuildQrPayload(ticket, screening, cinemaName, movieTitle));
 
         var document = Document.Create(container =>
         {
@@ -75,6 +76,22 @@ public class TicketPdfGenerator : ITicketPdfGenerator
     {
         column.Item().Text(label).FontSize(8).FontColor(Colors.Grey.Darken1);
         column.Item().Text(value).FontSize(12).Bold();
+    }
+
+    private static string BuildQrPayload(Entities.Ticket ticket, ScreeningDetails screening, string cinemaName, string movieTitle)
+    {
+        var payload = new
+        {
+            ticketId = ticket.Id,
+            movie = movieTitle,
+            cinema = cinemaName,
+            format = FormatScreeningFormat(screening.Format),
+            startTime = screening.StartTime,
+            seat = $"{ticket.SeatRow}-{ticket.SeatNumber}",
+            price = ticket.Price
+        };
+
+        return JsonSerializer.Serialize(payload);
     }
 
     private static byte[] GenerateQrCode(string payload)
